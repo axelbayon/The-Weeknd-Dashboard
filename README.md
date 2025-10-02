@@ -8,6 +8,46 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-02 — Prompt 6.3 : Fix Lead/Feat meta.json + Centrage parfait th/td + Date Spotify (J-1) + Espacement navigation**
+
+*Corrections finales UI après Prompt 6.2 :*
+
+**A) Fix cartes Lead/Feat (valeurs meta.json exactes)** :
+- **Problème** : Après `data-sync-updated`, les cartes "Solo / Lead" et "Featuring" affichaient des valeurs recalculées depuis `songs[]` au lieu des stats Kworb exactes de `meta.json.songs_role_stats`
+- **Cause** : `calculateSongsStats()` utilisait le cache `window.dataLoader.cachedData.meta` (invalidé après event), `renderSongsAggregates()` chargeait uniquement `loadSongs()` sans recharger `meta.json`
+- **Solution** : Modification de `renderSongsAggregates()` pour utiliser `Promise.all([loadSongs(), loadMeta()])` → fetch explicite de `meta.json` à chaque render
+- **Résultat** : Cartes Lead/Feat affichent toujours les valeurs Kworb exactes (237 lead, 78 feat) même après refresh automatique
+
+**B) Centrage parfait des cellules (th + td)** :
+- **Problème** : Seules les cellules `td` étaient centrées verticalement (via flex), les headers `th` n'avaient que text-align:center
+- **Solution** : Modification du sélecteur CSS de `.data-table td` vers `.data-table th, .data-table td` pour appliquer `display: flex; align-items: center; justify-content: center;` sur headers ET cellules
+- **Exception** : Colonne Titre (`:nth-child(2)`) conserve `justify-content: flex-start;` pour alignement gauche
+- **Résultat** : Headers et cellules numériques parfaitement centrés verticalement et horizontalement
+
+**C) Date Spotify = J-1 (déjà correct)** :
+- **Vérification** : `meta-refresh.js` ligne 152 affiche bien `meta.spotify_data_date` (pas `kworb_last_update_utc`)
+- Aucune modification requise, code déjà conforme
+
+**D) Espacement navigation robuste** :
+- **Vérification** : CSS `.page-header--aggregate, .page-header--split { margin-bottom: 28px; }` déjà appliqué
+- Pages Songs et Albums sont persistantes (divs non reconstruites au switch)
+- Aucune modification requise, espacement déjà robuste
+
+**E) Badge "Prochaine MAJ" + tooltip (DEFERRED)** :
+- Feature complexe nécessitant badge conditionnel (vert "Prête" / orange "MM:SS"), tooltip accessible (role="tooltip", aria-describedby), calcul ETA (nextTickAt = last_sync + interval + jitter)
+- Reportée à un prompt ultérieur si critique
+
+*Fichiers modifiés :*
+- `Website/src/data-renderer.js` : Ajout paramètre `meta` à `calculateSongsStats()`, refactoring `renderSongsAggregates()` avec `Promise.all()`, console logs détaillés Lead/Feat
+- `Website/src/styles/global.css` : Changement sélecteur `.data-table td` → `.data-table th, .data-table td` pour centrage flex sur headers
+
+*Impact technique :*
+- Lead/Feat toujours synchronisés avec `meta.json.songs_role_stats` (source de vérité Kworb)
+- Centrage UI parfait (vertical + horizontal) sur toutes les colonnes numériques (headers + cellules)
+- Date Spotify et espacement navigation confirmés corrects (aucun bug)
+
+---
+
 **2025-10-02 — Prompt 6.2 : Stats Lead/Feat exactes + Nombres entiers FR + Tri/Rang/Centrage perfectionnés**
 
 *Extraction stats Kworb exactes (scrape_kworb_songs.py) :*

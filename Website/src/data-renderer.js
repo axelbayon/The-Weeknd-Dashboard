@@ -17,14 +17,18 @@ class DataRenderer {
      */
     async renderSongsAggregates() {
         try {
-            const songs = await window.dataLoader.loadSongs();
+            // Charger meta.json ET songs.json pour garantir les dernières valeurs
+            const [songs, meta] = await Promise.all([
+                window.dataLoader.loadSongs(),
+                window.dataLoader.loadMeta()
+            ]);
             
             if (!songs || songs.length === 0) {
                 console.warn('⚠️ Aucune chanson à afficher');
                 return;
             }
 
-            const stats = this.calculateSongsStats(songs);
+            const stats = this.calculateSongsStats(songs, meta);
             this.updateSongsAggregatesUI(stats);
             
             console.log('✅ Agrégats Songs mis à jour:', stats);
@@ -38,9 +42,12 @@ class DataRenderer {
      * Calcule les statistiques des chansons depuis meta.json
      * Utilise songs_role_stats si disponible, sinon recalcule depuis songs
      */
-    calculateSongsStats(songs) {
-        // Essayer de charger les stats depuis meta.json (stats Kworb exactes)
-        const meta = window.dataLoader?.cachedData?.meta || {};
+    calculateSongsStats(songs, meta = null) {
+        // Utiliser meta passé en paramètre, sinon fallback sur cache
+        if (!meta) {
+            meta = window.dataLoader?.cachedData?.meta || {};
+        }
+        
         const roleStats = meta.songs_role_stats;
         
         if (roleStats && roleStats.lead && roleStats.feat) {
@@ -62,6 +69,8 @@ class DataRenderer {
             const dailyStreams = lead.dailyStreams + feat.dailyStreams;
             
             console.log('[Stats] Utilisation des stats Kworb exactes depuis meta.json');
+            console.log(`  Lead: ${lead.count} songs, ${lead.totalStreams} total, ${lead.dailyStreams} daily`);
+            console.log(`  Feat: ${feat.count} songs, ${feat.totalStreams} total, ${feat.dailyStreams} daily`);
             
             return {
                 total,
