@@ -8,6 +8,64 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-02 — Prompt 6.4 : Espacement SPA + Centrage cellules (override) + Badge/Tooltip "Prochaine MAJ"**
+
+*Corrections finales UI après Prompts 6.2 et 6.3 :*
+
+**A) Fix espacement SPA (structure DOM stable)** :
+- **Problème** : Espacement 28px entre header cards et tables "sautait" parfois lors de la navigation Songs ↔ Albums
+- **Solution** : Ajout de `margin-block-start: 28px` directement sur `.table-section` dans global.css au lieu de sélecteurs adjacents fragiles
+- **Vérification** : `data-renderer.js` ne remplace QUE le `<tbody>`, pas le wrapper `.table-section` (DOM stable)
+- **Résultat** : Espacement robuste et persistant après navigation, aucun "saut" visuel
+
+**B) Fix centrage cellules (override text-align)** :
+- **Problème** : Certaines cellules numériques n'étaient pas parfaitement centrées (horizontal + vertical) malgré le CSS de Prompt 6.3
+- **Solution** : Nouveau contrat CSS avec classes explicites :
+  - Base : `th, td` centrés par défaut (`text-align: center; vertical-align: middle;`)
+  - `.col-title` : Titre aligné à gauche
+  - `.cell-num` : Centrage fort avec `display: flex; align-items: center; justify-content: center;`
+- **HTML** : Ajout classes `col-title` sur colonne Titre, `cell-num` sur toutes cellules numériques (Songs & Albums)
+- **Résultat** : Centrage parfait de toutes les valeurs numériques (# / Streams / Variation / Prochain cap / Prochain palier), Titre reste à gauche
+
+**C) Date Spotify = meta.spotify_data_date (déjà correct)** :
+- **Vérification** : `meta-refresh.js` ligne 152 utilise bien `meta.spotify_data_date` (J-1 de kworb_last_update_utc)
+- Affichage format FR : `01/10/2025` au lieu de `2025-10-01`
+- Aucune modification requise, implémentation déjà conforme
+
+**D) Style badge + tooltip "Prochaine MAJ"** :
+- **HTML** : Markup `.next-update` avec `.nu-badge`, `.nu-info` (bouton ℹ️), `.nu-tooltip` sur Songs et Albums
+- **CSS** : 
+  - `.nu-badge.is-ready` : Fond vert (#10b981), texte "Prête" quand timeLeft <= 0
+  - `.nu-badge.is-wait` : Fond orange (#f59e0b), texte "MM:SS" (countdown)
+  - `.nu-info` : Bouton rond 1.75rem, bordure au survol/focus
+  - `.nu-tooltip` : Positionné en bas du badge, flèche, fond sombre, z-index 1000
+- **JS** : 
+  - `updateCountdown()` dans meta-refresh.js : Calcule timeLeft, met à jour badge et `.nu-eta` (ETA au format HH:MM:SS)
+  - `setupTooltips()` : Gère `mouseenter/mouseleave` et `focusin/focusout` pour afficher/cacher tooltip (accessible clavier)
+  - Tooltip affiche : "La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à **19:09:55**."
+- **Résultat** : Badge interactif vert/orange, tooltip accessible au survol et focus, ETA précise affichée
+
+*Fichiers modifiés :*
+- `Website/src/styles/global.css` : 
+  - Ajout `margin-block-start: 28px` sur `.table-section`
+  - Nouveau CSS `.col-title` et `.cell-num` pour centrage robuste
+  - Styles complets `.next-update`, `.nu-badge`, `.nu-info`, `.nu-tooltip` (~80 lignes)
+- `Website/src/data-renderer.js` : Ajout classes `cell-num` et `col-title` dans `createSongRow()` et `createAlbumRow()`
+- `Website/src/meta-refresh.js` : 
+  - Refactoring `updateCountdown()` pour gérer badge + ETA
+  - Ajout `setupTooltips()` pour interactivité mouseenter/focusin
+- `Website/index.html` : 
+  - Ajout classes `cell-num`/`col-title` dans headers `<th>` Songs (lignes 119-154)
+  - Remplacement markup carte "Prochaine mise à jour" par `.next-update` avec badge+tooltip sur Songs (nu-tip-songs) et Albums (nu-tip-albums)
+
+*Impact technique :*
+- Espacement stable en SPA sans sélecteurs CSS fragiles
+- Centrage cellules numériques parfait avec classes explicites (pas de `:nth-child` cassant)
+- Badge "Prochaine MAJ" avec countdown visuel (vert/orange) et tooltip accessible (WCAG conforme)
+- Date Spotify affichée au format FR (DD/MM/YYYY), toujours J-1 de la date Kworb
+
+---
+
 **2025-10-02 — Prompt 6.3 : Fix Lead/Feat meta.json + Centrage parfait th/td + Date Spotify (J-1) + Espacement navigation**
 
 *Corrections finales UI après Prompt 6.2 :*
