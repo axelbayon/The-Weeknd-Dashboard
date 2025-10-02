@@ -12,12 +12,13 @@
     // Configuration
     const FETCH_INTERVAL_MS = 10000; // 10 secondes
     const REFRESH_INTERVAL_S = 600; // 10 minutes (par défaut)
-    const META_JSON_PATH = '../data/meta.json';
+    const META_JSON_PATH = '/data/meta.json';
     
     // État
     let lastSyncTimestamp = null;
     let nextUpdateTime = null;
     let countdownInterval = null;
+    let previousSyncTimestamp = null; // Pour détecter les changements
     
     /**
      * Formate un timestamp ISO en format lisible court
@@ -125,6 +126,21 @@
             // Mettre à jour les en-têtes
             if (meta.last_sync_local_iso) {
                 updateElement('header-last-sync', formatTimestamp(meta.last_sync_local_iso));
+                
+                // Détecter changement de sync et émettre événement
+                if (previousSyncTimestamp && previousSyncTimestamp !== meta.last_sync_local_iso) {
+                    console.log('[Meta-Refresh] 🔄 Nouvelle synchronisation détectée');
+                    const event = new CustomEvent('data-sync-updated', {
+                        detail: {
+                            previousSync: previousSyncTimestamp,
+                            currentSync: meta.last_sync_local_iso,
+                            timestamp: Date.now()
+                        }
+                    });
+                    window.dispatchEvent(event);
+                }
+                
+                previousSyncTimestamp = meta.last_sync_local_iso;
                 
                 // Calculer le prochain refresh
                 const lastSync = new Date(meta.last_sync_local_iso);

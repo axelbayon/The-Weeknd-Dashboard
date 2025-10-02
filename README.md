@@ -6,29 +6,48 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
-**2025-10-02 — Prompt 5 : Orchestrateur auto-refresh 10 min + en-têtes UI dynamiques**
+**2025-10-02 — Prompt 6 : Connexion UI aux données + Recherche sticky + Formats FR**
 
-*Orchestrateur automatique :*
-- Script `auto_refresh.py` : exécute le pipeline complet toutes les 10 minutes (scrape Songs + Albums, régénération vues, update meta.json)
-- Verrou anti-chevauchement (`.sync.lock`) pour éviter exécutions simultanées
-- Jitter aléatoire ±15s pour éviter rafales exactes
-- Paramétrage flexible : `REFRESH_INTERVAL_SECONDS` (env) ou `--interval` (CLI)
-- Mode `--once` pour exécution unique (tests/CI)
-- Fallback gracieux : conserve données valides en cas d'erreur scraping
-- Rotation automatique : maintien minimum 3 snapshots (J/J-1/J-2), purge au-delà
-- meta.json étendu (v1.1) : `last_sync_status` ("ok"/"error"), `last_error` (optionnel)
+*Connexion UI/données :*
+- Tables Songs (315 lignes) et Albums (27 lignes) connectées aux fichiers `data/songs.json` et `data/albums.json`
+- Auto-refresh des tables : rechargement automatique sans reload page quand `last_sync_local_iso` change
+- Cache intelligent avec retry (3 tentatives, backoff exponentiel) via `data-loader.js`
+- Gestion erreurs douce : badge d'alerte si erreur fetch, conservation cache, aucune cassure UI
 
-*En-têtes UI dynamiques :*
-- `meta-refresh.js` : fetch meta.json toutes les 10s, mise à jour temps réel
-- 3 indicateurs dynamiques : Dernière sync locale, Prochaine mise à jour (countdown MM:SS), Date données Spotify
-- Countdown client-side décrémentant sans reload
-- Badge "⚠️ Sync partielle" si `last_sync_status = "error"`
-- Intégration transparente dans toutes les pages
+*Agrégats dynamiques :*
+- **Songs** : 6 indicateurs (Total titres, Streams totaux, Streams quotidiens + splits Lead/Feat avec counts et sommes)
+- **Albums** : 3 indicateurs (Total albums, Streams totaux, Streams quotidiens)
+- Validation : `lead_count + feat_count = total_count`
+- Formats FR : espaces fines (milliers), virgule décimale, suffixes M/B
 
-*Intégration :*
-- `start_dashboard.py` modifié : lance orchestrateur en arrière-plan + serveur web
-- Auto-refresh actif dès le démarrage, synchronisation toutes les 10 minutes
-- 3 snapshots maintenus : J, J-1, J-2 pour calcul variations stables
+*Formats français (formatters.js) :*
+- **Nombres** : séparateur milliers (espace fine `\u202F`), virgule décimale (ex: `1 664 001`, `3,52`)
+- **Pourcentages** : signe +/- avec 2 décimales (ex: `+3,52 %`, `-1,07 %`) ou `N.D.`
+- **Jours** : 2 décimales + suffixe `j` (ex: `23,84 j`) ou `N.D.`
+- **Paliers** : M/B avec virgule (ex: `5,1 B`, `300 M`)
+- **Streams** : formatage intelligent selon magnitude (B/M/K)
+
+*Recherche sticky (search.js) :*
+- Barre recherche en bas (sticky), active depuis n'importe quelle page
+- Saisie ≥2 caractères → dropdown 10 résultats max (titre + album)
+- Navigation : Enter ou clic → bascule page Songs + scroll vers ligne + highlight 3 secondes
+- Normalisation accents, highlight correspondances, navigation clavier (↑↓ Enter Escape)
+- Cache partagé avec data-loader
+
+*Architecture modules :*
+- `data-loader.js` : fetch avec cache 5s, retry, événements `data-loaded`/`data-load-error`
+- `formatters.js` : fonctions formatNumber, formatPercent, formatDays, formatCap, formatStreams
+- `data-renderer.js` : calcul stats, rendu tables/agrégats, tri streams_total desc
+- `search.js` : recherche sticky avec suggestions dropdown et navigation
+- `main.js` : orchestration chargement, auto-refresh, gestion pages
+- `meta-refresh.js` : émet événement `data-sync-updated` quand nouvelle sync détectée
+
+*Technique :*
+- Serveur HTTP depuis racine projet (accès `/Website/` et `/data/`)
+- Base href `/Website/` pour chemins relatifs assets
+- data-testid ajoutés : songs-total-count, songs-streams-total/daily, songs-lead/feat-*, albums-*, songs-row, albums-row, search-suggestions
+- Colonnes #/Titre collantes (CSS existant), data-row-id sur chaque `<tr>`
+- Tri stable par streams_total décroissant
 
 ---
 
@@ -74,9 +93,14 @@ scripts/                           # Scripts Python de scraping, génération et
   test_songs_ids.py                # Tests IDs Songs (pattern, unicité, @unknown count)
 
 Website/                           # Dossier parent du code applicatif
-  index.html                       # Page principale (SPA avec 3 pages)
+  index.html                       # Page principale (SPA avec 3 pages, base href="/Website/")
   src/
+    main.js                        # Orchestration chargement, auto-refresh, navigation
     app.js                         # Script JavaScript (navigation entre pages)
+    data-loader.js                 # Module chargement JSON (cache, retry, événements)
+    data-renderer.js               # Module rendu tables/agrégats (calculs, formatage, DOM)
+    formatters.js                  # Module formatage FR (nombres, %, jours, M/B)
+    search.js                      # Recherche sticky avec suggestions et navigation
     meta-refresh.js                # Script de mise à jour dynamique des en-têtes (fetch meta.json)
     styles/
       global.css                   # CSS canonique (960 lignes, dark theme)
@@ -105,8 +129,10 @@ python scripts/start_dashboard.py
 **Ce que fait cette commande** :
 1. ✅ Démarre l'orchestrateur auto-refresh en arrière-plan (toutes les 10 minutes)
 2. ✅ Synchronise les données immédiatement (Songs + Albums)
-3. ✅ Lance un serveur HTTP sur http://localhost:8000
+3. ✅ Lance un serveur HTTP sur http://localhost:8000/Website/
 4. ✅ En-têtes UI se mettent à jour automatiquement (dernière sync, countdown, date données)
+5. ✅ Tables Songs et Albums se remplissent avec les vraies données (auto-refresh à chaque synchro)
+6. ✅ Recherche sticky active pour naviguer rapidement vers n'importe quelle chanson
 
 **Note** : Appuyez sur `Ctrl+C` pour arrêter le serveur (l'orchestrateur s'arrête automatiquement).
 
@@ -413,12 +439,11 @@ Ce script lit les snapshots J et J-1, applique les règles de calcul, et produit
 
 ## Limites connues
 
-- **Données placeholder dans l'UI** : l'interface HTML affiche encore des données factices (connexion prévue dans prompts suivants).
-- **Album "Unknown" pour les chansons** : Kworb ne fournit pas l'information d'album, sera résolu via Spotify API (prompt 6).
-- **Variation_pct "N.D." pour toutes les chansons** : Les id ayant changé entre fixtures et scraper, aucun matching J/J-1 n'est possible pour l'instant (sera résolu au prochain scraping quotidien).
-- **Pas de scraper Albums** : seules les chansons sont scrapées pour l'instant (prompt 4 : scraper albums).
+- **Album "Unknown" pour les chansons** : Kworb ne fournit pas l'information d'album (288 chansons sur 315), sera résolu via Spotify API (prompt 7).
+- **Variation_pct "N.D." pour beaucoup de chansons** : Les données J-1 ne correspondent pas toujours aux IDs actuels (sera amélioré au prochain scraping quotidien).
 - **Snapshots J-2 manquants** : seuls J et anciennes fixtures sont disponibles (se remplira progressivement).
-- **Recherche non fonctionnelle** : la barre de recherche est présente mais ne filtre rien encore.
+- **Page "Caps imminents" non fonctionnelle** : contient uniquement des placeholders (implémentation prévue prompt 7+).
+- **Covers placeholder** : émojis 🎵/💿 en attendant intégration Spotify API (covers réelles en prompt 7).
 - **Stack technique** : HTML/CSS/JS vanilla (SPA simple), scripts Python pour scraping/génération/validation.
 
 ---

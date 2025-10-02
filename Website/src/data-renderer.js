@@ -1,0 +1,471 @@
+/**
+ * Module de rendu des données dans l'UI
+ * Gère les agrégats et les tables Songs/Albums
+ */
+
+class DataRenderer {
+    constructor() {
+        this.currentPage = 'songs';
+        this.lastRenderedData = {
+            songs: null,
+            albums: null
+        };
+    }
+
+    /**
+     * Calcule et rend les agrégats de la page Songs
+     */
+    async renderSongsAggregates() {
+        try {
+            const songs = await window.dataLoader.loadSongs();
+            
+            if (!songs || songs.length === 0) {
+                console.warn('⚠️ Aucune chanson à afficher');
+                return;
+            }
+
+            const stats = this.calculateSongsStats(songs);
+            this.updateSongsAggregatesUI(stats);
+            
+            console.log('✅ Agrégats Songs mis à jour:', stats);
+        } catch (error) {
+            console.error('❌ Erreur rendu agrégats Songs:', error);
+            this.showError('songs-aggregates');
+        }
+    }
+
+    /**
+     * Calcule les statistiques des chansons
+     */
+    calculateSongsStats(songs) {
+        const total = songs.length;
+        
+        let totalStreams = 0;
+        let dailyStreams = 0;
+        
+        let leadCount = 0;
+        let leadTotalStreams = 0;
+        let leadDailyStreams = 0;
+        
+        let featCount = 0;
+        let featTotalStreams = 0;
+        let featDailyStreams = 0;
+
+        songs.forEach(song => {
+            const streams_total = Number(song.streams_total) || 0;
+            const streams_daily = Number(song.streams_daily) || 0;
+            
+            totalStreams += streams_total;
+            dailyStreams += streams_daily;
+
+            if (song.role === 'lead') {
+                leadCount++;
+                leadTotalStreams += streams_total;
+                leadDailyStreams += streams_daily;
+            } else if (song.role === 'feat') {
+                featCount++;
+                featTotalStreams += streams_total;
+                featDailyStreams += streams_daily;
+            }
+        });
+
+        return {
+            total,
+            totalStreams,
+            dailyStreams,
+            lead: {
+                count: leadCount,
+                totalStreams: leadTotalStreams,
+                dailyStreams: leadDailyStreams
+            },
+            feat: {
+                count: featCount,
+                totalStreams: featTotalStreams,
+                dailyStreams: featDailyStreams
+            }
+        };
+    }
+
+    /**
+     * Met à jour l'UI des agrégats Songs
+     */
+    updateSongsAggregatesUI(stats) {
+        const { formatStreams, formatDailyStreams, formatNumber } = window.formatters;
+
+        // Agrégats généraux (dans page-header--aggregate)
+        const aggregateCards = document.querySelector('#page-songs .page-header--aggregate .page-header__cards');
+        if (aggregateCards) {
+            const cards = aggregateCards.querySelectorAll('.stat-card');
+            if (cards[0]) cards[0].querySelector('.stat-card__value').textContent = formatNumber(stats.total);
+            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatStreams(stats.totalStreams);
+            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatDailyStreams(stats.dailyStreams);
+
+            // Ajouter data-testid
+            if (cards[0]) cards[0].setAttribute('data-testid', 'songs-total-count');
+            if (cards[1]) cards[1].setAttribute('data-testid', 'songs-streams-total');
+            if (cards[2]) cards[2].setAttribute('data-testid', 'songs-streams-daily');
+        }
+
+        // Agrégats Lead/Feat (dans page-header--split)
+        const splitCards = document.querySelector('#page-songs .page-header--split .page-header__cards');
+        if (splitCards) {
+            const leadCard = splitCards.querySelectorAll('.stat-card')[0];
+            const featCard = splitCards.querySelectorAll('.stat-card')[1];
+
+            if (leadCard) {
+                const leadValues = leadCard.querySelectorAll('.stat-card__row-value');
+                if (leadValues[0]) leadValues[0].textContent = formatNumber(stats.lead.count);
+                if (leadValues[1]) leadValues[1].textContent = formatStreams(stats.lead.totalStreams);
+                if (leadValues[2]) leadValues[2].textContent = formatDailyStreams(stats.lead.dailyStreams);
+
+                // Ajouter data-testid
+                if (leadValues[0]) leadValues[0].setAttribute('data-testid', 'songs-lead-count');
+                if (leadValues[1]) leadValues[1].setAttribute('data-testid', 'songs-lead-streams-total');
+                if (leadValues[2]) leadValues[2].setAttribute('data-testid', 'songs-lead-streams-daily');
+            }
+
+            if (featCard) {
+                const featValues = featCard.querySelectorAll('.stat-card__row-value');
+                if (featValues[0]) featValues[0].textContent = formatNumber(stats.feat.count);
+                if (featValues[1]) featValues[1].textContent = formatStreams(stats.feat.totalStreams);
+                if (featValues[2]) featValues[2].textContent = formatDailyStreams(stats.feat.dailyStreams);
+
+                // Ajouter data-testid
+                if (featValues[0]) featValues[0].setAttribute('data-testid', 'songs-feat-count');
+                if (featValues[1]) featValues[1].setAttribute('data-testid', 'songs-feat-streams-total');
+                if (featValues[2]) featValues[2].setAttribute('data-testid', 'songs-feat-streams-daily');
+            }
+        }
+    }
+
+    /**
+     * Calcule et rend les agrégats de la page Albums
+     */
+    async renderAlbumsAggregates() {
+        try {
+            const albums = await window.dataLoader.loadAlbums();
+            
+            if (!albums || albums.length === 0) {
+                console.warn('⚠️ Aucun album à afficher');
+                return;
+            }
+
+            const stats = this.calculateAlbumsStats(albums);
+            this.updateAlbumsAggregatesUI(stats);
+            
+            console.log('✅ Agrégats Albums mis à jour:', stats);
+        } catch (error) {
+            console.error('❌ Erreur rendu agrégats Albums:', error);
+            this.showError('albums-aggregates');
+        }
+    }
+
+    /**
+     * Calcule les statistiques des albums
+     */
+    calculateAlbumsStats(albums) {
+        const total = albums.length;
+        let totalStreams = 0;
+        let dailyStreams = 0;
+
+        albums.forEach(album => {
+            totalStreams += Number(album.streams_total) || 0;
+            dailyStreams += Number(album.streams_daily) || 0;
+        });
+
+        return {
+            total,
+            totalStreams,
+            dailyStreams
+        };
+    }
+
+    /**
+     * Met à jour l'UI des agrégats Albums
+     */
+    updateAlbumsAggregatesUI(stats) {
+        const { formatStreams, formatDailyStreams, formatNumber } = window.formatters;
+
+        const aggregateCards = document.querySelector('#page-albums .page-header--aggregate .page-header__cards');
+        if (aggregateCards) {
+            const cards = aggregateCards.querySelectorAll('.stat-card');
+            if (cards[0]) cards[0].querySelector('.stat-card__value').textContent = formatNumber(stats.total);
+            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatStreams(stats.totalStreams);
+            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatDailyStreams(stats.dailyStreams);
+
+            // Ajouter data-testid
+            if (cards[0]) cards[0].setAttribute('data-testid', 'albums-total-count');
+            if (cards[1]) cards[1].setAttribute('data-testid', 'albums-streams-total');
+            if (cards[2]) cards[2].setAttribute('data-testid', 'albums-streams-daily');
+        }
+    }
+
+    /**
+     * Rend la table Songs
+     */
+    async renderSongsTable() {
+        try {
+            const songs = await window.dataLoader.loadSongs();
+            
+            if (!songs || songs.length === 0) {
+                console.warn('⚠️ Aucune chanson à afficher');
+                return;
+            }
+
+            // Trier par streams_total décroissant
+            const sortedSongs = [...songs].sort((a, b) => b.streams_total - a.streams_total);
+
+            const tbody = document.querySelector('#page-songs .data-table--songs tbody');
+            if (!tbody) {
+                console.error('❌ Tbody Songs introuvable');
+                return;
+            }
+
+            // Vider le tbody
+            tbody.innerHTML = '';
+
+            // Générer les lignes
+            sortedSongs.forEach((song, index) => {
+                const row = this.createSongRow(song, index + 1);
+                tbody.appendChild(row);
+            });
+
+            this.lastRenderedData.songs = songs;
+            console.log(`✅ Table Songs rendue: ${sortedSongs.length} lignes`);
+        } catch (error) {
+            console.error('❌ Erreur rendu table Songs:', error);
+            this.showError('songs-table');
+        }
+    }
+
+    /**
+     * Crée une ligne de la table Songs
+     */
+    createSongRow(song, displayRank) {
+        const { formatStreams, formatDailyStreams, formatPercent, formatDays, formatCap } = window.formatters;
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-row-id', song.id);
+        tr.setAttribute('data-testid', 'songs-row');
+
+        // Colonne #
+        const tdRank = document.createElement('td');
+        tdRank.className = 'data-table__cell--rank';
+        tdRank.textContent = displayRank;
+        tr.appendChild(tdRank);
+
+        // Colonne Titre
+        const tdTitle = document.createElement('td');
+        tdTitle.className = 'data-table__cell--title';
+        tdTitle.innerHTML = `
+            <div class="data-table__title-wrapper">
+                <div class="data-table__title-cover">
+                    <div class="cover-placeholder">🎵</div>
+                </div>
+                <div class="data-table__title-meta">
+                    <div class="data-table__song-name">${this.escapeHtml(song.title)}</div>
+                    <span class="data-table__album">${this.escapeHtml(song.album)}</span>
+                </div>
+            </div>
+        `;
+        tr.appendChild(tdTitle);
+
+        // Colonne Streams totaux
+        const tdStreamsTotal = document.createElement('td');
+        tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.textContent = formatStreams(song.streams_total);
+        tr.appendChild(tdStreamsTotal);
+
+        // Colonne Streams quotidiens
+        const tdStreamsDaily = document.createElement('td');
+        tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.textContent = formatDailyStreams(song.streams_daily);
+        tr.appendChild(tdStreamsDaily);
+
+        // Colonne Variation (%)
+        const tdVariation = document.createElement('td');
+        tdVariation.className = 'data-table__cell--numeric';
+        const variationText = formatPercent(song.variation_pct);
+        
+        if (variationText === 'N.D.') {
+            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
+        } else {
+            const value = Number(song.variation_pct);
+            const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
+            tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+        }
+        tr.appendChild(tdVariation);
+
+        // Colonne Prochain cap (j)
+        const tdDaysToCap = document.createElement('td');
+        tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.textContent = formatDays(song.days_to_next_cap);
+        tr.appendChild(tdDaysToCap);
+
+        // Colonne Prochain palier
+        const tdNextCap = document.createElement('td');
+        tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.textContent = formatCap(song.next_cap_value);
+        tr.appendChild(tdNextCap);
+
+        return tr;
+    }
+
+    /**
+     * Rend la table Albums
+     */
+    async renderAlbumsTable() {
+        try {
+            const albums = await window.dataLoader.loadAlbums();
+            
+            if (!albums || albums.length === 0) {
+                console.warn('⚠️ Aucun album à afficher');
+                return;
+            }
+
+            // Trier par streams_total décroissant
+            const sortedAlbums = [...albums].sort((a, b) => b.streams_total - a.streams_total);
+
+            const tbody = document.querySelector('#page-albums .data-table--albums tbody');
+            if (!tbody) {
+                console.error('❌ Tbody Albums introuvable');
+                return;
+            }
+
+            // Vider le tbody
+            tbody.innerHTML = '';
+
+            // Générer les lignes
+            sortedAlbums.forEach((album, index) => {
+                const row = this.createAlbumRow(album, index + 1);
+                tbody.appendChild(row);
+            });
+
+            this.lastRenderedData.albums = albums;
+            console.log(`✅ Table Albums rendue: ${sortedAlbums.length} lignes`);
+        } catch (error) {
+            console.error('❌ Erreur rendu table Albums:', error);
+            this.showError('albums-table');
+        }
+    }
+
+    /**
+     * Crée une ligne de la table Albums
+     */
+    createAlbumRow(album, displayRank) {
+        const { formatStreams, formatDailyStreams, formatPercent, formatDays, formatCap } = window.formatters;
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-row-id', album.id);
+        tr.setAttribute('data-testid', 'albums-row');
+
+        // Colonne #
+        const tdRank = document.createElement('td');
+        tdRank.className = 'data-table__cell--rank';
+        tdRank.textContent = displayRank;
+        tr.appendChild(tdRank);
+
+        // Colonne Titre
+        const tdTitle = document.createElement('td');
+        tdTitle.className = 'data-table__cell--title';
+        tdTitle.innerHTML = `
+            <div class="data-table__title-wrapper">
+                <div class="data-table__title-cover">
+                    <div class="cover-placeholder">💿</div>
+                </div>
+                <div class="data-table__title-meta">
+                    <div class="data-table__song-name">${this.escapeHtml(album.title)}</div>
+                </div>
+            </div>
+        `;
+        tr.appendChild(tdTitle);
+
+        // Colonne Streams totaux
+        const tdStreamsTotal = document.createElement('td');
+        tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.textContent = formatStreams(album.streams_total);
+        tr.appendChild(tdStreamsTotal);
+
+        // Colonne Streams quotidiens
+        const tdStreamsDaily = document.createElement('td');
+        tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.textContent = formatDailyStreams(album.streams_daily);
+        tr.appendChild(tdStreamsDaily);
+
+        // Colonne Variation (%)
+        const tdVariation = document.createElement('td');
+        tdVariation.className = 'data-table__cell--numeric';
+        const variationText = formatPercent(album.variation_pct);
+        
+        if (variationText === 'N.D.') {
+            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
+        } else {
+            const value = Number(album.variation_pct);
+            const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
+            tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+        }
+        tr.appendChild(tdVariation);
+
+        // Colonne Prochain cap (j)
+        const tdDaysToCap = document.createElement('td');
+        tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.textContent = formatDays(album.days_to_next_cap);
+        tr.appendChild(tdDaysToCap);
+
+        // Colonne Prochain palier
+        const tdNextCap = document.createElement('td');
+        tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.textContent = formatCap(album.next_cap_value);
+        tr.appendChild(tdNextCap);
+
+        return tr;
+    }
+
+    /**
+     * Affiche un message d'erreur léger
+     */
+    showError(context) {
+        // TODO: Implémenter une notification légère
+        console.error(`Erreur de chargement: ${context}`);
+    }
+
+    /**
+     * Échappe les caractères HTML
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Initialise le rendu pour la page courante
+     */
+    async initCurrentPage(pageName) {
+        this.currentPage = pageName;
+
+        if (pageName === 'songs') {
+            await Promise.all([
+                this.renderSongsAggregates(),
+                this.renderSongsTable()
+            ]);
+        } else if (pageName === 'albums') {
+            await Promise.all([
+                this.renderAlbumsAggregates(),
+                this.renderAlbumsTable()
+            ]);
+        }
+    }
+
+    /**
+     * Rafraîchit les données de la page courante
+     */
+    async refreshCurrentPage() {
+        console.log(`🔄 Rafraîchissement page: ${this.currentPage}`);
+        await this.initCurrentPage(this.currentPage);
+    }
+}
+
+// Instance singleton
+const dataRenderer = new DataRenderer();
+window.dataRenderer = dataRenderer;

@@ -101,11 +101,12 @@ def main():
     
     # Étape 3 : Lancement du serveur
     print("Etape 3/3 : Lancement du serveur HTTP...")
-    website_path = base_path / "Website"
+    # Servir depuis la racine du projet pour accéder à /data et /Website
+    server_path = base_path
     port = 8000
     
     print(f"\n{'=' * 60}")
-    print(f"Dashboard accessible sur : http://localhost:{port}")
+    print(f"Dashboard accessible sur : http://localhost:{port}/Website/")
     print(f"{'=' * 60}")
     print(f"\nUtilisation de Python: {python_exe}")
     print("Auto-refresh actif : toutes les 10 minutes")
@@ -114,11 +115,12 @@ def main():
     try:
         subprocess.run(
             [python_exe, "-m", "http.server", str(port)],
-            cwd=str(website_path),
+            cwd=str(server_path),
             check=True
         )
     except KeyboardInterrupt:
-        print("\n\nServeur arrete. A bientot!")
+        print("\n⏹️  Arrêt demandé (Ctrl+C)\n")
+        print("\nServeur arrete. A bientot!")
     except Exception as e:
         print(f"\nErreur lors du lancement du serveur: {e}")
         sys.exit(1)
