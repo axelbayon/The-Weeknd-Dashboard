@@ -346,74 +346,47 @@ Ce script lit les snapshots J et J-1, applique les règles de calcul, et produit
 
 ## Tests de validation
 
-### Prompt 3 — Tests du scraper Kworb Songs
+### Scripts de test disponibles
 
-**Test 1 : Comptage des items (>= 200)**
-```bash
-python scripts/test_prompt3.py
-```
-✅ Attendu : 315 chansons dans snapshot J et vue courante
+#### `scripts/validate_data.py` — Validation complète des contrats de données
+**Fonction** : Valide la conformité de tous les fichiers JSON aux schémas définis
+**Tests effectués** :
+- Conformité aux schémas JSON (songs, albums, meta, snapshots)
+- Arrondis à 2 décimales pour variation_pct et days_to_next_cap
+- Unicité des clés id dans songs.json et albums.json
+- Cohérence des dates (spotify_data_date = latest_date)
+- Validité des paliers (multiples de 100M pour songs, 1B pour albums)
 
-**Test 2 : Validation des schémas**
+**Commande** :
 ```bash
 python scripts/validate_data.py
 ```
-✅ Attendu : Toutes les validations passent (315 id uniques, dates cohérentes, paliers corrects)
 
-**Test 3 : Présence de roles lead/feat**
-```bash
-python scripts/test_prompt3.py
-```
-✅ Attendu : Au moins 1 chanson avec role="lead" et 1 avec role="feat" (282 lead + 33 feat constatés)
-
-**Test 4 : Cohérence des dates**
-✅ Attendu : meta.spotify_data_date = meta.history.latest_date = 2025-10-01
-
-**Test 5 : Structure des données**
-```bash
-python -c "import json; snap=json.load(open('data/history/songs/2025-10-01.json', encoding='utf-8')); print('Champs snapshot:', list(snap[0].keys()))"
-```
-✅ Attendu : Champs bruts sans calculs (id, rank, title, album, role, streams_total, streams_daily, last_update_kworb, spotify_data_date)
-
-```bash
-python -c "import json; curr=json.load(open('data/songs.json', encoding='utf-8')); print('Champs vue courante:', list(curr[0].keys()))"
-```
-✅ Attendu : Champs enrichis avec calculs (+ streams_daily_prev, variation_pct, next_cap_value, days_to_next_cap, spotify_track_id, spotify_album_id)
+**Résultat attendu** : "✅ Toutes les validations sont passées avec succès!"
 
 ---
 
-### Prompt 2 — Tests des contrats de données
+#### `scripts/test_scraper_songs.py` — Tests du scraper Kworb Songs
+**Fonction** : Vérifie l'intégrité et la qualité des données scrapées depuis Kworb
+**Tests effectués** :
+- Comptage minimum de chansons (>= 200 requis, 315 constatés)
+- Présence de variations numériques avec arrondis à 2 décimales
+- Détection de cas "N.D." pour variations non calculables
+- Présence des rôles "lead" et "feat" (282 lead + 33 feat)
+- Cohérence des dates entre meta.json et songs.json
+- Unicité des clés id
 
-**Test 1 : Conformité aux schémas**
+**Commande** :
 ```bash
-python scripts/validate_data.py
+python scripts/test_scraper_songs.py
 ```
-✅ Attendu : "Toutes les validations sont passées avec succès!" (10 validations : schémas songs/albums/meta, arrondis, unicité id, dates, paliers)
 
-**Test 2 : Présence des snapshots**
-```bash
-Get-ChildItem data/history/songs/ | Select-Object Name
-Get-ChildItem data/history/albums/ | Select-Object Name
-```
-✅ Attendu : 2025-09-29.json et 2025-09-30.json dans chaque dossier
-
-**Test 3 : Extraits de données courantes**
-```bash
-python -c "import json; data=json.load(open('data/songs.json')); print(json.dumps(data[:2], indent=2))"
-```
-✅ Attendu : Affichage de 2 chansons avec variation_pct à 2 déc. (ex: 3.52, -3.45) et/ou "N.D.", next_cap_value multiple de 100M, days_to_next_cap à 2 déc.
-
-**Test 4 : Unicité des id**
-```bash
-python -c "import json; songs=json.load(open('data/songs.json')); ids=[s['id'] for s in songs]; print('PASS' if len(ids)==len(set(ids)) else 'FAIL')"
-```
-✅ Attendu : PASS
-
-**Test 5 : Cohérence des dates**
-```bash
-python -c "import json; meta=json.load(open('data/meta.json')); songs=json.load(open('data/songs.json')); print('PASS' if meta['spotify_data_date']==meta['history']['latest_date']==songs[0]['spotify_data_date'] else 'FAIL')"
-```
-✅ Attendu : PASS (toutes les dates = "2025-09-30")
+**Résultats attendus** :
+- Test 1 : 315 chansons (PASS)
+- Test 2-3 : Variations avec 2 décimales ou "N.D." (PASS)
+- Test 4 : Rôles lead/feat présents (PASS)
+- Test 5 : Dates cohérentes (PASS)
+- Test 6 : Unicité des id (PASS)
 
 ---
 
