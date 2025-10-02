@@ -3,7 +3,7 @@
   "$id": "https://github.com/axelbayon/The-Weeknd-Dashboard/schemas/meta.json",
   "title": "Metadata Schema",
   "description": "Schéma pour les métadonnées globales du dashboard (dates, historique)",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "object",
   "required": [
     "kworb_last_update_utc",
@@ -26,6 +26,16 @@
       "type": "string",
       "description": "Timestamp ISO de la dernière synchronisation locale effectuée",
       "format": "date-time"
+    },
+    "last_sync_status": {
+      "type": "string",
+      "description": "Statut de la dernière synchronisation (optionnel, ajouté en v1.1)",
+      "enum": ["ok", "error"]
+    },
+    "last_error": {
+      "type": "string",
+      "description": "Message d'erreur court si last_sync_status = error (optionnel)",
+      "maxLength": 500
     },
     "history": {
       "type": "object",

@@ -6,6 +6,30 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+**2025-10-02 — Prompt 5 : Orchestrateur auto-refresh 10 min + en-têtes UI dynamiques**
+
+*Orchestrateur automatique :*
+- Script `auto_refresh.py` : exécute le pipeline complet toutes les 10 minutes (scrape Songs + Albums, régénération vues, update meta.json)
+- Verrou anti-chevauchement (`.sync.lock`) pour éviter exécutions simultanées
+- Jitter aléatoire ±15s pour éviter rafales exactes
+- Paramétrage flexible : `REFRESH_INTERVAL_SECONDS` (env) ou `--interval` (CLI)
+- Mode `--once` pour exécution unique (tests/CI)
+- Fallback gracieux : conserve données valides en cas d'erreur scraping
+- Rotation automatique : maintien minimum 3 snapshots (J/J-1/J-2), purge au-delà
+- meta.json étendu (v1.1) : `last_sync_status` ("ok"/"error"), `last_error` (optionnel)
+
+*En-têtes UI dynamiques :*
+- `meta-refresh.js` : fetch meta.json toutes les 10s, mise à jour temps réel
+- 3 indicateurs dynamiques : Dernière sync locale, Prochaine mise à jour (countdown MM:SS), Date données Spotify
+- Countdown client-side décrémentant sans reload
+- Badge "⚠️ Sync partielle" si `last_sync_status = "error"`
+- Intégration transparente dans toutes les pages
+
+*Intégration :*
+- `start_dashboard.py` modifié : lance orchestrateur en arrière-plan + serveur web
+- Auto-refresh actif dès le démarrage, synchronisation toutes les 10 minutes
+- 3 snapshots maintenus : J, J-1, J-2 pour calcul variations stables
+
 **2025-10-02 — Prompt 4 : Scraper Albums + Correctif IDs Songs (stabilité inter-jours)**
 
 *Correctif Songs :*
@@ -68,7 +92,8 @@ data/                              # Données du dashboard
   album_detail/                    # Détails albums Spotify (à remplir plus tard)
 
 scripts/                           # Scripts Python de scraping, génération et validation
-  start_dashboard.py               # 🚀 Script de lancement complet (scrape + serveur web)
+  start_dashboard.py               # 🚀 Script de lancement complet (orchestrateur + serveur web)
+  auto_refresh.py                  # Orchestrateur auto-refresh (pipeline 10 min, lock, jitter)
   scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons, IDs stables)
   scrape_kworb_albums.py           # Scraper Kworb Albums (extraction 27 albums)
   generate_current_views.py        # Génère data/songs.json et albums.json depuis snapshots
@@ -81,6 +106,7 @@ Website/                           # Dossier parent du code applicatif
   index.html                       # Page principale (SPA avec 3 pages)
   src/
     app.js                         # Script JavaScript (navigation entre pages)
+    meta-refresh.js                # Script de mise à jour dynamique des en-têtes (fetch meta.json)
     styles/
       global.css                   # CSS canonique (960 lignes, dark theme)
   public/
@@ -106,12 +132,45 @@ python scripts/start_dashboard.py
 ```
 
 **Ce que fait cette commande** :
-1. ✅ Scrape automatiquement les dernières données (Songs + Albums) depuis Kworb
-2. ✅ Met à jour data/songs.json et data/albums.json avec les calculs
+1. ✅ Démarre l'orchestrateur auto-refresh en arrière-plan (toutes les 10 minutes)
+2. ✅ Synchronise les données immédiatement (Songs + Albums)
 3. ✅ Lance un serveur HTTP sur http://localhost:8000
-4. ✅ Ouvre automatiquement l'accès au dashboard
+4. ✅ En-têtes UI se mettent à jour automatiquement (dernière sync, countdown, date données)
 
-**Note** : Appuyez sur `Ctrl+C` pour arrêter le serveur.
+**Note** : Appuyez sur `Ctrl+C` pour arrêter le serveur (l'orchestrateur s'arrête automatiquement).
+
+---
+
+### Orchestrateur auto-refresh (mode manuel)
+
+Pour lancer uniquement l'orchestrateur sans le serveur web :
+
+**Mode continu (refresh toutes les 10 min)** :
+```bash
+python scripts/auto_refresh.py
+```
+
+**Mode --once (une seule exécution, utile pour tests)** :
+```bash
+python scripts/auto_refresh.py --once
+```
+
+**Personnaliser l'intervalle** :
+```bash
+# Via variable d'environnement (8 secondes pour tests rapides)
+$env:REFRESH_INTERVAL_SECONDS=8
+python scripts/auto_refresh.py
+
+# Via paramètre CLI
+python scripts/auto_refresh.py --interval 30
+```
+
+**Fonctionnalités** :
+- Verrou anti-chevauchement (`.sync.lock`)
+- Jitter aléatoire ±15s
+- Rotation automatique J/J-1/J-2
+- Fallback gracieux en cas d'erreur
+- Statut dans `meta.json` (`last_sync_status`, `last_error`)
 
 ---
 
