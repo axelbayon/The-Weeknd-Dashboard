@@ -304,7 +304,7 @@ class DataRenderer {
 
         // Colonne #
         const tdRank = document.createElement('td');
-        tdRank.className = 'data-table__cell--rank';
+        tdRank.className = 'data-table__cell--rank cell-num';
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
         tdRank.textContent = displayRank;
@@ -312,7 +312,7 @@ class DataRenderer {
 
         // Colonne Titre
         const tdTitle = document.createElement('td');
-        tdTitle.className = 'data-table__cell--title';
+        tdTitle.className = 'data-table__cell--title col-title';
         tdTitle.setAttribute('data-sort-value', 'title');
         tdTitle.setAttribute('data-sort-raw', song.title); // Garde * pour tri intelligent
         tdTitle.innerHTML = `
@@ -330,7 +330,7 @@ class DataRenderer {
 
         // Colonne Streams totaux (format entier FR)
         const tdStreamsTotal = document.createElement('td');
-        tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.className = 'data-table__cell--numeric cell-num';
         tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
         tdStreamsTotal.setAttribute('data-sort-raw', song.streams_total);
         tdStreamsTotal.textContent = formatIntFr(song.streams_total);
@@ -338,7 +338,7 @@ class DataRenderer {
 
         // Colonne Streams quotidiens (format entier FR)
         const tdStreamsDaily = document.createElement('td');
-        tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.className = 'data-table__cell--numeric cell-num';
         tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
         tdStreamsDaily.setAttribute('data-sort-raw', song.streams_daily);
         tdStreamsDaily.textContent = formatIntFr(song.streams_daily);
@@ -346,7 +346,7 @@ class DataRenderer {
 
         // Colonne Variation (%)
         const tdVariation = document.createElement('td');
-        tdVariation.className = 'data-table__cell--numeric';
+        tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
         tdVariation.setAttribute('data-sort-raw', song.variation_pct || 0);
         const variationText = formatPercent(song.variation_pct);
@@ -362,7 +362,7 @@ class DataRenderer {
 
         // Colonne Prochain cap (j)
         const tdDaysToCap = document.createElement('td');
-        tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.className = 'data-table__cell--numeric cell-num';
         tdDaysToCap.setAttribute('data-sort-value', 'days_to_next_cap');
         tdDaysToCap.setAttribute('data-sort-raw', song.days_to_next_cap || 999999);
         tdDaysToCap.textContent = formatDays(song.days_to_next_cap);
@@ -370,7 +370,7 @@ class DataRenderer {
 
         // Colonne Prochain palier
         const tdNextCap = document.createElement('td');
-        tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.className = 'data-table__cell--numeric cell-num';
         tdNextCap.setAttribute('data-sort-value', 'next_cap');
         tdNextCap.setAttribute('data-sort-raw', song.next_cap_value); // Valeur numérique pour tri correct
         tdNextCap.textContent = formatCap(song.next_cap_value);
@@ -437,7 +437,7 @@ class DataRenderer {
 
         // Colonne #
         const tdRank = document.createElement('td');
-        tdRank.className = 'data-table__cell--rank';
+        tdRank.className = 'data-table__cell--rank cell-num';
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
         tdRank.textContent = displayRank;
@@ -445,7 +445,7 @@ class DataRenderer {
 
         // Colonne Titre
         const tdTitle = document.createElement('td');
-        tdTitle.className = 'data-table__cell--title';
+        tdTitle.className = 'data-table__cell--title col-title';
         tdTitle.setAttribute('data-sort-value', 'title');
         tdTitle.setAttribute('data-sort-raw', album.title);
         tdTitle.innerHTML = `
@@ -462,7 +462,7 @@ class DataRenderer {
 
         // Colonne Streams totaux (format entier FR)
         const tdStreamsTotal = document.createElement('td');
-        tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.className = 'data-table__cell--numeric cell-num';
         tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
         tdStreamsTotal.setAttribute('data-sort-raw', album.streams_total);
         tdStreamsTotal.textContent = formatIntFr(album.streams_total);
@@ -470,7 +470,7 @@ class DataRenderer {
 
         // Colonne Streams quotidiens (format entier FR)
         const tdStreamsDaily = document.createElement('td');
-        tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.className = 'data-table__cell--numeric cell-num';
         tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
         tdStreamsDaily.setAttribute('data-sort-raw', album.streams_daily);
         tdStreamsDaily.textContent = formatIntFr(album.streams_daily);
@@ -478,7 +478,7 @@ class DataRenderer {
 
         // Colonne Variation (%)
         const tdVariation = document.createElement('td');
-        tdVariation.className = 'data-table__cell--numeric';
+        tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
         tdVariation.setAttribute('data-sort-raw', album.variation_pct || 0);
         const variationText = formatPercent(album.variation_pct);
@@ -494,7 +494,7 @@ class DataRenderer {
 
         // Colonne Prochain cap (j)
         const tdDaysToCap = document.createElement('td');
-        tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.className = 'data-table__cell--numeric cell-num';
         tdDaysToCap.setAttribute('data-sort-value', 'days_to_next_cap');
         tdDaysToCap.setAttribute('data-sort-raw', album.days_to_next_cap || 999999);
         tdDaysToCap.textContent = formatDays(album.days_to_next_cap);
@@ -502,7 +502,7 @@ class DataRenderer {
 
         // Colonne Prochain palier
         const tdNextCap = document.createElement('td');
-        tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.className = 'data-table__cell--numeric cell-num';
         tdNextCap.setAttribute('data-sort-value', 'next_cap');
         tdNextCap.setAttribute('data-sort-raw', album.next_cap_value); // Valeur numérique pour tri correct
         tdNextCap.textContent = formatCap(album.next_cap_value);

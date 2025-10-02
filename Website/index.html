@@ -55,7 +55,13 @@
                             </div>
                             <div class="stat-card" data-testid="header-next-update">
                                 <div class="stat-card__label">Prochaine mise à jour</div>
-                                <div class="stat-card__value countdown-text">—</div>
+                                <div class="next-update">
+                                    <span class="nu-badge" aria-live="polite">—</span>
+                                    <button class="nu-info" aria-describedby="nu-tip-songs" type="button" title="Informations">ℹ️</button>
+                                    <div id="nu-tip-songs" class="nu-tooltip" role="tooltip" hidden>
+                                        La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à <strong class="nu-eta">—</strong>.
+                                    </div>
+                                </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
                                 <div class="stat-card__label">Date données Spotify</div>
@@ -118,35 +124,35 @@
                                 <caption class="data-table__caption">Liste des songs The Weeknd</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col">
+                                        <th scope="col" class="cell-num">
                                             <span class="data-table__header-text">#</span>
                                         </th>
-                                        <th scope="col">
+                                        <th scope="col" class="col-title">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Titre</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams totaux</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams quotidiens</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Variation (%)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain cap (j)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain palier</span>
                                             </button>
@@ -155,8 +161,8 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td class="data-table__cell--rank">1</td>
-                                        <td class="data-table__cell--title">
+                                        <td class="data-table__cell--rank cell-num">1</td>
+                                        <td class="data-table__cell--title col-title">
                                             <div class="data-table__title-wrapper">
                                                 <div class="data-table__title-cover">
                                                     <div class="cover-placeholder">🎵</div>
@@ -167,17 +173,17 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="data-table__cell--numeric">4,123,456,789</td>
-                                        <td class="data-table__cell--numeric">12,345,678</td>
-                                        <td class="data-table__cell--numeric">
+                                        <td class="data-table__cell--numeric cell-num">4,123,456,789</td>
+                                        <td class="data-table__cell--numeric cell-num">12,345,678</td>
+                                        <td class="data-table__cell--numeric cell-num">
                                             <span class="data-table__delta--na">N.D.</span>
                                         </td>
-                                        <td class="data-table__cell--numeric">—</td>
-                                        <td class="data-table__cell--numeric">5B</td>
+                                        <td class="data-table__cell--numeric cell-num">—</td>
+                                        <td class="data-table__cell--numeric cell-num">5B</td>
                                     </tr>
                                     <tr>
-                                        <td class="data-table__cell--rank">2</td>
-                                        <td class="data-table__cell--title">
+                                        <td class="data-table__cell--rank cell-num">2</td>
+                                        <td class="data-table__cell--title col-title">
                                             <div class="data-table__title-wrapper">
                                                 <div class="data-table__title-cover">
                                                     <div class="cover-placeholder">🎵</div>

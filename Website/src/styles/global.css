@@ -636,6 +636,7 @@ a {
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
+  margin-block-start: 28px; /* Espacement robuste après header cards */
 }
 
 .table-placeholder {
@@ -701,22 +702,30 @@ a {
   letter-spacing: 0.05em;
 }
 
+/* Base: tout centré par défaut */
 .data-table th,
 .data-table td {
   padding: 0.85rem 1rem;
   text-align: center;
+  vertical-align: middle;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   word-break: break-word;
-  /* Centrage vertical et horizontal parfait */
+}
+
+/* Colonne Titre: alignée à gauche */
+.data-table th:nth-child(2),
+.data-table td:nth-child(2),
+.data-table .col-title {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+/* Cellules numériques: centrage fort avec flexbox */
+.data-table th.cell-num,
+.data-table td.cell-num {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.data-table th:nth-child(2),
-.data-table td:nth-child(2) {
-  text-align: left;
-  justify-content: flex-start; /* Titre aligné à gauche */
 }
 
 .data-table th {
