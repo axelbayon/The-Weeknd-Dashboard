@@ -1,19 +1,27 @@
 {
-  "kworb_last_update_utc": "2025-10-02T16:22:11.644572+00:00",
+  "kworb_last_update_utc": "2025-10-02T16:44:30.651268+00:00",
   "spotify_data_date": "2025-10-01",
-  "last_sync_local_iso": "2025-10-02T18:22:11.950044",
+  "last_sync_local_iso": "2025-10-02T18:44:30.684444",
   "history": {
     "available_dates": [
       "2025-10-01",
       "2025-09-30",
       "2025-09-29"
     ],
-    "latest_date": "2025-10-01",
-    "available_dates_albums": [
-      "2025-10-01",
-      "2025-09-30",
-      "2025-09-29"
-    ]
+    "latest_date": "2025-10-01"
   },
-  "last_sync_status": "ok"
+  "last_sync_status": "error",
+  "last_error": "Songs: Erreur inconnue",
+  "songs_role_stats": {
+    "lead": {
+      "count": 237,
+      "streams_total": 68403452747,
+      "streams_daily": 34346197
+    },
+    "feat": {
+      "count": 78,
+      "streams_total": 16596277670,
+      "streams_daily": 7055853
+    }
+  }
 }

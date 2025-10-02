@@ -120,21 +120,7 @@
     // Réinsérer les lignes triées
     rows.forEach(row => tbody.appendChild(row));
 
-    // Mettre à jour les rangs visuels (#)
-    updateRankNumbers(tbody);
-  }
-
-  /**
-   * Met à jour les numéros de rang après tri
-   */
-  function updateRankNumbers(tbody) {
-    const rows = tbody.querySelectorAll('tr[data-row-id]');
-    rows.forEach((row, index) => {
-      const rankCell = row.querySelector('td:first-child');
-      if (rankCell) {
-        rankCell.textContent = index + 1;
-      }
-    });
+    // Ne PAS mettre à jour les rangs visuels - ils doivent rester figés au rang Kworb d'origine
   }
 
   /**

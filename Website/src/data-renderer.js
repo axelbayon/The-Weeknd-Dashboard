@@ -35,9 +35,46 @@ class DataRenderer {
     }
 
     /**
-     * Calcule les statistiques des chansons
+     * Calcule les statistiques des chansons depuis meta.json
+     * Utilise songs_role_stats si disponible, sinon recalcule depuis songs
      */
     calculateSongsStats(songs) {
+        // Essayer de charger les stats depuis meta.json (stats Kworb exactes)
+        const meta = window.dataLoader?.cachedData?.meta || {};
+        const roleStats = meta.songs_role_stats;
+        
+        if (roleStats && roleStats.lead && roleStats.feat) {
+            // Utiliser les stats exactes de Kworb
+            const lead = {
+                count: roleStats.lead.count,
+                totalStreams: roleStats.lead.streams_total,
+                dailyStreams: roleStats.lead.streams_daily
+            };
+            
+            const feat = {
+                count: roleStats.feat.count,
+                totalStreams: roleStats.feat.streams_total,
+                dailyStreams: roleStats.feat.streams_daily
+            };
+            
+            const total = lead.count + feat.count;
+            const totalStreams = lead.totalStreams + feat.totalStreams;
+            const dailyStreams = lead.dailyStreams + feat.dailyStreams;
+            
+            console.log('[Stats] Utilisation des stats Kworb exactes depuis meta.json');
+            
+            return {
+                total,
+                totalStreams,
+                dailyStreams,
+                lead,
+                feat
+            };
+        }
+        
+        // Fallback : recalculer depuis songs array (ancienne méthode)
+        console.warn('[Stats] songs_role_stats non disponible dans meta.json, recalcul depuis songs[]');
+        
         const total = songs.length;
         
         let totalStreams = 0;
@@ -90,15 +127,15 @@ class DataRenderer {
      * Met à jour l'UI des agrégats Songs
      */
     updateSongsAggregatesUI(stats) {
-        const { formatStreams, formatDailyStreams, formatNumber } = window.formatters;
+        const { formatIntFr, formatNumber } = window.formatters;
 
         // Agrégats généraux (dans page-header--aggregate)
         const aggregateCards = document.querySelector('#page-songs .page-header--aggregate .page-header__cards');
         if (aggregateCards) {
             const cards = aggregateCards.querySelectorAll('.stat-card');
             if (cards[0]) cards[0].querySelector('.stat-card__value').textContent = formatNumber(stats.total);
-            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatStreams(stats.totalStreams);
-            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatDailyStreams(stats.dailyStreams);
+            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatIntFr(stats.totalStreams);
+            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatIntFr(stats.dailyStreams);
 
             // Ajouter data-testid
             if (cards[0]) cards[0].setAttribute('data-testid', 'songs-total-count');
@@ -115,8 +152,8 @@ class DataRenderer {
             if (leadCard) {
                 const leadValues = leadCard.querySelectorAll('.stat-card__row-value');
                 if (leadValues[0]) leadValues[0].textContent = formatNumber(stats.lead.count);
-                if (leadValues[1]) leadValues[1].textContent = formatStreams(stats.lead.totalStreams);
-                if (leadValues[2]) leadValues[2].textContent = formatDailyStreams(stats.lead.dailyStreams);
+                if (leadValues[1]) leadValues[1].textContent = formatIntFr(stats.lead.totalStreams);
+                if (leadValues[2]) leadValues[2].textContent = formatIntFr(stats.lead.dailyStreams);
 
                 // Ajouter data-testid
                 if (leadValues[0]) leadValues[0].setAttribute('data-testid', 'songs-lead-count');
@@ -127,8 +164,8 @@ class DataRenderer {
             if (featCard) {
                 const featValues = featCard.querySelectorAll('.stat-card__row-value');
                 if (featValues[0]) featValues[0].textContent = formatNumber(stats.feat.count);
-                if (featValues[1]) featValues[1].textContent = formatStreams(stats.feat.totalStreams);
-                if (featValues[2]) featValues[2].textContent = formatDailyStreams(stats.feat.dailyStreams);
+                if (featValues[1]) featValues[1].textContent = formatIntFr(stats.feat.totalStreams);
+                if (featValues[2]) featValues[2].textContent = formatIntFr(stats.feat.dailyStreams);
 
                 // Ajouter data-testid
                 if (featValues[0]) featValues[0].setAttribute('data-testid', 'songs-feat-count');
@@ -184,14 +221,14 @@ class DataRenderer {
      * Met à jour l'UI des agrégats Albums
      */
     updateAlbumsAggregatesUI(stats) {
-        const { formatStreams, formatDailyStreams, formatNumber } = window.formatters;
+        const { formatIntFr, formatNumber } = window.formatters;
 
         const aggregateCards = document.querySelector('#page-albums .page-header--aggregate .page-header__cards');
         if (aggregateCards) {
             const cards = aggregateCards.querySelectorAll('.stat-card');
             if (cards[0]) cards[0].querySelector('.stat-card__value').textContent = formatNumber(stats.total);
-            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatStreams(stats.totalStreams);
-            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatDailyStreams(stats.dailyStreams);
+            if (cards[1]) cards[1].querySelector('.stat-card__value').textContent = formatIntFr(stats.totalStreams);
+            if (cards[2]) cards[2].querySelector('.stat-card__value').textContent = formatIntFr(stats.dailyStreams);
 
             // Ajouter data-testid
             if (cards[0]) cards[0].setAttribute('data-testid', 'albums-total-count');
@@ -250,7 +287,7 @@ class DataRenderer {
      * Crée une ligne de la table Songs
      */
     createSongRow(song, displayRank) {
-        const { formatStreams, formatDailyStreams, formatPercent, formatDays, formatCap } = window.formatters;
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
 
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', song.id);
@@ -282,20 +319,20 @@ class DataRenderer {
         `;
         tr.appendChild(tdTitle);
 
-        // Colonne Streams totaux
+        // Colonne Streams totaux (format entier FR)
         const tdStreamsTotal = document.createElement('td');
         tdStreamsTotal.className = 'data-table__cell--numeric';
         tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
         tdStreamsTotal.setAttribute('data-sort-raw', song.streams_total);
-        tdStreamsTotal.textContent = formatStreams(song.streams_total);
+        tdStreamsTotal.textContent = formatIntFr(song.streams_total);
         tr.appendChild(tdStreamsTotal);
 
-        // Colonne Streams quotidiens
+        // Colonne Streams quotidiens (format entier FR)
         const tdStreamsDaily = document.createElement('td');
         tdStreamsDaily.className = 'data-table__cell--numeric';
         tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
         tdStreamsDaily.setAttribute('data-sort-raw', song.streams_daily);
-        tdStreamsDaily.textContent = formatDailyStreams(song.streams_daily);
+        tdStreamsDaily.textContent = formatIntFr(song.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
         // Colonne Variation (%)
@@ -326,7 +363,7 @@ class DataRenderer {
         const tdNextCap = document.createElement('td');
         tdNextCap.className = 'data-table__cell--numeric';
         tdNextCap.setAttribute('data-sort-value', 'next_cap');
-        tdNextCap.setAttribute('data-sort-raw', formatCap(song.next_cap_value));
+        tdNextCap.setAttribute('data-sort-raw', song.next_cap_value); // Valeur numérique pour tri correct
         tdNextCap.textContent = formatCap(song.next_cap_value);
         tr.appendChild(tdNextCap);
 
@@ -383,7 +420,7 @@ class DataRenderer {
      * Crée une ligne de la table Albums
      */
     createAlbumRow(album, displayRank) {
-        const { formatStreams, formatDailyStreams, formatPercent, formatDays, formatCap } = window.formatters;
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
 
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', album.id);
@@ -414,20 +451,20 @@ class DataRenderer {
         `;
         tr.appendChild(tdTitle);
 
-        // Colonne Streams totaux
+        // Colonne Streams totaux (format entier FR)
         const tdStreamsTotal = document.createElement('td');
         tdStreamsTotal.className = 'data-table__cell--numeric';
         tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
         tdStreamsTotal.setAttribute('data-sort-raw', album.streams_total);
-        tdStreamsTotal.textContent = formatStreams(album.streams_total);
+        tdStreamsTotal.textContent = formatIntFr(album.streams_total);
         tr.appendChild(tdStreamsTotal);
 
-        // Colonne Streams quotidiens
+        // Colonne Streams quotidiens (format entier FR)
         const tdStreamsDaily = document.createElement('td');
         tdStreamsDaily.className = 'data-table__cell--numeric';
         tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
         tdStreamsDaily.setAttribute('data-sort-raw', album.streams_daily);
-        tdStreamsDaily.textContent = formatDailyStreams(album.streams_daily);
+        tdStreamsDaily.textContent = formatIntFr(album.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
         // Colonne Variation (%)
@@ -458,7 +495,7 @@ class DataRenderer {
         const tdNextCap = document.createElement('td');
         tdNextCap.className = 'data-table__cell--numeric';
         tdNextCap.setAttribute('data-sort-value', 'next_cap');
-        tdNextCap.setAttribute('data-sort-raw', formatCap(album.next_cap_value));
+        tdNextCap.setAttribute('data-sort-raw', album.next_cap_value); // Valeur numérique pour tri correct
         tdNextCap.textContent = formatCap(album.next_cap_value);
         tr.appendChild(tdNextCap);
 

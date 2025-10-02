@@ -16,7 +16,7 @@ try:
     import requests
     from bs4 import BeautifulSoup
 except ImportError:
-    print("❌ Dépendances manquantes. Installez-les avec:")
+    print("[ERROR] Dépendances manquantes. Installez-les avec:")
     print("   pip install requests beautifulsoup4")
     sys.exit(1)
 
@@ -144,16 +144,16 @@ def parse_kworb_date(date_str: str) -> datetime:
             continue
     
     # Si aucun format ne fonctionne, utiliser la date actuelle
-    print(f"⚠️  Impossible de parser la date '{date_str}', utilisation de la date actuelle")
+    print(f"[WARN] Impossible de parser la date '{date_str}', utilisation de la date actuelle")
     return datetime.now(timezone.utc)
 
 
-def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict], datetime]:
+def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict], datetime, Dict]:
     """
-    Scrape la page Kworb Songs et retourne les données brutes.
+    Scrape la page Kworb Songs et retourne les données brutes + stats role.
     
     Returns:
-        Tuple[List[Dict], datetime]: (liste des chansons, timestamp de mise à jour)
+        Tuple[List[Dict], datetime, Dict]: (liste des chansons, timestamp, stats lead/feat)
     """
     headers = {
         "User-Agent": USER_AGENT,
@@ -165,7 +165,7 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
     
     for attempt in range(retries):
         try:
-            print(f"🌐 Récupération des données depuis Kworb (tentative {attempt + 1}/{retries})...")
+            print(f"[GET] Récupération des données depuis Kworb (tentative {attempt + 1}/{retries})...")
             
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
@@ -175,8 +175,56 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Trouver la table des chansons (la deuxième table avec class 'sortable')
+            # Extraire les stats Lead/Feat depuis la table des stats agrégées
+            role_stats = {"lead": {}, "feat": {}}
+            
+            # Trouver toutes les tables
             tables = soup.find_all('table')
+            
+            # La première table (avant sortable) contient les stats agrégées
+            stats_table = None
+            for t in tables:
+                if 'sortable' not in t.get('class', []):
+                    stats_table = t
+                    break
+            
+            if stats_table:
+                rows = stats_table.find_all('tr')
+                # rows[0] = header (Total, As lead, Solo, As feature)
+                # rows[1] = Streams
+                # rows[2] = Daily
+                # rows[3] = Tracks
+                
+                if len(rows) >= 4:
+                    # Extraire les valeurs des colonnes : col[1]=Total, col[2]=As lead, col[3]=Solo, col[4]=As feature
+                    tracks_row = rows[3].find_all('td')
+                    streams_row = rows[1].find_all('td')
+                    daily_row = rows[2].find_all('td')
+                    
+                    if len(tracks_row) >= 5 and len(streams_row) >= 5 and len(daily_row) >= 5:
+                        # As lead : col[2]
+                        role_stats["lead"] = {
+                            "count": int(tracks_row[2].get_text(strip=True).replace(',', '')),
+                            "streams_total": clean_number(streams_row[2].get_text(strip=True)),
+                            "streams_daily": clean_number(daily_row[2].get_text(strip=True))
+                        }
+                        
+                        # As feature : col[4]
+                        role_stats["feat"] = {
+                            "count": int(tracks_row[4].get_text(strip=True).replace(',', '')),
+                            "streams_total": clean_number(streams_row[4].get_text(strip=True)),
+                            "streams_daily": clean_number(daily_row[4].get_text(strip=True))
+                        }
+                        
+                        print(f"[Stats] Lead/Feat extraites : Lead={role_stats['lead']['count']} songs, Feat={role_stats['feat']['count']} songs")
+                    else:
+                        print("[WARN] Impossible d'extraire les stats : colonnes manquantes")
+                else:
+                    print("[WARN] Impossible d'extraire les stats : lignes manquantes")
+            else:
+                print("[WARN] Table de stats agrégées non trouvée")
+            
+            # Trouver la table des chansons (la table avec class 'sortable')
             table = None
             for t in tables:
                 if 'sortable' in t.get('class', []):
@@ -245,19 +293,19 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
                 
                 songs.append(song)
             
-            print(f"✅ {len(songs)} chansons extraites avec succès")
-            return songs, last_update_kworb
+            print(f"[OK] {len(songs)} chansons extraites avec succès")
+            return songs, last_update_kworb, role_stats
             
         except requests.RequestException as e:
-            print(f"❌ Erreur réseau (tentative {attempt + 1}/{retries}): {e}")
+            print(f"[ERROR] Erreur réseau (tentative {attempt + 1}/{retries}): {e}")
             if attempt < retries - 1:
                 wait_time = RETRY_BACKOFF ** attempt
-                print(f"⏳ Nouvelle tentative dans {wait_time}s...")
+                print(f"[WAIT] Nouvelle tentative dans {wait_time}s...")
                 time.sleep(wait_time)
             else:
                 raise
         except Exception as e:
-            print(f"❌ Erreur lors du scraping: {e}")
+            print(f"[ERROR] Erreur lors du scraping: {e}")
             raise
 
 
@@ -288,15 +336,15 @@ def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: P
     with open(snapshot_path, "w", encoding="utf-8") as f:
         json.dump(snapshot_songs, f, indent=2, ensure_ascii=False)
     
-    print(f"💾 Snapshot créé : {snapshot_path}")
+    print(f"[SAVE] Snapshot créé : {snapshot_path}")
     print(f"   Date des données Spotify : {spotify_data_date}")
     
     return spotify_data_date
 
 
-def update_meta(spotify_data_date: str, last_update_kworb: datetime, base_path: Path):
+def update_meta(spotify_data_date: str, last_update_kworb: datetime, role_stats: Dict, base_path: Path):
     """
-    Met à jour data/meta.json avec les nouvelles informations.
+    Met à jour data/meta.json avec les nouvelles informations + stats Lead/Feat.
     """
     meta_path = base_path / "data" / "meta.json"
     
@@ -329,11 +377,16 @@ def update_meta(spotify_data_date: str, last_update_kworb: datetime, base_path: 
         "latest_date": available_dates[0] if available_dates else spotify_data_date
     }
     
+    # Ajouter les stats Lead/Feat extraites de Kworb
+    if role_stats:
+        meta["songs_role_stats"] = role_stats
+        print(f"[Stats] Lead/Feat ajoutées à meta.json : Lead={role_stats.get('lead', {}).get('count', 'N/A')}, Feat={role_stats.get('feat', {}).get('count', 'N/A')}")
+    
     # Sauvegarder
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, ensure_ascii=False)
     
-    print(f"📝 meta.json mis à jour")
+    print(f"[SAVE] meta.json mis à jour")
     print(f"   Dates disponibles : {len(available_dates)}")
 
 
@@ -346,19 +399,20 @@ def regenerate_current_view(base_path: Path):
     
     script_path = base_path / "scripts" / "generate_current_views.py"
     
-    print("🔄 Régénération de la vue courante data/songs.json...")
+    print("[REGEN] Régénération de la vue courante data/songs.json...")
     
     result = subprocess.run(
         [sys.executable, str(script_path)],
         cwd=str(base_path),
         capture_output=True,
-        text=True
+        text=True,
+        encoding='utf-8'
     )
     
     if result.returncode == 0:
         print(result.stdout)
     else:
-        print(f"❌ Erreur lors de la régénération: {result.stderr}")
+        print(f"[ERROR] Erreur lors de la régénération: {result.stderr}")
         raise Exception("Échec de la régénération de data/songs.json")
 
 
@@ -367,29 +421,29 @@ def main():
     base_path = Path(__file__).parent.parent
     
     print("="*60)
-    print("🎵 Scraper Kworb Songs — The Weeknd Dashboard")
+    print("[SCRAPER] Kworb Songs - The Weeknd Dashboard")
     print("="*60)
     
     try:
         # 1. Scraper Kworb
-        songs, last_update_kworb = scrape_kworb_songs(KWORB_SONGS_URL)
+        songs, last_update_kworb, role_stats = scrape_kworb_songs(KWORB_SONGS_URL)
         
         # 2. Créer snapshot J
         spotify_data_date = create_snapshot(songs, last_update_kworb, base_path)
         
-        # 3. Mettre à jour meta.json
-        update_meta(spotify_data_date, last_update_kworb, base_path)
+        # 3. Mettre à jour meta.json avec les stats Lead/Feat
+        update_meta(spotify_data_date, last_update_kworb, role_stats, base_path)
         
         # 4. Régénérer data/songs.json
         regenerate_current_view(base_path)
         
         print("\n" + "="*60)
-        print("✅ Scraping terminé avec succès!")
+        print("[OK] Scraping terminé avec succès!")
         print("="*60)
         
     except Exception as e:
         print("\n" + "="*60)
-        print(f"❌ Erreur critique : {e}")
+        print(f"[ERROR] Erreur critique : {e}")
         print("="*60)
         sys.exit(1)
 

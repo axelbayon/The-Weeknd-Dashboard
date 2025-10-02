@@ -707,11 +707,16 @@ a {
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   word-break: break-word;
+  /* Centrage vertical et horizontal parfait */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .data-table th:nth-child(2),
 .data-table td:nth-child(2) {
   text-align: left;
+  justify-content: flex-start; /* Titre aligné à gauche */
 }
 
 .data-table th {

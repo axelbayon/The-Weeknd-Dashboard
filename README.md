@@ -6,6 +6,76 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+---
+
+**2025-10-02 — Prompt 6.2 : Stats Lead/Feat exactes + Nombres entiers FR + Tri/Rang/Centrage perfectionnés**
+
+*Extraction stats Kworb exactes (scrape_kworb_songs.py) :*
+- Parse la **table de stats agrégées** HTML Kworb (avant la table sortable)
+- Extrait 6 valeurs depuis les colonnes "As lead" et "As feature (*)" :
+  - Lead : count (237), streams_total (68 403 452 747), streams_daily (34 346 197)
+  - Feat : count (78), streams_total (16 596 277 670), streams_daily (7 055 853)
+- Stockage dans `meta.json` → `songs_role_stats: { lead: {...}, feat: {...} }`
+- Scraper retourne maintenant `(songs, last_update_kworb, role_stats)` au lieu de tuple 2 éléments
+- `update_meta()` accepte `role_stats` et l'écrit dans meta.json
+- **Correction encodage** : emojis remplacés par `[GET]`, `[Stats]`, `[OK]` pour éviter UnicodeDecodeError Windows
+- Ajout `encoding='utf-8'` dans subprocess.run() pour fiabilité
+
+*Format nombres entiers FR complets (formatters.js) :*
+- **Nouveau** : `formatIntFr(value)` utilise `Intl.NumberFormat('fr-FR', {maximumFractionDigits: 0, useGrouping: true})`
+- Affiche nombres entiers COMPLETS avec espaces (ex: "5 050 786 130" au lieu de "5,1 B")
+- **Remplace formatStreams()** : Toutes les colonnes streams_total et streams_daily affichent maintenant le format entier
+- Appliqué sur : stats agrégées (header cards), cellules tables Songs/Albums
+
+*UI affiche stats Kworb directes (data-renderer.js) :*
+- `calculateSongsStats()` : Lit `meta.songs_role_stats` **au lieu de recalculer** depuis songs[]
+- Fallback : Si `songs_role_stats` absent, recalcul manuel avec console.warn
+- Calcul Total = Lead + Feat (count, streams_total, streams_daily)
+- `updateSongsAggregatesUI()`, `updateAlbumsAggregatesUI()` : Appel `formatIntFr()` au lieu de `formatStreams()`/`formatDailyStreams()`
+- `createSongRow()`, `createAlbumRow()` : Colonnes streams_total/streams_daily formatées avec `formatIntFr()`
+
+*Tri "Prochain palier" numérique correct :*
+- `data-sort-raw` de la colonne "Prochain palier" utilise maintenant `song.next_cap_value` (numérique)
+- Avant : `formatCap(song.next_cap_value)` (texte) → tri alphabétique incorrect ("2,8 B" avant "300 M")
+- Après : Valeur numérique brute → tri croissant correct (millions < milliards)
+
+*Rang # figé au rang Kworb :*
+- **Suppression** de `updateRankNumbers()` dans table-sort.js
+- Suppression de l'appel depuis `sortTable()`
+- Commentaire explicatif : "Ne PAS mettre à jour les rangs visuels - ils doivent rester figés au rang Kworb d'origine"
+- Résultat : Colonne # conserve le rang d'origine même après tri sur autres colonnes
+
+*Centrage vertical parfait (global.css) :*
+- `.data-table td` : Ajout `display: flex; align-items: center; justify-content: center;`
+- `.data-table td:nth-child(2)` : Exception avec `justify-content: flex-start;` pour Titre aligné à gauche
+- Centrage horizontal (text-align: center) déjà existant depuis Prompt 6.1
+- Résultat : Tous les nombres/textes centrés parfaitement verticalement ET horizontalement
+
+*Albums conformes :*
+- `margin-bottom: 28px` déjà appliqué sur `.page-header--aggregate` (global)
+- Headers dynamiques (data-testid) déjà présents dans index.html
+- meta-refresh.js met à jour automatiquement les 3 cards (last sync, next update, spotify date)
+- Format entier FR appliqué sur toutes les colonnes streams Albums
+- data-sort-raw "Prochain palier" numérique comme Songs
+
+*Résultats validés :*
+- **Stats Lead/Feat exactes** : 237 lead (68 403 452 747 total, 34 346 197 daily), 78 feat (16 596 277 670 total, 7 055 853 daily)
+- **Lead + Feat = Total** : 237 + 78 = 315 songs, 68,4B + 16,6B = 85,0B streams
+- **Nombres entiers FR** : "5 050 786 130" au lieu de "5,1 B", espaces insécables
+- **Tri "Prochain palier"** : Ordre croissant correct (100M, 200M, ..., 1B, 2B, ...)
+- **Rang # figé** : Tri par Titre/Streams ne modifie pas la colonne #
+- **Centrage parfait** : Toutes cellules centrées verticalement et horizontalement (sauf Titre à gauche)
+- Dashboard fonctionnel, tri multi-colonnes, formatage cohérent Songs/Albums
+
+*Fichiers modifiés :*
+- `scripts/scrape_kworb_songs.py` (extraction stats agrégées, encoding, meta.json)
+- `Website/src/formatters.js` (+formatIntFr)
+- `Website/src/data-renderer.js` (lecture meta.songs_role_stats, formatIntFr, data-sort-raw numérique)
+- `Website/src/table-sort.js` (-updateRankNumbers)
+- `Website/src/styles/global.css` (flex centering sur td)
+
+---
+
 **2025-10-02 — Prompt 6.1 : Fix UI (espacements, centrage, tri + flèches, libellés) + Stats Lead/Feat Kworb**
 
 *Ergonomie nettoyée :*

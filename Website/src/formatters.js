@@ -34,6 +34,25 @@ function formatNumber(value, decimals = 0) {
 }
 
 /**
+ * Formate un entier avec séparateur de milliers français (espace) - sans décimales
+ * Utilise Intl.NumberFormat pour garantir la cohérence
+ * @param {number} value - Entier à formater
+ * @returns {string} - Nombre formaté (ex: "5 050 786 130", "68 403 452 747")
+ */
+function formatIntFr(value) {
+    if (value === null || value === undefined || isNaN(value)) {
+        return 'N.D.';
+    }
+
+    const formatter = new Intl.NumberFormat('fr-FR', {
+        maximumFractionDigits: 0,
+        useGrouping: true
+    });
+
+    return formatter.format(Number(value));
+}
+
+/**
  * Formate un pourcentage avec signe +/- et 2 décimales
  * @param {number|string} value - Valeur à formater (nombre ou "N.D.")
  * @returns {string} - Pourcentage formaté (ex: "+3,52 %", "-1,07 %", "N.D.")
@@ -175,6 +194,7 @@ console.log(formatStreams(5300000)); // "5,3 M"
 // Export pour utilisation dans d'autres modules
 window.formatters = {
     formatNumber,
+    formatIntFr,
     formatPercent,
     formatDays,
     formatCap,
