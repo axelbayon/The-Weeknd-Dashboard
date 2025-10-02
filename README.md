@@ -6,12 +6,12 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
-**2025-10-02 — Réorganisation finale de l'arborescence**
-- Déplacement du README.md à la racine du projet (avant Website/)
-- Déplacement de .env.local à la racine du projet
-- Réorganisation du CSS : Website/global.css → Website/src/styles/global.css
-- Mise à jour de .gitignore : `.env.local` remplace `Website/.env.local` (ligne 7)
-- Structure finale : fichiers de config à la racine, code applicatif dans Website/
+**2025-10-02 — Prompt 0.2 : Gestion des secrets Spotify**
+- Ajout de `SPOTIFY_REDIRECT_URI` dans `.env.local` (3 clés Spotify complètes)
+- Complétion de `.gitignore` : ajout de `*/.env.local` (7 patterns de protection au total)
+- Création de la section "Variables d'environnement (Spotify)" dans le README
+- Documentation complète : emplacement, clés attendues, avertissements, process d'obtention
+- Validation : .env.local ignoré, aucun .env* tracké, 3 clés présentes (valeurs masquées)
 
 ---
 
@@ -61,6 +61,30 @@ SPOTIFY_CLIENT_SECRET=your_client_secret
 ```
 
 Le fichier `.env.local` est explicitement ignoré par Git (voir `.gitignore` ligne 7).
+
+---
+
+## Variables d'environnement (Spotify)
+
+**Emplacement** : `.env.local` à la racine du projet
+
+**Clés attendues** (sans valeurs, à renseigner) :
+```bash
+SPOTIFY_CLIENT_ID=         # ID client de votre app Spotify
+SPOTIFY_CLIENT_SECRET=     # Secret client de votre app Spotify
+SPOTIFY_REDIRECT_URI=      # URI de redirection (ex: http://localhost:8888/callback)
+```
+
+**Avertissements** :
+- ⚠️ **Ne jamais committer** ces valeurs dans Git
+- ⚠️ **Ne jamais logger** ces valeurs dans les fichiers de log ou la console
+- Ces clés seront utilisées ultérieurement lors de l'intégration Spotify API (récupération des covers, métadonnées, tracklists)
+- Le fichier `.env.local` est ignoré par Git via `.gitignore` (7 patterns de protection)
+
+**Comment obtenir ces clés** :
+1. Créer une app sur [Spotify for Developers](https://developer.spotify.com/dashboard)
+2. Récupérer le Client ID et Client Secret
+3. Configurer l'URI de redirection dans les paramètres de l'app
 
 ---
 

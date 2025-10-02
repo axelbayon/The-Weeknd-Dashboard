@@ -4,6 +4,7 @@
 .env*.local
 */.env
 */.env.*
+*/.env.local
 .env.local
 
 # Logs
