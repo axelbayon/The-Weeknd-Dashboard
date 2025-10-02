@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=6.6">
+    <link rel="stylesheet" href="src/styles/global.css?v=6.9">
 </head>
 <body>
     <div class="app-shell">
@@ -41,13 +41,6 @@
                 <!-- Page Songs (visible par défaut) -->
                 <div id="page-songs" class="page page--songs" data-page-content="songs">
                     <div class="page-header">
-                        <div class="page-header__meta">
-                            <h1>Songs</h1>
-                            <p class="page-header__subtitle">
-                                Classement des titres The Weeknd sur Spotify
-                                <span class="page-header__subtitle-note">(Lead, Solo & Feat)</span>
-                            </p>
-                        </div>
                         <div class="page-header__cards">
                             <div class="stat-card" data-testid="header-last-sync">
                                 <div class="stat-card__label">Dernière sync locale</div>
@@ -61,7 +54,7 @@
                                 </div>
                                 
                                 <div class="nu-header">
-                                    <span class="nu-title">PROCHAINE MISE À JOUR</span>
+                                    <span class="nu-title">MISE À JOUR DES DONNÉES</span>
                                     <button class="nu-info" type="button" aria-describedby="nu-tip-songs" aria-label="Informations"></button>
                                 </div>
                                 
@@ -70,7 +63,7 @@
                                 </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
-                                <div class="stat-card__label">Date données Spotify</div>
+                                <div class="stat-card__label">Date des données actuelles</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                         </div>
@@ -79,15 +72,15 @@
                     <div class="page-header page-header--aggregate">
                         <div class="page-header__cards">
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Total titres</div>
+                                <div class="stat-card__label">Nombre total de titres</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Streams totaux</div>
+                                <div class="stat-card__label">Nombre total de streams</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Streams quotidiens</div>
+                                <div class="stat-card__label">Nombre de streams quotidiens <span data-testid="daily-streams-date">(—)</span></div>
                                 <div class="stat-card__value">—</div>
                             </div>
                         </div>
@@ -97,10 +90,10 @@
                         <div class="page-header__cards">
                             <div class="stat-card stat-card--aggregate">
                                 <div class="stat-card__header">
-                                    <div class="stat-card__label">Solo / Lead</div>
+                                    <div class="stat-card__label">Titres en Solo / Lead</div>
                                 </div>
                                 <dl class="stat-card__rows">
-                                    <dt class="stat-card__row-label">Titres</dt>
+                                    <dt class="stat-card__row-label">Nombre de titres</dt>
                                     <dd class="stat-card__row-value">—</dd>
                                     <dt class="stat-card__row-label">Streams totaux</dt>
                                     <dd class="stat-card__row-value">—</dd>
@@ -110,10 +103,10 @@
                             </div>
                             <div class="stat-card stat-card--aggregate">
                                 <div class="stat-card__header">
-                                    <div class="stat-card__label">Feat</div>
+                                    <div class="stat-card__label">Titres en Feat</div>
                                 </div>
                                 <dl class="stat-card__rows">
-                                    <dt class="stat-card__row-label">Titres</dt>
+                                    <dt class="stat-card__row-label">Nombre de titres</dt>
                                     <dd class="stat-card__row-value">—</dd>
                                     <dt class="stat-card__row-label">Streams totaux</dt>
                                     <dd class="stat-card__row-value">—</dd>
@@ -134,9 +127,12 @@
                                             <span class="data-table__header-text">#</span>
                                         </th>
                                         <th scope="col" class="col-title">
-                                            <button type="button" class="data-table__sort-button">
-                                                <span class="data-table__header-text">Titre</span>
-                                            </button>
+                                            <div class="data-table__header-wrapper">
+                                                <button type="button" class="data-table__sort-button">
+                                                    <span class="data-table__header-text">Titre</span>
+                                                </button>
+                                                <span class="data-table__legend">* = featuring</span>
+                                            </div>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric cell-num">
                                             <button type="button" class="data-table__sort-button">
@@ -238,12 +234,6 @@
                 <!-- Page Albums (cachée par défaut) -->
                 <div id="page-albums" class="page page--albums" data-page-content="albums" style="display: none;">
                     <div class="page-header">
-                        <div class="page-header__meta">
-                            <h1>Albums</h1>
-                            <p class="page-header__subtitle">
-                                Classement des albums The Weeknd sur Spotify
-                            </p>
-                        </div>
                         <div class="page-header__cards">
                             <div class="stat-card" data-testid="header-last-sync">
                                 <div class="stat-card__label">Dernière sync locale</div>
@@ -257,7 +247,7 @@
                                 </div>
                                 
                                 <div class="nu-header">
-                                    <span class="nu-title">PROCHAINE MISE À JOUR</span>
+                                    <span class="nu-title">MISE À JOUR DES DONNÉES</span>
                                     <button class="nu-info" type="button" aria-describedby="nu-tip-albums" aria-label="Informations"></button>
                                 </div>
                                 
@@ -266,7 +256,7 @@
                                 </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
-                                <div class="stat-card__label">Date données Spotify</div>
+                                <div class="stat-card__label">Date des données actuelles</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                         </div>
@@ -275,15 +265,15 @@
                     <div class="page-header page-header--aggregate">
                         <div class="page-header__cards">
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Total albums</div>
+                                <div class="stat-card__label">Nombre total d'albums</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Streams totaux</div>
+                                <div class="stat-card__label">Nombre total de streams</div>
                                 <div class="stat-card__value">—</div>
                             </div>
                             <div class="stat-card stat-card--aggregate">
-                                <div class="stat-card__label">Streams quotidiens</div>
+                                <div class="stat-card__label">Nombre de streams quotidiens <span data-testid="daily-streams-date-albums">(—)</span></div>
                                 <div class="stat-card__value">—</div>
                             </div>
                         </div>
@@ -299,9 +289,12 @@
                                             <span class="data-table__header-text">#</span>
                                         </th>
                                         <th scope="col">
-                                            <button type="button" class="data-table__sort-button">
-                                                <span class="data-table__header-text">Titre</span>
-                                            </button>
+                                            <div class="data-table__header-wrapper">
+                                                <button type="button" class="data-table__sort-button">
+                                                    <span class="data-table__header-text">Titre</span>
+                                                </button>
+                                                <span class="data-table__legend">* = featuring</span>
+                                            </div>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
                                             <button type="button" class="data-table__sort-button">
@@ -384,12 +377,6 @@
                 <!-- Page Caps imminents (cachée par défaut) -->
                 <div id="page-caps" class="page page--caps" data-page-content="caps" style="display: none;">
                     <div class="page-header">
-                        <div class="page-header__meta">
-                            <h1>Caps imminents</h1>
-                            <p class="page-header__subtitle">
-                                Titres et albums proches d'atteindre un nouveau palier de streams
-                            </p>
-                        </div>
                     </div>
 
                     <section class="table-section">
@@ -493,13 +480,13 @@
         </div>
     </div>
 
-    <script src="src/formatters.js?v=6.6"></script>
-    <script src="src/data-loader.js?v=6.6"></script>
-    <script src="src/data-renderer.js?v=6.6"></script>
-    <script src="src/table-sort.js?v=6.6"></script>
-    <script src="src/meta-refresh.js?v=6.6"></script>
-    <script src="src/search.js?v=6.6"></script>
-    <script src="src/main.js?v=6.6"></script>
-    <script src="src/app.js?v=6.6"></script>
+    <script src="src/formatters.js?v=6.7"></script>
+    <script src="src/data-loader.js?v=6.7"></script>
+    <script src="src/data-renderer.js?v=6.7"></script>
+    <script src="src/table-sort.js?v=6.7"></script>
+    <script src="src/meta-refresh.js?v=6.7"></script>
+    <script src="src/search.js?v=6.7"></script>
+    <script src="src/main.js?v=6.7"></script>
+    <script src="src/app.js?v=6.7"></script>
 </body>
 </html>

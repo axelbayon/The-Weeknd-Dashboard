@@ -65,15 +65,16 @@
     /**
      * Met à jour un élément du DOM si il existe
      * Cherche .stat-card__value à l'intérieur du data-testid
+     * Mise à jour de TOUS les éléments ayant ce testid (Songs + Albums)
      */
     function updateElement(testId, content) {
-        const card = document.querySelector(`[data-testid="${testId}"]`);
-        if (card) {
+        const cards = document.querySelectorAll(`[data-testid="${testId}"]`);
+        cards.forEach(card => {
             const valueEl = card.querySelector('.stat-card__value');
             if (valueEl) {
                 valueEl.textContent = content;
             }
-        }
+        });
     }
     
     /**
@@ -163,6 +164,18 @@
             
             if (meta.spotify_data_date) {
                 updateElement('header-spotify-data-date', formatDate(meta.spotify_data_date));
+                
+                // Mettre à jour les dates entre parenthèses dans les cartes "Streams quotidiens"
+                const dailyStreamsDateSongs = document.querySelector('[data-testid="daily-streams-date"]');
+                const dailyStreamsDateAlbums = document.querySelector('[data-testid="daily-streams-date-albums"]');
+                const formattedDate = formatDate(meta.spotify_data_date);
+                
+                if (dailyStreamsDateSongs) {
+                    dailyStreamsDateSongs.textContent = `(${formattedDate})`;
+                }
+                if (dailyStreamsDateAlbums) {
+                    dailyStreamsDateAlbums.textContent = `(${formattedDate})`;
+                }
             }
             
             // Badge d'erreur si sync partielle

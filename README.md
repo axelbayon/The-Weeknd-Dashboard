@@ -8,6 +8,62 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-02 — Prompt 6.7 (fix) : Espacements gap pure + Tooltip collé/harmonisé + Zéro margin gros blocs**
+
+*Uniformisation complète des espacements et perfection finale du tooltip :*
+
+**A) Cartes d'en-tête - Gap uniquement (zéro margin)** :
+- **Problème** : Espacements incohérents entre titre et valeur dans certaines cartes (margins résiduels)
+- **Solution** : Harmonisation totale sur TOUTES les cartes (Songs & Albums) :
+  - `.stat-card` : `gap:0.35rem` (déjà présent, conservé)
+  - `.stat-card__label` : `margin:0` ajouté explicitement
+  - `.stat-card__value` : `margin:0` ajouté explicitement
+  - `.nu-header` : `margin:0` (suppression `margin-bottom:0.5rem`)
+  - `.nu-body` : `margin:0` (suppression `margin-top:0.5rem`)
+  - `.nu-title` : `margin:0` ajouté
+- **Résultat** : Espacement vertical géré UNIQUEMENT par gap des conteneurs, aucun margin résiduel
+
+**B) Tooltip "Infos synchro" - Collé au bouton, fond harmonisé, bordure chrono** :
+- **Positionnement** : Tooltip collé directement au bouton (`inset-block-end:calc(100% + 0.2rem)`)
+- **Fond** : `background:rgba(8,10,18,0.65)` (identique aux `.stat-card`)
+- **Bordure dynamique** : Couleur = état chrono (plus de règles hover complexes) :
+  - `.nu-card:has(.nu-badge.is-wait) .nu-tooltip` : border ambre `rgba(242,180,34,.65)`
+  - `.nu-card:has(.nu-badge.is-ready) .nu-tooltip` : border vert `rgba(24,160,88,.65)`
+- **Flèche** : Position exacte centre du bouton `inset-inline-end:calc(0.875rem - 0.5rem)` (bouton 1.75rem / 2 = 0.875rem)
+- **Contenu** : `<strong>` en `display:inline` + `margin:0`, texte collé sans espacement (suppression `margin-bottom:0.3rem`)
+- **Padding** : Réduit à `0.8rem 1rem` pour compacité
+
+**C) Zéro margin sur gros blocs "page header"** :
+- **Suppression** : `margin-bottom:28px` sur `.page-header--aggregate` et `.page-header--split` (ligne 204)
+- **Conservation** : `.table-section { margin-block-start:28px }` (espacement légitime entre header-cards et tables)
+- **Logique** : Espacements gérés par gap des conteneurs parents, pas par margins extérieures destructrices
+
+**D) SPA stable + Albums meta (vérifications)** :
+- **SPA** : `main.js` ligne 73 utilise bien `page.hidden=true/false` (pas `display:none`)
+- **Albums** : Cartes `header-last-sync`, `header-next-update`, `header-spotify-data-date` présentes avec data-testid
+- **Mise à jour** : `meta-refresh.js` met automatiquement à jour tous les `data-testid` (Songs + Albums)
+- **Résultat** : Albums affiche et rafraîchit Dernière sync locale, Date Spotify, badge chrono
+
+*Fichiers modifiés :*
+- `Website/src/styles/global.css` : 
+  - Ajout `margin:0` sur `.stat-card__label`, `.stat-card__value`, `.nu-header`, `.nu-body`, `.nu-title`
+  - Refonte `.nu-tooltip` : fond carte, bordure chrono dynamique, collé au bouton, flèche centrée
+  - `.nu-tooltip strong` : `display:inline` + `margin:0` (contenu collé)
+  - Suppression `margin-bottom:28px` sur `.page-header--aggregate` et `.page-header--split`
+- `Website/index.html` : 
+  - Cache-busting v6.7 sur CSS et tous scripts JS
+
+*Tests de validation :*
+1. ✅ Toutes cartes : `getComputedStyle(label/value).margin == 0`, espacement via gap uniquement
+2. ✅ Tooltip collé au bouton, flèche pointe centre du bouton (0.875rem depuis droite)
+3. ✅ Fond tooltip = rgba(8,10,18,0.65) (même que cartes), bordure = couleur chrono
+4. ✅ Contenu tooltip : titre et texte collés (pas d'espacement entre `<strong>` et texte)
+5. ✅ Zéro `margin:28px` sur gros blocs, espacement géré par gap
+6. ✅ Navigation Songs ↔ Albums stable (pas de display:none, wrappers inchangés)
+7. ✅ Albums affiche et met à jour Dernière sync locale + Date Spotify
+
+---
+
 **2025-10-02 — Prompt 6.6 (rev) : Tooltip/bouton perfectionné + Fix espacement SPA (hidden) + Albums meta**
 
 *Corrections finales UI tooltip + fix architectural espacement SPA :*
