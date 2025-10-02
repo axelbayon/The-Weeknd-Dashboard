@@ -147,11 +147,38 @@ def main():
     history_songs = base_path / "data" / "history" / "songs"
     history_albums = base_path / "data" / "history" / "albums"
     
+    # Charger meta.json pour obtenir les dates disponibles
+    meta_path = base_path / "data" / "meta.json"
+    if meta_path.exists():
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        available_dates = meta.get("history", {}).get("available_dates", [])
+    else:
+        # Fallback : scanner le dossier history/songs
+        available_dates = []
+        if history_songs.exists():
+            for file in sorted(history_songs.glob("*.json"), reverse=True):
+                available_dates.append(file.stem)
+    
+    if not available_dates:
+        print("Aucun snapshot disponible. Génération impossible.")
+        return
+    
+    # Utiliser les dates les plus récentes disponibles
+    date_j = available_dates[0] if len(available_dates) > 0 else None
+    date_j1 = available_dates[1] if len(available_dates) > 1 else None
+    
+    if not date_j:
+        print("Aucune date J trouvée")
+        return
+    
+    print(f"Utilisation des snapshots : J={date_j}, J-1={date_j1 or 'N/A'}")
+    
     # Charger snapshots
-    songs_j = load_snapshot(history_songs / "2025-09-30.json")
-    songs_j1 = load_snapshot(history_songs / "2025-09-29.json")
-    albums_j = load_snapshot(history_albums / "2025-09-30.json")
-    albums_j1 = load_snapshot(history_albums / "2025-09-29.json")
+    songs_j = load_snapshot(history_songs / f"{date_j}.json")
+    songs_j1 = load_snapshot(history_songs / f"{date_j1}.json") if date_j1 else []
+    albums_j = load_snapshot(history_albums / f"{date_j}.json")
+    albums_j1 = load_snapshot(history_albums / f"{date_j1}.json") if date_j1 else []
     
     # Générer vues courantes
     songs_current = generate_current_view(songs_j, songs_j1, 100_000_000)
@@ -164,7 +191,7 @@ def main():
     with open(base_path / "data" / "albums.json", "w", encoding="utf-8") as f:
         json.dump(albums_current, f, indent=2, ensure_ascii=False)
     
-    print("✅ Vues courantes générées avec succès")
+    print("OK Vues courantes generees avec succes")
     print(f"   - {len(songs_current)} chansons dans data/songs.json")
     print(f"   - {len(albums_current)} albums dans data/albums.json")
 

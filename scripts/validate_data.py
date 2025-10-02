@@ -28,7 +28,7 @@ class DataValidator:
         albums = self._load_json("data/albums.json")
         meta = self._load_json("data/meta.json")
         
-        if not songs or not albums or not meta:
+        if songs is None or albums is None or meta is None:
             print("❌ Impossible de charger les fichiers de données")
             return False
         

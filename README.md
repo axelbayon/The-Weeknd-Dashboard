@@ -6,16 +6,17 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
-**2025-10-02 — Prompt 2 : Contrats de données & règles de calcul**
-- Schémas JSON v1.0 créés pour songs.json, albums.json, meta.json et snapshots historiques (format JSON Schema draft-07)
-- Clé d'alignement inter-jours définie : `id = "kworb:<norm_title>@<norm_album>"` (normalisation strict pour matcher J/J-1/J-2)
-- Règles de calcul figées : variation % (2 déc.), paliers (songs: 100M, albums: 1B), jours restants (2 déc.), "N.D." si non calculable
-- Fixtures générées : snapshots 2025-09-29 (J-1) et 2025-09-30 (J) avec 5 chansons et 3 albums
-- Vues courantes data/songs.json et data/albums.json produites avec calculs (variation_pct, next_cap_value, days_to_next_cap)
-- Script scripts/generate_current_views.py : génère les vues courantes à partir des snapshots
-- Script scripts/validate_data.py : valide conformité des schémas, arrondis, unicité id, cohérence dates
-- Fichier data/meta.json créé avec kworb_last_update_utc, spotify_data_date, history.available_dates
-- Tous les tests de conformité passent (5/5 : unicité, dates, arrondis, paliers, schémas)
+**2025-10-02 — Prompt 3 : Scraper Kworb Songs + snapshot J + data/songs.json**
+- Scraper Kworb Songs fonctionnel : extraction de 315 chansons depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html
+- User-Agent dédié "The-Weeknd-Dashboard/1.0", throttle 1s, retry avec backoff exponentiel (3 tentatives max)
+- Parsing HTML robuste avec BeautifulSoup : extraction rank, title, streams_total, streams_daily
+- Détection automatique du rôle : lead (The Weeknd premier artiste) ou feat (featuring)
+- Génération de clés id uniques basées sur title + rank (album temporaire "Unknown", sera résolu via Spotify API)
+- Snapshot J créé dans data/history/songs/2025-10-01.json (315 chansons, format brut sans calculs)
+- meta.json mis à jour automatiquement (kworb_last_update_utc, spotify_data_date, last_sync_local_iso, history.available_dates)
+- data/songs.json régénéré dynamiquement avec calculs (variation_pct, next_cap_value, days_to_next_cap)
+- Script generate_current_views.py rendu dynamique (utilise les dates disponibles dans meta.json)
+- Toutes les validations passent : 315 id uniques, 282 lead + 33 feat, dates cohérentes, paliers corrects
 
 ---
 
@@ -67,7 +68,39 @@ docs/
 
 ## Comment utiliser / Commandes
 
-### Lancement local
+### Lancement du scraper Kworb Songs
+
+Pour récupérer les dernières données de streams depuis Kworb et mettre à jour le dashboard :
+
+```bash
+python scripts/scrape_kworb_songs.py
+```
+
+**Ce que fait le scraper** :
+1. Récupère les données depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html
+2. Crée un snapshot journalier dans `data/history/songs/{date}.json`
+3. Met à jour `data/meta.json` avec les nouvelles dates
+4. Régénère `data/songs.json` avec calculs (variation_pct, next_cap_value, days_to_next_cap)
+
+**Note** : Le scraper utilise un User-Agent dédié, un throttle de 1s entre requêtes, et un système de retry avec backoff exponentiel (3 tentatives max).
+
+### Génération manuelle des vues courantes
+
+Si vous souhaitez régénérer `data/songs.json` et `data/albums.json` à partir des snapshots existants :
+
+```bash
+python scripts/generate_current_views.py
+```
+
+### Validation des données
+
+Pour valider la conformité des données aux schémas JSON :
+
+```bash
+python scripts/validate_data.py
+```
+
+### Lancement local de l'interface
 
 1. Ouvrir `Website/index.html` dans un navigateur web
 2. Naviguer entre les pages via la barre de navigation (Songs / Albums / Caps imminents)
@@ -301,16 +334,53 @@ Ce script lit les snapshots J et J-1, applique les règles de calcul, et produit
 
 ## Limites connues
 
-- **Données placeholder dans l'UI** : l'interface HTML affiche des données factices (mise à jour prévue dans prompts suivants).
-- **Pas de scraping Kworb** : les données sont actuellement des fixtures manuelles (prompts 3-4 : implémentation scrapers).
-- **Snapshots J-2 manquant** : seuls J et J-1 sont disponibles pour l'instant.
+- **Données placeholder dans l'UI** : l'interface HTML affiche encore des données factices (connexion prévue dans prompts suivants).
+- **Album "Unknown" pour les chansons** : Kworb ne fournit pas l'information d'album, sera résolu via Spotify API (prompt 6).
+- **Variation_pct "N.D." pour toutes les chansons** : Les id ayant changé entre fixtures et scraper, aucun matching J/J-1 n'est possible pour l'instant (sera résolu au prochain scraping quotidien).
+- **Pas de scraper Albums** : seules les chansons sont scrapées pour l'instant (prompt 4 : scraper albums).
+- **Snapshots J-2 manquants** : seuls J et anciennes fixtures sont disponibles (se remplira progressivement).
 - **Recherche non fonctionnelle** : la barre de recherche est présente mais ne filtre rien encore.
-- **Spotify API non intégrée** : `spotify_track_id` et `spotify_album_id` sont null (prompt 6 : intégration API).
-- **Stack technique** : HTML/CSS/JS vanilla (simple SPA sans framework), scripts Python pour génération/validation.
+- **Stack technique** : HTML/CSS/JS vanilla (SPA simple), scripts Python pour scraping/génération/validation.
 
 ---
 
 ## Tests de validation
+
+### Prompt 3 — Tests du scraper Kworb Songs
+
+**Test 1 : Comptage des items (>= 200)**
+```bash
+python scripts/test_prompt3.py
+```
+✅ Attendu : 315 chansons dans snapshot J et vue courante
+
+**Test 2 : Validation des schémas**
+```bash
+python scripts/validate_data.py
+```
+✅ Attendu : Toutes les validations passent (315 id uniques, dates cohérentes, paliers corrects)
+
+**Test 3 : Présence de roles lead/feat**
+```bash
+python scripts/test_prompt3.py
+```
+✅ Attendu : Au moins 1 chanson avec role="lead" et 1 avec role="feat" (282 lead + 33 feat constatés)
+
+**Test 4 : Cohérence des dates**
+✅ Attendu : meta.spotify_data_date = meta.history.latest_date = 2025-10-01
+
+**Test 5 : Structure des données**
+```bash
+python -c "import json; snap=json.load(open('data/history/songs/2025-10-01.json', encoding='utf-8')); print('Champs snapshot:', list(snap[0].keys()))"
+```
+✅ Attendu : Champs bruts sans calculs (id, rank, title, album, role, streams_total, streams_daily, last_update_kworb, spotify_data_date)
+
+```bash
+python -c "import json; curr=json.load(open('data/songs.json', encoding='utf-8')); print('Champs vue courante:', list(curr[0].keys()))"
+```
+✅ Attendu : Champs enrichis avec calculs (+ streams_daily_prev, variation_pct, next_cap_value, days_to_next_cap, spotify_track_id, spotify_album_id)
+
+---
 
 ### Prompt 2 — Tests des contrats de données
 
