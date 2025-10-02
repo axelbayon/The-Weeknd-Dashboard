@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/axelbayon/The-Weeknd-Dashboard/schemas/songs.json",
+  "title": "Songs Data Schema",
+  "description": "Schéma pour la vue courante des chansons avec calculs de variations et paliers",
+  "version": "1.0.0",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "rank",
+      "title",
+      "album",
+      "role",
+      "streams_total",
+      "streams_daily",
+      "streams_daily_prev",
+      "variation_pct",
+      "next_cap_value",
+      "days_to_next_cap",
+      "last_update_kworb",
+      "spotify_data_date",
+      "spotify_track_id",
+      "spotify_album_id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Clé stable interne normalisée (format: kworb:<norm_title>@<norm_album>)",
+        "pattern": "^kworb:.+@.+$"
+      },
+      "rank": {
+        "type": "integer",
+        "description": "Position dans le classement Kworb",
+        "minimum": 1
+      },
+      "title": {
+        "type": "string",
+        "description": "Titre original de la chanson",
+        "minLength": 1
+      },
+      "album": {
+        "type": "string",
+        "description": "Album d'origine",
+        "minLength": 1
+      },
+      "role": {
+        "type": "string",
+        "description": "Rôle de The Weeknd sur le titre",
+        "enum": ["lead", "feat"]
+      },
+      "streams_total": {
+        "type": "number",
+        "description": "Nombre total de streams cumulés",
+        "minimum": 0
+      },
+      "streams_daily": {
+        "type": "number",
+        "description": "Streams quotidiens du jour J",
+        "minimum": 0
+      },
+      "streams_daily_prev": {
+        "type": ["number", "null"],
+        "description": "Streams quotidiens du jour J-1 (null si non disponible)",
+        "minimum": 0
+      },
+      "variation_pct": {
+        "description": "Variation % entre J et J-1 (2 décimales) ou 'N.D.' si non calculable",
+        "oneOf": [
+          {"type": "number"},
+          {"type": "string", "enum": ["N.D."]}
+        ]
+      },
+      "next_cap_value": {
+        "type": "number",
+        "description": "Prochain palier absolu (multiple de 100M)",
+        "multipleOf": 100000000,
+        "minimum": 100000000
+      },
+      "days_to_next_cap": {
+        "description": "Jours estimés pour atteindre le palier (2 décimales) ou 'N.D.'",
+        "oneOf": [
+          {"type": "number", "minimum": 0},
+          {"type": "string", "enum": ["N.D."]}
+        ]
+      },
+      "last_update_kworb": {
+        "type": "string",
+        "description": "Timestamp ISO de la dernière mise à jour Kworb",
+        "format": "date-time"
+      },
+      "spotify_data_date": {
+        "type": "string",
+        "description": "Date des données Spotify (YYYY-MM-DD), last_update_kworb - 1 jour",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "spotify_track_id": {
+        "type": ["string", "null"],
+        "description": "ID Spotify du track (à remplir ultérieurement)"
+      },
+      "spotify_album_id": {
+        "type": ["string", "null"],
+        "description": "ID Spotify de l'album (à remplir ultérieurement)"
+      }
+    },
+    "additionalProperties": false
+  }
+}

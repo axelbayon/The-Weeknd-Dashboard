@@ -1,0 +1,29 @@
+[
+  {
+    "id": "kworb:after hours@after hours",
+    "rank": 1,
+    "title": "After Hours",
+    "streams_total": 15200000000,
+    "streams_daily": 8500000,
+    "last_update_kworb": "2025-09-30T00:00:00Z",
+    "spotify_data_date": "2025-09-29"
+  },
+  {
+    "id": "kworb:starboy@starboy",
+    "rank": 2,
+    "title": "Starboy",
+    "streams_total": 12800000000,
+    "streams_daily": 7200000,
+    "last_update_kworb": "2025-09-30T00:00:00Z",
+    "spotify_data_date": "2025-09-29"
+  },
+  {
+    "id": "kworb:beauty behind the madness@beauty behind the madness",
+    "rank": 3,
+    "title": "Beauty Behind the Madness",
+    "streams_total": 9500000000,
+    "streams_daily": 5800000,
+    "last_update_kworb": "2025-09-30T00:00:00Z",
+    "spotify_data_date": "2025-09-29"
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/axelbayon/The-Weeknd-Dashboard/schemas/snapshot-albums.json",
+  "title": "Albums Snapshot Schema",
+  "description": "Schéma pour les snapshots journaliers d'albums (historique brut sans calculs)",
+  "version": "1.0.0",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "rank",
+      "title",
+      "streams_total",
+      "streams_daily",
+      "last_update_kworb",
+      "spotify_data_date"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Clé stable interne normalisée (format: kworb:<norm_title>@<norm_title>)",
+        "pattern": "^kworb:.+@.+$"
+      },
+      "rank": {
+        "type": "integer",
+        "description": "Position dans le classement Kworb",
+        "minimum": 1
+      },
+      "title": {
+        "type": "string",
+        "description": "Titre original de l'album",
+        "minLength": 1
+      },
+      "streams_total": {
+        "type": "number",
+        "description": "Nombre total de streams cumulés",
+        "minimum": 0
+      },
+      "streams_daily": {
+        "type": "number",
+        "description": "Streams quotidiens du jour",
+        "minimum": 0
+      },
+      "last_update_kworb": {
+        "type": "string",
+        "description": "Timestamp ISO de la dernière mise à jour Kworb",
+        "format": "date-time"
+      },
+      "spotify_data_date": {
+        "type": "string",
+        "description": "Date des données Spotify (YYYY-MM-DD)",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      }
+    },
+    "additionalProperties": false
+  }
+}

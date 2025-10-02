@@ -1,0 +1,57 @@
+[
+  {
+    "id": "kworb:blinding lights@after hours",
+    "rank": 1,
+    "title": "Blinding Lights",
+    "album": "After Hours",
+    "role": "lead",
+    "streams_total": 4290300000,
+    "streams_daily": 5300000,
+    "last_update_kworb": "2025-10-01T00:00:00Z",
+    "spotify_data_date": "2025-09-30"
+  },
+  {
+    "id": "kworb:starboy@starboy",
+    "rank": 2,
+    "title": "Starboy",
+    "album": "Starboy",
+    "role": "lead",
+    "streams_total": 3924200000,
+    "streams_daily": 4200000,
+    "last_update_kworb": "2025-10-01T00:00:00Z",
+    "spotify_data_date": "2025-09-30"
+  },
+  {
+    "id": "kworb:die for you@starboy",
+    "rank": 3,
+    "title": "Die For You",
+    "album": "Starboy",
+    "role": "lead",
+    "streams_total": 2818500000,
+    "streams_daily": 3500000,
+    "last_update_kworb": "2025-10-01T00:00:00Z",
+    "spotify_data_date": "2025-09-30"
+  },
+  {
+    "id": "kworb:save your tears@after hours",
+    "rank": 4,
+    "title": "Save Your Tears",
+    "album": "After Hours",
+    "role": "lead",
+    "streams_total": 2982800000,
+    "streams_daily": 2800000,
+    "last_update_kworb": "2025-10-01T00:00:00Z",
+    "spotify_data_date": "2025-09-30"
+  },
+  {
+    "id": "kworb:one of the girls@the idol episode 4",
+    "rank": 5,
+    "title": "One Of The Girls",
+    "album": "The Idol Episode 4",
+    "role": "feat",
+    "streams_total": 1542050000,
+    "streams_daily": 2050000,
+    "last_update_kworb": "2025-10-01T00:00:00Z",
+    "spotify_data_date": "2025-09-30"
+  }
+]

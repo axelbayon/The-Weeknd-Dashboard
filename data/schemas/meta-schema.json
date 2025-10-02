@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/axelbayon/The-Weeknd-Dashboard/schemas/meta.json",
+  "title": "Metadata Schema",
+  "description": "Schéma pour les métadonnées globales du dashboard (dates, historique)",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "kworb_last_update_utc",
+    "spotify_data_date",
+    "last_sync_local_iso",
+    "history"
+  ],
+  "properties": {
+    "kworb_last_update_utc": {
+      "type": "string",
+      "description": "Timestamp ISO de la dernière mise à jour récupérée depuis Kworb",
+      "format": "date-time"
+    },
+    "spotify_data_date": {
+      "type": "string",
+      "description": "Date des données Spotify au format YYYY-MM-DD (kworb_last_update_utc - 1 jour)",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "last_sync_local_iso": {
+      "type": "string",
+      "description": "Timestamp ISO de la dernière synchronisation locale effectuée",
+      "format": "date-time"
+    },
+    "history": {
+      "type": "object",
+      "required": ["available_dates", "latest_date"],
+      "properties": {
+        "available_dates": {
+          "type": "array",
+          "description": "Liste des dates disponibles dans data/history (YYYY-MM-DD), triée décroissant",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "latest_date": {
+          "type": "string",
+          "description": "Date la plus récente disponible dans l'historique (YYYY-MM-DD)",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
