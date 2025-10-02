@@ -13,25 +13,6 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 - Mise à jour de .gitignore : `.env.local` remplace `Website/.env.local` (ligne 7)
 - Structure finale : fichiers de config à la racine, code applicatif dans Website/
 
-**2025-10-02 — Restructuration (Website parent)**
-- Restructuration complète : `Website/` devient le dossier parent du projet
-- Déplacement de tous les dossiers (data/, src/, public/, scripts/, docs/) dans Website/
-- Déplacement du README.md vers Website/README.md
-- Conservation de `Website/global.css` comme CSS unique (960 lignes)
-- `Website/.env.local` confirmé ignoré par Git (ligne 7 de .gitignore)
-
-**2025-10-02 — Prompt 0.1-fix**
-- Harmonisation CSS : conservation de `Website/global.css` comme référence unique
-- Suppression du doublon `public/styles/global.css`
-- Renforcement de `.gitignore` pour les secrets (patterns `.env*`, `*/.env*`, `Website/.env.local`)
-- Clarification de la structure du projet
-
-**2025-10-02 — Prompt 0.1**
-- Création de l'arborescence initiale du projet
-- Ajout de la documentation de base (README, sécurité-scraping, roadmap placeholder)
-- Configuration Git (.gitignore, .gitattributes, LICENSE placeholder)
-- Préparation des dossiers de snapshots (data/history/songs/ et albums/)
-
 ---
 
 ## Structure du repo
