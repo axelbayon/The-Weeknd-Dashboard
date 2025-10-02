@@ -23,43 +23,51 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 ## Structure du repo
 
 ```
-README.md                     # Ce fichier (documentation du projet)
-.env.local                    # Secrets Spotify (non tracké, ignoré par Git)
-.gitignore                    # Patterns d'exclusion Git
-.gitattributes                # Normalisation des fins de ligne
-LICENSE                       # Licence (placeholder MIT)
-data/
-  schemas/                    # Schémas JSON Schema v1.0 (contrats de données)
-    songs-schema.json         # Schéma pour data/songs.json
-    albums-schema.json        # Schéma pour data/albums.json
-    meta-schema.json          # Schéma pour data/meta.json
-    snapshot-songs-schema.json   # Schéma pour snapshots songs
-    snapshot-albums-schema.json  # Schéma pour snapshots albums
-  songs.json                  # Vue courante des chansons (avec calculs)
-  albums.json                 # Vue courante des albums (avec calculs)
-  meta.json                   # Métadonnées globales (dates, historique)
-  history/
-    songs/                    # Snapshots quotidiens des chansons (J, J-1, J-2)
-      2025-09-29.json         # Fixture J-1
-      2025-09-30.json         # Fixture J
-    albums/                   # Snapshots quotidiens des albums (J, J-1, J-2)
-      2025-09-29.json         # Fixture J-1
-      2025-09-30.json         # Fixture J
-  album_detail/               # Détails albums Spotify (à remplir plus tard)
-scripts/                      # Scripts Python de génération et validation
-  generate_current_views.py   # Génère data/songs.json et data/albums.json depuis snapshots
-  validate_data.py            # Valide conformité des données (schémas, arrondis, unicité, dates)
-Website/                      # Dossier parent du code applicatif
-  index.html                  # Page principale (SPA)
+README.md                          # Ce fichier (documentation du projet)
+.env.local                         # Secrets Spotify (non tracké, ignoré par Git)
+.gitignore                         # Patterns d'exclusion Git
+.gitattributes                     # Normalisation des fins de ligne
+LICENSE                            # Licence (placeholder MIT)
+
+data/                              # Données du dashboard
+  schemas/                         # Schémas JSON Schema v1.0 (contrats de données)
+    songs-schema.json              # Schéma pour data/songs.json
+    albums-schema.json             # Schéma pour data/albums.json
+    meta-schema.json               # Schéma pour data/meta.json
+    snapshot-songs-schema.json     # Schéma pour snapshots songs
+    snapshot-albums-schema.json    # Schéma pour snapshots albums
+  songs.json                       # Vue courante des chansons (315 items avec calculs)
+  albums.json                      # Vue courante des albums (vide pour l'instant)
+  meta.json                        # Métadonnées globales (dates, historique)
+  history/                         # Snapshots journaliers
+    songs/                         # Snapshots quotidiens des chansons (J, J-1, J-2)
+      2025-09-29.json              # Fixture J-2
+      2025-09-30.json              # Fixture J-1
+      2025-10-01.json              # Snapshot J actuel (315 chansons)
+    albums/                        # Snapshots quotidiens des albums
+      2025-09-29.json              # Fixture J-2
+      2025-09-30.json              # Fixture J-1
+  album_detail/                    # Détails albums Spotify (à remplir plus tard)
+
+scripts/                           # Scripts Python de scraping, génération et validation
+  start_dashboard.py               # 🚀 Script de lancement complet (scrape + serveur web)
+  scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons)
+  generate_current_views.py        # Génère data/songs.json et albums.json depuis snapshots
+  validate_data.py                 # Valide conformité des données (schémas, arrondis, unicité, dates)
+  test_scraper_songs.py            # Tests automatisés du scraper Songs (6 tests)
+
+Website/                           # Dossier parent du code applicatif
+  index.html                       # Page principale (SPA avec 3 pages)
   src/
-    app.js                    # Script JavaScript (navigation)
+    app.js                         # Script JavaScript (navigation entre pages)
     styles/
-      global.css              # CSS canonique (960 lignes)
+      global.css                   # CSS canonique (960 lignes, dark theme)
   public/
-    styles/                   # Assets CSS additionnels (vide pour l'instant)
-docs/
-  roadmap.md                  # Feuille de route (à compléter)
-  securité-scraping.md        # Règles de sécurité pour le scraping
+    styles/                        # Assets CSS additionnels (vide pour l'instant)
+
+docs/                              # Documentation complémentaire
+  roadmap.md                       # Feuille de route (à compléter)
+  securité-scraping.md             # Règles de sécurité pour le scraping
 ```
 
 **Note** : Fichiers de configuration et documentation à la racine, code applicatif dans `Website/`, données et scripts dans `data/` et `scripts/`. CSS canonique : `Website/src/styles/global.css`.
@@ -67,6 +75,24 @@ docs/
 ---
 
 ## Comment utiliser / Commandes
+
+### 🚀 Lancement complet en une commande (recommandé)
+
+Pour scraper les données ET lancer le dashboard en une seule commande :
+
+```bash
+python scripts/start_dashboard.py
+```
+
+**Ce que fait cette commande** :
+1. ✅ Scrape automatiquement les dernières données depuis Kworb
+2. ✅ Met à jour data/songs.json avec les calculs
+3. ✅ Lance un serveur HTTP sur http://localhost:8000
+4. ✅ Ouvre automatiquement l'accès au dashboard
+
+**Note** : Appuyez sur `Ctrl+C` pour arrêter le serveur.
+
+---
 
 ### Lancement du scraper Kworb Songs
 
