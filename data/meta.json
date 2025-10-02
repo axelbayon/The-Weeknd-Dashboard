@@ -1,7 +1,7 @@
 {
-  "kworb_last_update_utc": "2025-10-02T17:53:49.893730+00:00",
+  "kworb_last_update_utc": "2025-10-02T22:47:23.823077+00:00",
   "spotify_data_date": "2025-10-01",
-  "last_sync_local_iso": "2025-10-02T19:53:50.041748",
+  "last_sync_local_iso": "2025-10-03T00:47:24.115877",
   "history": {
     "available_dates": [
       "2025-10-01",
@@ -19,13 +19,13 @@
   "songs_role_stats": {
     "lead": {
       "count": 237,
-      "streams_total": 68403452747,
-      "streams_daily": 34346197
+      "streams_total": 68437793605,
+      "streams_daily": 34340858
     },
     "feat": {
       "count": 78,
-      "streams_total": 16596277670,
-      "streams_daily": 7055853
+      "streams_total": 16603872019,
+      "streams_daily": 7154522
     }
   }
 }

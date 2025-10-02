@@ -1202,6 +1202,232 @@ a {
   color: #f2b422;
 }
 
+/* === Caps Page Specific Styles === */
+
+/* Contrôles de filtrage - rapproché du tableau */
+.caps-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(12, 14, 24, 0.6);
+  border-radius: 0.8rem;
+  margin-block-end: 0.75rem; /* Réduit de 1.5rem à 0.75rem */
+  flex-wrap: wrap;
+}
+
+.caps-controls__group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.caps-controls__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.caps-controls__select {
+  padding: 0.4rem 1.75rem 0.4rem 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23f6f7fb' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  transition: all 0.2s ease;
+}
+
+.caps-controls__select:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.caps-controls__select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 54, 92, 0.1);
+}
+
+.caps-controls__toggles {
+  display: flex;
+  gap: 1rem;
+}
+
+.caps-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.caps-toggle input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.25rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.caps-toggle input[type="checkbox"]:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.caps-toggle input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.caps-toggle input[type="checkbox"]:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.caps-toggle input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 54, 92, 0.1);
+}
+
+.caps-toggle__label {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+/* Badge type (Song/Album) */
+.flag-chip--album {
+  background: rgba(95, 87, 255, 0.12);
+  border-color: rgba(95, 87, 255, 0.35);
+  color: #7c6dff;
+}
+
+/* Highlight temporaire pour navigation croisée */
+.row-highlighted {
+  animation: highlight-pulse 2s ease;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% {
+    background: transparent;
+  }
+  25%, 75% {
+    background: rgba(255, 54, 92, 0.15);
+  }
+}
+
+/* Largeurs colonnes tableau Caps */
+.data-table--caps th:nth-child(1),
+.data-table--caps td:nth-child(1) {
+  /* # (rang) */
+  width: 60px;
+  max-width: 60px;
+  min-width: 60px;
+}
+
+.data-table--caps th:nth-child(2),
+.data-table--caps td:nth-child(2) {
+  /* Titre - colonne large prioritaire */
+  width: auto;
+  min-width: 320px;
+  max-width: 500px;
+}
+
+.data-table--caps td:nth-child(2) .data-table__song-name {
+  /* Texte du titre plus grand */
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.data-table--caps td:nth-child(2) .data-table__album {
+  /* Album sous le titre */
+  font-size: 0.85rem;
+}
+
+.data-table--caps th:nth-child(3),
+.data-table--caps td:nth-child(3) {
+  /* Type (Song/Album) */
+  width: 90px;
+  max-width: 90px;
+  min-width: 90px;
+}
+
+.data-table--caps th:nth-child(4),
+.data-table--caps td:nth-child(4) {
+  /* Prochain cap (j) */
+  width: 110px;
+  max-width: 110px;
+  min-width: 110px;
+}
+
+.data-table--caps th:nth-child(5),
+.data-table--caps td:nth-child(5) {
+  /* Streams totaux */
+  width: 130px;
+  max-width: 130px;
+  min-width: 130px;
+}
+
+.data-table--caps th:nth-child(6),
+.data-table--caps td:nth-child(6) {
+  /* Streams quotidiens */
+  width: 140px;
+  max-width: 140px;
+  min-width: 140px;
+}
+
+.data-table--caps th:nth-child(7),
+.data-table--caps td:nth-child(7) {
+  /* Variation (%) */
+  width: 110px;
+  max-width: 110px;
+  min-width: 110px;
+}
+
+.data-table--caps th:nth-child(8),
+.data-table--caps td:nth-child(8) {
+  /* Prochain palier */
+  width: 120px;
+  max-width: 120px;
+  min-width: 120px;
+}
+
+.data-table--caps th:nth-child(9),
+.data-table--caps td:nth-child(9) {
+  /* ETA */
+  width: 110px;
+  max-width: 110px;
+  min-width: 110px;
+}
+
+/* Légende featuring */
+.data-table__legend {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  text-align: left;
+  padding-left: 0.25rem;
+}
+
 
 @media (max-width: 1100px) {
   .page-header {

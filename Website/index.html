@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=6.9">
+    <link rel="stylesheet" href="src/styles/global.css?v=7.0">
 </head>
 <body>
     <div class="app-shell">
@@ -376,88 +376,140 @@
 
                 <!-- Page Caps imminents (cachée par défaut) -->
                 <div id="page-caps" class="page page--caps" data-page-content="caps" style="display: none;">
+                    <!-- En-tête avec cartes meta (comme Songs/Albums) -->
                     <div class="page-header">
+                        <div class="page-header__cards">
+                            <div class="stat-card" data-testid="header-last-sync">
+                                <div class="stat-card__label">Dernière sync locale</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card nu-card" data-testid="header-next-update">
+                                <div id="nu-tip-caps" class="nu-tooltip" role="tooltip" hidden>
+                                    <strong>INFOS SYNCHRONISATION</strong><br>
+                                    La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à
+                                    <span class="nu-eta">—</span>.
+                                </div>
+                                
+                                <div class="nu-header">
+                                    <span class="nu-title">MISE À JOUR DES DONNÉES</span>
+                                    <button class="nu-info" type="button" aria-describedby="nu-tip-caps" aria-label="Informations"></button>
+                                </div>
+                                
+                                <div class="nu-body">
+                                    <span class="nu-badge" aria-live="polite">—</span>
+                                </div>
+                            </div>
+                            <div class="stat-card" data-testid="header-spotify-data-date">
+                                <div class="stat-card__label">Date des données actuelles</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- Compteurs -->
+                    <div class="page-header page-header--aggregate">
+                        <div class="page-header__cards">
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Nombre total d'éléments</div>
+                                <div class="stat-card__value" data-testid="caps-total-count">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label" data-caps-label="songs">Nombre de titres</div>
+                                <div class="stat-card__value" data-testid="caps-songs-count">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label" data-caps-label="albums">Nombre d'albums</div>
+                                <div class="stat-card__value" data-testid="caps-albums-count">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contrôles de filtrage -->
+                    <div class="caps-controls">
+                        <div class="caps-controls__group">
+                            <label for="caps-window-select" class="caps-controls__label">Fenêtre temporelle</label>
+                            <select id="caps-window-select" class="caps-controls__select" data-testid="caps-window-select">
+                                <option value="7">7 jours</option>
+                                <option value="14">14 jours</option>
+                                <option value="30" selected>30 jours</option>
+                                <option value="60">60 jours</option>
+                            </select>
+                        </div>
+                        
+                        <div class="caps-controls__group">
+                            <span class="caps-controls__label">Afficher</span>
+                            <div class="caps-controls__toggles">
+                                <label class="caps-toggle">
+                                    <input type="checkbox" id="caps-toggle-songs" checked data-testid="caps-toggle-songs">
+                                    <span class="caps-toggle__label">Songs</span>
+                                </label>
+                                <label class="caps-toggle">
+                                    <input type="checkbox" id="caps-toggle-albums" checked data-testid="caps-toggle-albums">
+                                    <span class="caps-toggle__label">Albums</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tableau -->
                     <section class="table-section">
-                        <div class="table-wrapper">
-                            <table class="data-table" data-testid="caps-table">
+                        <div class="table-wrapper table-wrapper--has-hscroll">
+                            <table class="data-table data-table--caps" data-testid="caps-table">
                                 <caption class="data-table__caption">Liste des caps imminents</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col">
-                                            <span class="data-table__header-text">Type</span>
+                                        <th scope="col" class="data-table__cell--numeric data-table__cell--rank">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">#</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--title">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Titre</span>
+                                            </button>
                                         </th>
                                         <th scope="col">
-                                            <span class="data-table__header-text">Titre</span>
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Type</span>
+                                            </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
-                                            <span class="data-table__header-text">Jours (2 déc.)</span>
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Prochain cap (j)</span>
+                                            </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
-                                            <span class="data-table__header-text">Date attendue</span>
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams totaux</span>
+                                            </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
-                                            <span class="data-table__header-text">Streams actuels</span>
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams quotidiens</span>
+                                            </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
-                                            <span class="data-table__header-text">Prochain palier</span>
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Variation (%)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Prochain palier</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">ETA</span>
+                                            </button>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <span class="flag-chip">Song</span>
-                                        </td>
-                                        <td>
-                                            <div class="data-table__title-wrapper">
-                                                <div class="data-table__title-cover">
-                                                    <div class="cover-placeholder">🎵</div>
-                                                </div>
-                                                <div class="data-table__title-meta">
-                                                    <div class="data-table__song-name">Save Your Tears</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="data-table__cell--numeric">
-                                            <span class="countdown-chip countdown-chip--pending">
-                                                <span class="countdown-chip__dot"></span>
-                                                14 jours
-                                            </span>
-                                        </td>
-                                        <td class="data-table__cell--numeric">16 oct. 2025</td>
-                                        <td class="data-table__cell--numeric">2,987,654,321</td>
-                                        <td class="data-table__cell--numeric">3B</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <span class="flag-chip">Album</span>
-                                        </td>
-                                        <td>
-                                            <div class="data-table__title-wrapper">
-                                                <div class="data-table__title-cover">
-                                                    <div class="cover-placeholder">💿</div>
-                                                </div>
-                                                <div class="data-table__title-meta">
-                                                    <div class="data-table__song-name">
-                                                        <a href="#album-detail/dawn-fm" data-album-link>Dawn FM</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="data-table__cell--numeric">
-                                            <span class="countdown-chip countdown-chip--ready">
-                                                <span class="countdown-chip__dot"></span>
-                                                2 jours
-                                            </span>
-                                        </td>
-                                        <td class="data-table__cell--numeric">04 oct. 2025</td>
-                                        <td class="data-table__cell--numeric">7,876,543,210</td>
-                                        <td class="data-table__cell--numeric">8B</td>
-                                    </tr>
+                                    <!-- Rempli dynamiquement par caps.js -->
                                 </tbody>
                             </table>
+                            <p class="data-table__legend">* = featuring</p>
                         </div>
                     </section>
                 </div>
@@ -485,6 +537,7 @@
     <script src="src/data-renderer.js?v=6.7"></script>
     <script src="src/table-sort.js?v=6.7"></script>
     <script src="src/meta-refresh.js?v=6.7"></script>
+    <script src="src/caps.js?v=7.1"></script>
     <script src="src/search.js?v=6.7"></script>
     <script src="src/main.js?v=6.7"></script>
     <script src="src/app.js?v=6.7"></script>
