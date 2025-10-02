@@ -1,0 +1,14 @@
+# Normalisation des fins de ligne
+* text=auto eol=lf
+
+# Fichiers binaires
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.zip binary
+*.gz binary
