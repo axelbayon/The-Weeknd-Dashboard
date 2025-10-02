@@ -236,6 +236,11 @@ a {
   width: 100%;
 }
 
+/* Espacement direct page → table-wrap (SPA-proof, Prompt 6.5) */
+.page .table-section {
+  margin-block-start: 28px;
+}
+
 .stat-card {
   padding: 0.9rem 1rem;
   border-radius: 16px;
@@ -1015,91 +1020,145 @@ a {
 }
 
 /* === Badge "Prochaine MAJ" + Tooltip === */
-.next-update {
+/* ==============================================
+   CARTE "PROCHAINE MISE À JOUR" (Prompt 6.5)
+   ============================================== */
+
+/* Carte avec positionnement relatif pour tooltip */
+.nu-card {
   position: relative;
+}
+
+/* En-tête : titre + bouton info */
+.nu-header {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-.nu-badge {
-  display: inline-block;
-  min-width: 3.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 1rem;
-  text-align: center;
+.nu-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  opacity: 0.9;
   font-weight: 600;
-  font-size: 0.85rem;
-  transition: background-color 0.3s ease;
 }
 
-.nu-badge.is-ready {
-  background: #10b981; /* green-600 */
-  color: #fff;
-}
-
-.nu-badge.is-wait {
-  background: #f59e0b; /* amber-600 */
-  color: #000;
-}
-
+/* Bouton info "i" en haut-droite (icône pure CSS) */
 .nu-info {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border: 1px solid var(--panel-600);
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: absolute;
+  inset-block-start: 0.6rem;
+  inset-inline-end: 0.6rem;
   background: transparent;
-  color: var(--color-text-muted);
-  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.nu-info::before {
+  content: "i";
+  font-weight: 700;
+  display: block;
+  text-align: center;
+  line-height: 1.65rem;
+  color: var(--muted-100);
 }
 
 .nu-info:hover,
 .nu-info:focus {
   border-color: var(--color-accent);
-  color: var(--color-accent);
   background: rgba(95, 87, 255, 0.1);
 }
 
+.nu-info:hover::before,
+.nu-info:focus::before {
+  color: var(--color-accent);
+}
+
+/* Tooltip centré au-dessus de la carte */
 .nu-tooltip {
   position: absolute;
-  bottom: calc(100% + 0.5rem);
-  left: 0;
-  background: rgba(12, 14, 24, 0.98);
-  border: 1px solid rgba(95, 87, 255, 0.3);
-  padding: 0.6rem 0.8rem;
+  inset-block-end: calc(100% + 0.6rem);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-900);
+  border: 1px solid var(--panel-700);
+  padding: 0.75rem 0.9rem;
   border-radius: 0.6rem;
-  max-width: 22rem;
+  max-inline-size: 22rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  text-align: center;
   font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--color-text);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  line-height: 1.5;
   z-index: 1000;
   white-space: normal;
 }
 
+/* Flèche du tooltip (pointant vers le bas, centrée) */
 .nu-tooltip::after {
   content: "";
   position: absolute;
-  top: 100%;
-  left: 1rem;
+  inset-block-start: 100%;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
   border: 8px solid transparent;
-  border-top-color: rgba(95, 87, 255, 0.3);
+  border-block-start-color: var(--panel-700);
 }
 
 .nu-tooltip[hidden] {
   display: none;
 }
 
+.nu-tooltip strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
 .nu-eta {
   color: var(--color-accent);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
+
+/* Corps de la carte : badge chrono */
+.nu-body {
+  margin-top: 0.5rem;
+}
+
+/* Badge sobre, style conforme aux captures */
+.nu-badge {
+  display: inline-block;
+  min-width: 4.25rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--panel-800);
+  border: 1px solid var(--panel-600);
+  transition: all 0.3s ease;
+}
+
+/* État "Prête" (vert subtil) */
+.nu-badge.is-ready {
+  background: rgba(24, 160, 88, 0.18);
+  border-color: rgba(24, 160, 88, 0.35);
+  color: #18a058;
+}
+
+/* État "MM:SS" (orange subtil) */
+.nu-badge.is-wait {
+  background: rgba(242, 180, 34, 0.12);
+  border-color: rgba(242, 180, 34, 0.35);
+  color: #f2b422;
+}
+
 
 @media (max-width: 1100px) {
   .page-header {

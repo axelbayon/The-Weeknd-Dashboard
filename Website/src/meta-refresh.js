@@ -77,7 +77,7 @@
     }
     
     /**
-     * Calcule et met à jour le compte à rebours avec badge
+     * Calcule et met à jour le compte à rebours avec badge (format MM:SS)
      */
     function updateCountdown() {
         if (!nextUpdateTime) return;
@@ -88,7 +88,6 @@
         
         // Trouver tous les badges (Songs et Albums)
         const badges = document.querySelectorAll('.nu-badge');
-        const etas = document.querySelectorAll('.nu-eta');
         
         badges.forEach(badge => {
             if (remainingS <= 0) {
@@ -96,19 +95,10 @@
                 badge.classList.remove('is-wait');
                 badge.classList.add('is-ready');
             } else {
-                badge.textContent = formatCountdown(remainingS);
+                badge.textContent = formatCountdown(remainingS); // MM:SS
                 badge.classList.remove('is-ready');
                 badge.classList.add('is-wait');
             }
-        });
-        
-        // Mettre à jour l'ETA dans le tooltip
-        etas.forEach(eta => {
-            const nextDate = new Date(nextUpdateTime);
-            const hours = String(nextDate.getHours()).padStart(2, '0');
-            const minutes = String(nextDate.getMinutes()).padStart(2, '0');
-            const seconds = String(nextDate.getSeconds()).padStart(2, '0');
-            eta.textContent = `${hours}:${minutes}:${seconds}`;
         });
         
         // Si le compte à rebours atteint 0, recharger les métadonnées
@@ -202,6 +192,7 @@
     
     /**
      * Configure les tooltips interactifs (survol + focus)
+     * Remplit l'ETA au moment de l'ouverture
      */
     function setupTooltips() {
         const infoButtons = document.querySelectorAll('.nu-info');
@@ -212,23 +203,33 @@
             
             if (!tooltip) return;
             
-            // Afficher au survol
-            button.addEventListener('mouseenter', () => {
+            const showTooltip = () => {
+                // Remplir l'ETA avec l'heure locale (HH:MM:SS)
+                if (nextUpdateTime) {
+                    const nextDate = new Date(nextUpdateTime);
+                    const hours = String(nextDate.getHours()).padStart(2, '0');
+                    const minutes = String(nextDate.getMinutes()).padStart(2, '0');
+                    const seconds = String(nextDate.getSeconds()).padStart(2, '0');
+                    
+                    const etaEl = tooltip.querySelector('.nu-eta');
+                    if (etaEl) {
+                        etaEl.textContent = `${hours}:${minutes}:${seconds}`;
+                    }
+                }
                 tooltip.hidden = false;
-            });
+            };
             
-            button.addEventListener('mouseleave', () => {
+            const hideTooltip = () => {
                 tooltip.hidden = true;
-            });
+            };
+            
+            // Afficher au survol
+            button.addEventListener('mouseenter', showTooltip);
+            button.addEventListener('mouseleave', hideTooltip);
             
             // Afficher au focus (accessibilité clavier)
-            button.addEventListener('focusin', () => {
-                tooltip.hidden = false;
-            });
-            
-            button.addEventListener('focusout', () => {
-                tooltip.hidden = true;
-            });
+            button.addEventListener('focusin', showTooltip);
+            button.addEventListener('focusout', hideTooltip);
         });
     }
     

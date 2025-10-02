@@ -8,6 +8,57 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-02 — Prompt 6.5 : UI polish "Prochaine MAJ" (icône/tooltip/chrono) + Espacements SPA + Date J-1**
+
+*Polish final de la carte "Prochaine mise à jour" et corrections UI :*
+
+**A) Refonte complète carte "Prochaine MAJ"** :
+- **Markup** : Nouvelle structure `.nu-card` avec `.nu-header` (titre + bouton i) et `.nu-body` (badge)
+- **Icône "i" pure CSS** : Suppression de l'emoji ℹ️, bouton `.nu-info` en `position:absolute` (top-right) avec `::before { content:"i" }`
+- **Badge sobre** : Style conforme aux captures (fond panel-800, border panel-600, min-width 4.25rem)
+- **Classes badge** : `.is-ready` (vert rgba(24,160,88,.18)), `.is-wait` (orange rgba(242,180,34,.12))
+- **Tooltip centré** : Position `left:50% + translateX(-50%)` au-dessus de la carte, flèche centrée avec `::after`
+
+**B) JS meta-refresh amélioré** :
+- **updateCountdown()** : Format strict MM:SS, suppression mise à jour .nu-eta en boucle (seulement dans tooltip)
+- **setupTooltips()** : Remplissage `.nu-eta` (HH:MM:SS) uniquement au moment de l'ouverture du tooltip (hover/focus)
+- Événements : `mouseenter/mouseleave` + `focusin/focusout` pour accessibilité clavier
+
+**C) Espacements SPA persistants** :
+- **CSS direct** : Ajout `.page .table-section { margin-block-start:28px }` (règle non fragile, pas de sélecteur adjacent)
+- **Vérification code** : `data-renderer.js` ne manipule que `tbody.innerHTML`, jamais `.header-cards` ou `.table-section`
+- **Résultat** : Espacement 28px garanti après navigation Songs ↔ Albums, aucun "saut" CSS
+
+**D) Date Spotify strict J-1** :
+- **Vérification** : `meta-refresh.js` ligne 165 utilise uniquement `meta.spotify_data_date`
+- Aucune référence à `kworb_last_update_utc` pour cette carte
+- Format FR `DD/MM/YYYY` conservé
+
+*Fichiers modifiés :*
+- `Website/index.html` : 
+  - Refonte markup cartes "Prochaine MAJ" (Songs & Albums) avec `.nu-card`, `.nu-header`, `.nu-body`
+  - Tooltip repositionné au-dessus (avant .nu-header)
+  - Cache-busting v6.5 sur CSS et tous scripts JS
+- `Website/src/styles/global.css` : 
+  - Réécriture complète section badge/tooltip (~130 lignes)
+  - `.nu-info` avec `::before content:"i"` (pas d'emoji)
+  - `.nu-tooltip` centré avec `transform:translateX(-50%)`
+  - `.nu-badge` avec border et fond sobre
+  - Ajout `.page .table-section { margin-block-start:28px }` (SPA-proof)
+- `Website/src/meta-refresh.js` : 
+  - Simplification `updateCountdown()` : suppression màj .nu-eta en boucle
+  - Amélioration `setupTooltips()` : remplissage ETA uniquement au showTooltip
+
+*Tests de validation :*
+1. ✅ Icône "i" sans emoji, position absolute top-right
+2. ✅ Tooltip centré horizontalement au-dessus de la carte
+3. ✅ Badge alterne "Prête" (vert) / "MM:SS" (orange) selon countdown
+4. ✅ ETA (HH:MM:SS) affiché uniquement dans tooltip au hover/focus
+5. ✅ Espacements 28px persistants après navigation Songs ↔ Albums
+6. ✅ Date Spotify = `meta.spotify_data_date` uniquement (pas de kworb_last_update)
+
+---
+
 **2025-10-02 — Prompt 6.4 : Espacement SPA + Centrage cellules (override) + Badge/Tooltip "Prochaine MAJ"**
 
 *Corrections finales UI après Prompts 6.2 et 6.3 :*

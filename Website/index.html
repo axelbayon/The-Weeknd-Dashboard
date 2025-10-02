@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=6.4.1">
+    <link rel="stylesheet" href="src/styles/global.css?v=6.5">
 </head>
 <body>
     <div class="app-shell">
@@ -53,14 +53,20 @@
                                 <div class="stat-card__label">Dernière sync locale</div>
                                 <div class="stat-card__value">—</div>
                             </div>
-                            <div class="stat-card" data-testid="header-next-update">
-                                <div class="stat-card__label">Prochaine mise à jour</div>
-                                <div class="next-update">
+                            <div class="stat-card nu-card" data-testid="header-next-update">
+                                <div id="nu-tip-songs" class="nu-tooltip" role="tooltip" hidden>
+                                    <strong>INFOS SYNCHRONISATION</strong><br>
+                                    La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à
+                                    <span class="nu-eta">—</span>.
+                                </div>
+                                
+                                <div class="nu-header">
+                                    <span class="nu-title">PROCHAINE MISE À JOUR</span>
+                                    <button class="nu-info" type="button" aria-describedby="nu-tip-songs" aria-label="Informations"></button>
+                                </div>
+                                
+                                <div class="nu-body">
                                     <span class="nu-badge" aria-live="polite">—</span>
-                                    <button class="nu-info" aria-describedby="nu-tip-songs" type="button" title="Informations">ℹ️</button>
-                                    <div id="nu-tip-songs" class="nu-tooltip" role="tooltip" hidden>
-                                        La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à <strong class="nu-eta">—</strong>.
-                                    </div>
                                 </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
@@ -243,14 +249,20 @@
                                 <div class="stat-card__label">Dernière sync locale</div>
                                 <div class="stat-card__value">—</div>
                             </div>
-                            <div class="stat-card" data-testid="header-next-update">
-                                <div class="stat-card__label">Prochaine mise à jour</div>
-                                <div class="next-update">
+                            <div class="stat-card nu-card" data-testid="header-next-update">
+                                <div id="nu-tip-albums" class="nu-tooltip" role="tooltip" hidden>
+                                    <strong>INFOS SYNCHRONISATION</strong><br>
+                                    La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à
+                                    <span class="nu-eta">—</span>.
+                                </div>
+                                
+                                <div class="nu-header">
+                                    <span class="nu-title">PROCHAINE MISE À JOUR</span>
+                                    <button class="nu-info" type="button" aria-describedby="nu-tip-albums" aria-label="Informations"></button>
+                                </div>
+                                
+                                <div class="nu-body">
                                     <span class="nu-badge" aria-live="polite">—</span>
-                                    <button class="nu-info" aria-describedby="nu-tip-albums" type="button" title="Informations">ℹ️</button>
-                                    <div id="nu-tip-albums" class="nu-tooltip" role="tooltip" hidden>
-                                        La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à <strong class="nu-eta">—</strong>.
-                                    </div>
                                 </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
@@ -481,13 +493,13 @@
         </div>
     </div>
 
-    <script src="src/formatters.js?v=6.4"></script>
-    <script src="src/data-loader.js?v=6.4"></script>
-    <script src="src/data-renderer.js?v=6.4"></script>
-    <script src="src/table-sort.js?v=6.4"></script>
-    <script src="src/meta-refresh.js?v=6.4"></script>
-    <script src="src/search.js?v=6.4"></script>
-    <script src="src/main.js?v=6.4"></script>
-    <script src="src/app.js?v=6.4"></script>
+    <script src="src/formatters.js?v=6.5"></script>
+    <script src="src/data-loader.js?v=6.5"></script>
+    <script src="src/data-renderer.js?v=6.5"></script>
+    <script src="src/table-sort.js?v=6.5"></script>
+    <script src="src/meta-refresh.js?v=6.5"></script>
+    <script src="src/search.js?v=6.5"></script>
+    <script src="src/main.js?v=6.5"></script>
+    <script src="src/app.js?v=6.5"></script>
 </body>
 </html>
