@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Scraper Kworb pour les chansons de The Weeknd.
-Génère un snapshot journalier et régénère data/songs.json avec calculs.
+Scraper Kworb pour les albums de The Weeknd.
+Génère un snapshot journalier et régénère data/albums.json avec calculs.
 """
 
 import json
@@ -22,7 +22,7 @@ except ImportError:
 
 
 # Configuration
-KWORB_SONGS_URL = "https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html"
+KWORB_ALBUMS_URL = "https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_albums.html"
 USER_AGENT = "The-Weeknd-Dashboard/1.0 (Educational Project; Python Scraper)"
 THROTTLE_SECONDS = 1.0
 MAX_RETRIES = 3
@@ -36,71 +36,33 @@ def normalize_text(text: str) -> str:
     Règles :
     - lowercasing
     - trim
-    - suppression ponctuation
-    - "feat./with/x/& (...)" retirés
+    - suppression ponctuation et caractères spéciaux
     """
     # Lowercase et trim
     text = text.lower().strip()
-    
-    # Retirer les patterns de featuring
-    patterns = [
-        " feat.", " feat ", " featuring ", " ft.", " ft ",
-        " with ", " x ", " & ", " and "
-    ]
-    for pattern in patterns:
-        if pattern in text:
-            text = text.split(pattern)[0]
     
     # Retirer parenthèses et leur contenu
     if "(" in text:
         text = text.split("(")[0].strip()
     
-    # Retirer ponctuation
-    punctuation = ".,;:!?'\"-"
-    for char in punctuation:
-        text = text.replace(char, "")
+    # Retirer caractères spéciaux et ponctuation
+    # Garder seulement lettres, chiffres et espaces
+    allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789 "
+    text = ''.join(char for char in text if char in allowed_chars)
+    
+    # Nettoyer les espaces multiples
+    text = ' '.join(text.split())
     
     return text.strip()
 
 
-def generate_song_id(title: str, album: str) -> str:
+def generate_album_id(album_title: str) -> str:
     """
-    Génère un ID stable pour une chanson.
-    Format: kworb:<norm_title>@<norm_album>
-    Si album inconnu, utiliser "unknown".
-    
-    IMPORTANT: Ne JAMAIS inclure le rank dans l'ID (stabilité inter-jours).
+    Génère un ID stable pour un album.
+    Format: kworb:album:<norm_album>
     """
-    norm_title = normalize_text(title)
-    norm_album = normalize_text(album) if album and album.lower() != "unknown" else "unknown"
-    
-    return f"kworb:{norm_title}@{norm_album}"
-
-
-def detect_role(title: str) -> str:
-    """
-    Détecte le rôle de The Weeknd sur un titre.
-    
-    Heuristique simple :
-    - Si "The Weeknd" apparaît en premier (ou seul) → "lead"
-    - Si "feat.", "with", "x", "&" avant "The Weeknd" → "feat"
-    """
-    title_lower = title.lower()
-    
-    # Patterns indiquant un featuring
-    feat_patterns = ["feat.", "feat ", "ft.", "ft ", "with ", " x ", " & "]
-    
-    for pattern in feat_patterns:
-        if pattern in title_lower:
-            # Vérifier si The Weeknd est après le pattern
-            pattern_pos = title_lower.find(pattern)
-            weeknd_pos = title_lower.find("the weeknd")
-            
-            if weeknd_pos > pattern_pos:
-                return "feat"
-    
-    # Par défaut, considérer comme lead
-    return "lead"
+    norm_album = normalize_text(album_title)
+    return f"kworb:album:{norm_album}"
 
 
 def clean_number(text: str) -> int:
@@ -123,37 +85,12 @@ def clean_number(text: str) -> int:
         return 0
 
 
-def parse_kworb_date(date_str: str) -> datetime:
+def scrape_kworb_albums(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict], datetime]:
     """
-    Parse une date Kworb (format variable, généralement "YYYY-MM-DD" ou timestamp).
-    Retourne un datetime UTC.
-    """
-    # Essayer différents formats
-    formats = [
-        "%Y-%m-%d",
-        "%Y-%m-%d %H:%M:%S",
-        "%d/%m/%Y",
-        "%m/%d/%Y"
-    ]
-    
-    for fmt in formats:
-        try:
-            dt = datetime.strptime(date_str.strip(), fmt)
-            return dt.replace(tzinfo=timezone.utc)
-        except ValueError:
-            continue
-    
-    # Si aucun format ne fonctionne, utiliser la date actuelle
-    print(f"⚠️  Impossible de parser la date '{date_str}', utilisation de la date actuelle")
-    return datetime.now(timezone.utc)
-
-
-def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict], datetime]:
-    """
-    Scrape la page Kworb Songs et retourne les données brutes.
+    Scrape la page Kworb Albums et retourne les données brutes.
     
     Returns:
-        Tuple[List[Dict], datetime]: (liste des chansons, timestamp de mise à jour)
+        Tuple[List[Dict], datetime]: (liste des albums, timestamp de mise à jour)
     """
     headers = {
         "User-Agent": USER_AGENT,
@@ -165,7 +102,7 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
     
     for attempt in range(retries):
         try:
-            print(f"🌐 Récupération des données depuis Kworb (tentative {attempt + 1}/{retries})...")
+            print(f"🌐 Récupération des données albums depuis Kworb (tentative {attempt + 1}/{retries})...")
             
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
@@ -175,7 +112,7 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Trouver la table des chansons (la deuxième table avec class 'sortable')
+            # Trouver la table des albums (table avec class 'sortable')
             tables = soup.find_all('table')
             table = None
             for t in tables:
@@ -184,21 +121,21 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
                     break
             
             if not table:
-                raise ValueError("Table de chansons non trouvée sur la page")
+                raise ValueError("Table d'albums non trouvée sur la page")
             
             rows = table.find_all('tr')[1:]  # Skip header
             
             if not rows:
                 raise ValueError("Aucune ligne de données trouvée dans la table")
             
-            songs = []
-            last_update_kworb = datetime.now(timezone.utc)  # Par défaut
-            seen_ids = {}  # Pour gérer les doublons temporaires
+            albums = []
+            last_update_kworb = datetime.now(timezone.utc)
+            seen_ids = {}  # Pour gérer les doublons
             
             for i, row in enumerate(rows, start=1):
                 cols = row.find_all('td')
                 
-                # Structure Kworb : [Title, Streams Total, Daily]
+                # Structure Kworb Albums : [Album Title, Streams Total, Daily]
                 if len(cols) < 3:
                     continue
                 
@@ -208,45 +145,35 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
                 streams_total_text = cols[1].get_text(strip=True)
                 streams_daily_text = cols[2].get_text(strip=True)
                 
-                # Pas d'info album sur Kworb Songs, on met "Unknown" par défaut
-                # (sera résolu plus tard via Spotify API)
-                album = "Unknown"
-                
                 # Nettoyage et typage
                 streams_total = clean_number(streams_total_text)
                 streams_daily = clean_number(streams_daily_text)
                 
-                # Détection du rôle
-                role = detect_role(title)
+                # Génération de l'ID stable
+                # Format: kworb:album:<norm_album>
+                base_id = generate_album_id(title)
+                album_id = base_id
                 
-                # Génération de l'ID stable (sans rank!)
-                # Format: kworb:<norm_title>@unknown
-                # Si doublon, ajouter suffixe numérique: @unknown-2, @unknown-3, etc.
-                base_id = generate_song_id(title, album)
-                song_id = base_id
-                
-                # Gérer les doublons temporaires (en attendant données Spotify)
-                if song_id in seen_ids:
-                    seen_ids[song_id] += 1
-                    # Remplacer @unknown par @unknown-N
-                    song_id = song_id.replace("@unknown", f"@unknown-{seen_ids[song_id]}")
+                # Gérer les doublons (ex: différentes éditions d'un même album)
+                if album_id in seen_ids:
+                    seen_ids[album_id] += 1
+                    # Ajouter suffixe numérique
+                    album_id = f"{base_id}-{seen_ids[album_id]}"
                 else:
-                    seen_ids[song_id] = 1
+                    seen_ids[album_id] = 1
                 
-                song = {
-                    "id": song_id,
+                album = {
+                    "id": album_id,
                     "rank": rank,
                     "title": title,
-                    "album": album,
-                    "role": role,
                     "streams_total": streams_total,
                     "streams_daily": streams_daily
                 }
                 
-                songs.append(song)
+                albums.append(album)
             
-            print(f"✅ {len(songs)} chansons extraites avec succès")
-            return songs, last_update_kworb
+            print(f"✅ {len(albums)} albums extraits avec succès")
+            return albums, last_update_kworb
             
         except requests.RequestException as e:
             print(f"❌ Erreur réseau (tentative {attempt + 1}/{retries}): {e}")
@@ -261,9 +188,9 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
             raise
 
 
-def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: Path) -> str:
+def create_snapshot(albums: List[Dict], last_update_kworb: datetime, base_path: Path) -> str:
     """
-    Crée un snapshot journalier dans data/history/songs/.
+    Crée un snapshot journalier dans data/history/albums/.
     
     Returns:
         str: La date spotify_data_date (YYYY-MM-DD)
@@ -271,24 +198,24 @@ def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: P
     # Calculer spotify_data_date = last_update_kworb - 1 jour
     spotify_data_date = (last_update_kworb - timedelta(days=1)).strftime("%Y-%m-%d")
     
-    # Enrichir chaque chanson avec les timestamps
-    snapshot_songs = []
-    for song in songs:
-        snapshot_song = {
-            **song,
+    # Enrichir chaque album avec les timestamps
+    snapshot_albums = []
+    for album in albums:
+        snapshot_album = {
+            **album,
             "last_update_kworb": last_update_kworb.isoformat(),
             "spotify_data_date": spotify_data_date
         }
-        snapshot_songs.append(snapshot_song)
+        snapshot_albums.append(snapshot_album)
     
     # Écrire le snapshot
-    snapshot_path = base_path / "data" / "history" / "songs" / f"{spotify_data_date}.json"
+    snapshot_path = base_path / "data" / "history" / "albums" / f"{spotify_data_date}.json"
     snapshot_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(snapshot_path, "w", encoding="utf-8") as f:
-        json.dump(snapshot_songs, f, indent=2, ensure_ascii=False)
+        json.dump(snapshot_albums, f, indent=2, ensure_ascii=False)
     
-    print(f"💾 Snapshot créé : {snapshot_path}")
+    print(f"💾 Snapshot Albums créé : {snapshot_path}")
     print(f"   Date des données Spotify : {spotify_data_date}")
     
     return spotify_data_date
@@ -296,7 +223,7 @@ def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: P
 
 def update_meta(spotify_data_date: str, last_update_kworb: datetime, base_path: Path):
     """
-    Met à jour data/meta.json avec les nouvelles informations.
+    Met à jour data/meta.json avec les nouvelles informations Albums.
     """
     meta_path = base_path / "data" / "meta.json"
     
@@ -307,46 +234,49 @@ def update_meta(spotify_data_date: str, last_update_kworb: datetime, base_path: 
     else:
         meta = {"history": {}}
     
-    # Récupérer les dates disponibles dans history/songs
-    songs_history_path = base_path / "data" / "history" / "songs"
-    available_dates = []
+    # Récupérer les dates disponibles dans history/albums
+    albums_history_path = base_path / "data" / "history" / "albums"
+    available_dates_albums = []
     
-    if songs_history_path.exists():
-        for file in songs_history_path.glob("*.json"):
+    if albums_history_path.exists():
+        for file in albums_history_path.glob("*.json"):
             date = file.stem
             if re.match(r'^\d{4}-\d{2}-\d{2}$', date):
-                available_dates.append(date)
+                available_dates_albums.append(date)
     
     # Trier par ordre décroissant
-    available_dates.sort(reverse=True)
+    available_dates_albums.sort(reverse=True)
     
     # Mettre à jour
     meta["kworb_last_update_utc"] = last_update_kworb.isoformat()
     meta["spotify_data_date"] = spotify_data_date
     meta["last_sync_local_iso"] = datetime.now().isoformat()
-    meta["history"] = {
-        "available_dates": available_dates,
-        "latest_date": available_dates[0] if available_dates else spotify_data_date
-    }
+    
+    # Garder la structure history.available_dates pour les songs aussi
+    if "history" not in meta:
+        meta["history"] = {}
+    
+    meta["history"]["latest_date"] = spotify_data_date
+    meta["history"]["available_dates_albums"] = available_dates_albums
     
     # Sauvegarder
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, ensure_ascii=False)
     
     print(f"📝 meta.json mis à jour")
-    print(f"   Dates disponibles : {len(available_dates)}")
+    print(f"   Dates albums disponibles : {len(available_dates_albums)}")
 
 
 def regenerate_current_view(base_path: Path):
     """
-    Régénère data/songs.json à partir des snapshots disponibles.
+    Régénère data/albums.json à partir des snapshots disponibles.
     Utilise le script generate_current_views.py existant.
     """
     import subprocess
     
     script_path = base_path / "scripts" / "generate_current_views.py"
     
-    print("🔄 Régénération de la vue courante data/songs.json...")
+    print("🔄 Régénération de la vue courante data/albums.json...")
     
     result = subprocess.run(
         [sys.executable, str(script_path)],
@@ -359,7 +289,7 @@ def regenerate_current_view(base_path: Path):
         print(result.stdout)
     else:
         print(f"❌ Erreur lors de la régénération: {result.stderr}")
-        raise Exception("Échec de la régénération de data/songs.json")
+        raise Exception("Échec de la régénération de data/albums.json")
 
 
 def main():
@@ -367,24 +297,24 @@ def main():
     base_path = Path(__file__).parent.parent
     
     print("="*60)
-    print("🎵 Scraper Kworb Songs — The Weeknd Dashboard")
+    print("💿 Scraper Kworb Albums — The Weeknd Dashboard")
     print("="*60)
     
     try:
-        # 1. Scraper Kworb
-        songs, last_update_kworb = scrape_kworb_songs(KWORB_SONGS_URL)
+        # 1. Scraper Kworb Albums
+        albums, last_update_kworb = scrape_kworb_albums(KWORB_ALBUMS_URL)
         
         # 2. Créer snapshot J
-        spotify_data_date = create_snapshot(songs, last_update_kworb, base_path)
+        spotify_data_date = create_snapshot(albums, last_update_kworb, base_path)
         
         # 3. Mettre à jour meta.json
         update_meta(spotify_data_date, last_update_kworb, base_path)
         
-        # 4. Régénérer data/songs.json
+        # 4. Régénérer data/albums.json
         regenerate_current_view(base_path)
         
         print("\n" + "="*60)
-        print("✅ Scraping terminé avec succès!")
+        print("✅ Scraping Albums terminé avec succès!")
         print("="*60)
         
     except Exception as e:

@@ -6,12 +6,29 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+**2025-10-02 — Prompt 4 : Scraper Albums + Correctif IDs Songs (stabilité inter-jours)**
+
+*Correctif Songs :*
+- IDs Songs corrigés pour respecter le contrat stable : `kworb:<norm_title>@<norm_album>` (sans rank)
+- Les chansons sans album connu utilisent `@unknown` (exemple : `kworb:blinding lights@unknown`)
+- Gestion des doublons temporaires : suffixe numérique ajouté (`@unknown-2`, `@unknown-3`) en attendant les données Spotify
+- 315 chansons avec IDs stables et uniques : ✅ pattern `^kworb:[^:]+@[^:]+$` respecté, 288 IDs avec `@unknown`
+
+*Scraper Albums :*
+- Scraper Albums Kworb opérationnel : extraction de 27 albums depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_albums.html
+- Parsing table Albums : rank, title, streams_total, streams_daily, last_update_kworb
+- IDs Albums format `kworb:album:<norm_album>` (normalisation complète : lowercase, suppression caractères spéciaux/ponctuation)
+- Snapshot Albums J créé dans `data/history/albums/2025-10-01.json` (27 albums, format brut)
+- `data/albums.json` généré avec paliers 1 milliard (1B) : next_cap_value = multiples de 1 000 000 000
+- Calculs : variation_pct (2 déc. ou "N.D."), days_to_next_cap (2 déc.)
+- meta.json mis à jour avec `available_dates_albums` et timestamps
+- Tests complets : 27 albums ≥ 20, IDs uniques, paliers 1B validés, dates cohérentes
+
 **2025-10-02 — Prompt 3 : Scraper Kworb Songs + snapshot J + data/songs.json**
 - Scraper Kworb Songs fonctionnel : extraction de 315 chansons depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html
 - User-Agent dédié "The-Weeknd-Dashboard/1.0", throttle 1s, retry avec backoff exponentiel (3 tentatives max)
 - Parsing HTML robuste avec BeautifulSoup : extraction rank, title, streams_total, streams_daily
 - Détection automatique du rôle : lead (The Weeknd premier artiste) ou feat (featuring)
-- Génération de clés id uniques basées sur title + rank (album temporaire "Unknown", sera résolu via Spotify API)
 - Snapshot J créé dans data/history/songs/2025-10-01.json (315 chansons, format brut sans calculs)
 - meta.json mis à jour automatiquement (kworb_last_update_utc, spotify_data_date, last_sync_local_iso, history.available_dates)
 - data/songs.json régénéré dynamiquement avec calculs (variation_pct, next_cap_value, days_to_next_cap)
@@ -37,24 +54,28 @@ data/                              # Données du dashboard
     snapshot-songs-schema.json     # Schéma pour snapshots songs
     snapshot-albums-schema.json    # Schéma pour snapshots albums
   songs.json                       # Vue courante des chansons (315 items avec calculs)
-  albums.json                      # Vue courante des albums (vide pour l'instant)
+  albums.json                      # Vue courante des albums (27 items avec calculs)
   meta.json                        # Métadonnées globales (dates, historique)
   history/                         # Snapshots journaliers
     songs/                         # Snapshots quotidiens des chansons (J, J-1, J-2)
       2025-09-29.json              # Fixture J-2
       2025-09-30.json              # Fixture J-1
-      2025-10-01.json              # Snapshot J actuel (315 chansons)
+      2025-10-01.json              # Snapshot J actuel (315 chansons, IDs stables)
     albums/                        # Snapshots quotidiens des albums
       2025-09-29.json              # Fixture J-2
       2025-09-30.json              # Fixture J-1
+      2025-10-01.json              # Snapshot J actuel (27 albums)
   album_detail/                    # Détails albums Spotify (à remplir plus tard)
 
 scripts/                           # Scripts Python de scraping, génération et validation
   start_dashboard.py               # 🚀 Script de lancement complet (scrape + serveur web)
-  scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons)
+  scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons, IDs stables)
+  scrape_kworb_albums.py           # Scraper Kworb Albums (extraction 27 albums)
   generate_current_views.py        # Génère data/songs.json et albums.json depuis snapshots
   validate_data.py                 # Valide conformité des données (schémas, arrondis, unicité, dates)
   test_scraper_songs.py            # Tests automatisés du scraper Songs (6 tests)
+  test_scraper_albums.py           # Tests automatisés du scraper Albums (7 tests)
+  test_songs_ids.py                # Tests IDs Songs (pattern, unicité, @unknown count)
 
 Website/                           # Dossier parent du code applicatif
   index.html                       # Page principale (SPA avec 3 pages)
@@ -85,8 +106,8 @@ python scripts/start_dashboard.py
 ```
 
 **Ce que fait cette commande** :
-1. ✅ Scrape automatiquement les dernières données depuis Kworb
-2. ✅ Met à jour data/songs.json avec les calculs
+1. ✅ Scrape automatiquement les dernières données (Songs + Albums) depuis Kworb
+2. ✅ Met à jour data/songs.json et data/albums.json avec les calculs
 3. ✅ Lance un serveur HTTP sur http://localhost:8000
 4. ✅ Ouvre automatiquement l'accès au dashboard
 
@@ -94,21 +115,23 @@ python scripts/start_dashboard.py
 
 ---
 
-### Lancement du scraper Kworb Songs
+### Lancement des scrapers individuels
 
-Pour récupérer les dernières données de streams depuis Kworb et mettre à jour le dashboard :
-
+**Scraper Songs** :
 ```bash
 python scripts/scrape_kworb_songs.py
 ```
 
-**Ce que fait le scraper** :
-1. Récupère les données depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html
-2. Crée un snapshot journalier dans `data/history/songs/{date}.json`
-3. Met à jour `data/meta.json` avec les nouvelles dates
-4. Régénère `data/songs.json` avec calculs (variation_pct, next_cap_value, days_to_next_cap)
+Récupère 315 chansons depuis Kworb, crée snapshot dans `data/history/songs/{date}.json`, met à jour `data/songs.json` avec paliers 100M.
 
-**Note** : Le scraper utilise un User-Agent dédié, un throttle de 1s entre requêtes, et un système de retry avec backoff exponentiel (3 tentatives max).
+**Scraper Albums** :
+```bash
+python scripts/scrape_kworb_albums.py
+```
+
+Récupère 27 albums depuis Kworb, crée snapshot dans `data/history/albums/{date}.json`, met à jour `data/albums.json` avec paliers 1B.
+
+**Note** : Les scrapers utilisent un User-Agent dédié, throttle 1s, et retry avec backoff exponentiel (3 tentatives max).
 
 ### Génération manuelle des vues courantes
 
@@ -413,6 +436,52 @@ python scripts/test_scraper_songs.py
 - Test 4 : Rôles lead/feat présents (PASS)
 - Test 5 : Dates cohérentes (PASS)
 - Test 6 : Unicité des id (PASS)
+
+---
+
+#### `scripts/test_scraper_albums.py` — Tests du scraper Kworb Albums
+**Fonction** : Vérifie l'intégrité et la qualité des données albums scrapées depuis Kworb
+**Tests effectués** :
+- Comptage minimum d'albums (>= 20 requis, 27 constatés)
+- Pattern des IDs Albums : `^kworb:album:[a-z0-9\s]+(-\d+)?$`
+- Unicité des clés id (27 IDs uniques)
+- Variations numériques (2 décimales) ou "N.D." pour données manquantes
+- Paliers 1B : next_cap_value multiples de 1 000 000 000
+- Jours restants (days_to_next_cap) avec arrondis 2 décimales
+- Cohérence des dates (spotify_data_date, latest_date, available_dates_albums)
+
+**Commande** :
+```bash
+python scripts/test_scraper_albums.py
+```
+
+**Résultats attendus** :
+- Test 1 : 27 albums ≥ 20 (PASS)
+- Test 2 : Pattern IDs valide (PASS)
+- Test 3 : Unicité des IDs (PASS)
+- Test 4-5 : Variations et paliers 1B (PASS)
+- Test 6-7 : Jours restants et dates cohérentes (PASS)
+
+---
+
+#### `scripts/test_songs_ids.py` — Validation IDs Songs (Prompt 4)
+**Fonction** : Vérifie que les IDs Songs respectent le format stable après correctif Prompt 4
+**Tests effectués** :
+- Pattern correct : `^kworb:[^:]+@[^:]+$` (sans rank)
+- Comptage des IDs avec `@unknown` (288 sur 315)
+- Absence de 'rank' dans les IDs
+- Unicité absolue des IDs (315 uniques)
+
+**Commande** :
+```bash
+python scripts/test_songs_ids.py
+```
+
+**Résultats attendus** :
+- Pattern valide : 315/315 (PASS)
+- IDs avec @unknown : 288 (PASS)
+- Aucun 'rank' dans IDs (PASS)
+- Unicité : 315 uniques (PASS)
 
 ---
 
