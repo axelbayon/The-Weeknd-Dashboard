@@ -30,35 +30,6 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 - Auto-refresh actif dès le démarrage, synchronisation toutes les 10 minutes
 - 3 snapshots maintenus : J, J-1, J-2 pour calcul variations stables
 
-**2025-10-02 — Prompt 4 : Scraper Albums + Correctif IDs Songs (stabilité inter-jours)**
-
-*Correctif Songs :*
-- IDs Songs corrigés pour respecter le contrat stable : `kworb:<norm_title>@<norm_album>` (sans rank)
-- Les chansons sans album connu utilisent `@unknown` (exemple : `kworb:blinding lights@unknown`)
-- Gestion des doublons temporaires : suffixe numérique ajouté (`@unknown-2`, `@unknown-3`) en attendant les données Spotify
-- 315 chansons avec IDs stables et uniques : ✅ pattern `^kworb:[^:]+@[^:]+$` respecté, 288 IDs avec `@unknown`
-
-*Scraper Albums :*
-- Scraper Albums Kworb opérationnel : extraction de 27 albums depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_albums.html
-- Parsing table Albums : rank, title, streams_total, streams_daily, last_update_kworb
-- IDs Albums format `kworb:album:<norm_album>` (normalisation complète : lowercase, suppression caractères spéciaux/ponctuation)
-- Snapshot Albums J créé dans `data/history/albums/2025-10-01.json` (27 albums, format brut)
-- `data/albums.json` généré avec paliers 1 milliard (1B) : next_cap_value = multiples de 1 000 000 000
-- Calculs : variation_pct (2 déc. ou "N.D."), days_to_next_cap (2 déc.)
-- meta.json mis à jour avec `available_dates_albums` et timestamps
-- Tests complets : 27 albums ≥ 20, IDs uniques, paliers 1B validés, dates cohérentes
-
-**2025-10-02 — Prompt 3 : Scraper Kworb Songs + snapshot J + data/songs.json**
-- Scraper Kworb Songs fonctionnel : extraction de 315 chansons depuis https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html
-- User-Agent dédié "The-Weeknd-Dashboard/1.0", throttle 1s, retry avec backoff exponentiel (3 tentatives max)
-- Parsing HTML robuste avec BeautifulSoup : extraction rank, title, streams_total, streams_daily
-- Détection automatique du rôle : lead (The Weeknd premier artiste) ou feat (featuring)
-- Snapshot J créé dans data/history/songs/2025-10-01.json (315 chansons, format brut sans calculs)
-- meta.json mis à jour automatiquement (kworb_last_update_utc, spotify_data_date, last_sync_local_iso, history.available_dates)
-- data/songs.json régénéré dynamiquement avec calculs (variation_pct, next_cap_value, days_to_next_cap)
-- Script generate_current_views.py rendu dynamique (utilise les dates disponibles dans meta.json)
-- Toutes les validations passent : 315 id uniques, 282 lead + 33 feat, dates cohérentes, paliers corrects
-
 ---
 
 ## Structure du repo
@@ -93,7 +64,7 @@ data/                              # Données du dashboard
 
 scripts/                           # Scripts Python de scraping, génération et validation
   start_dashboard.py               # 🚀 Script de lancement complet (orchestrateur + serveur web)
-  auto_refresh.py                  # Orchestrateur auto-refresh (pipeline 10 min, lock, jitter)
+  auto_refresh.py                  # Orchestrateur auto-refresh (pipeline 10 min, lock, jitter, rotation J/J-1/J-2)
   scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons, IDs stables)
   scrape_kworb_albums.py           # Scraper Kworb Albums (extraction 27 albums)
   generate_current_views.py        # Génère data/songs.json et albums.json depuis snapshots
@@ -541,42 +512,6 @@ python scripts/test_songs_ids.py
 - IDs avec @unknown : 288 (PASS)
 - Aucun 'rank' dans IDs (PASS)
 - Unicité : 315 uniques (PASS)
-
----
-
-### Prompt 1 — Tests de l'UI Shell
-
-### Test 1 - Arborescence complète
-**Commande** : `Get-ChildItem -Recurse -Depth 4`  
-**Objectif** : Vérifier la structure du projet avec README.md et .env.local à la racine, et tous les dossiers applicatifs dans Website/.
-
-### Test 2 - README à la racine
-**Commande** : `Test-Path README.md`  
-**Objectif** : Confirmer que README.md est bien à la racine du projet.
-
-### Test 3 - .env.local à la racine
-**Commande** : `Test-Path .env.local`  
-**Objectif** : Confirmer que .env.local est bien à la racine du projet.
-
-### Test 4 - global.css dans src/styles
-**Commande** : `Test-Path Website/src/styles/global.css`  
-**Objectif** : Confirmer que global.css est bien dans Website/src/styles/.
-
-### Test 5 - Unicité du CSS
-**Commande** : `Get-ChildItem -Filter "global.css" -Recurse`  
-**Objectif** : Confirmer qu'un seul fichier global.css existe dans le projet (Website/src/styles/global.css).
-
-### Test 6 - Protection des secrets
-**Commande** : `git check-ignore -v .env.local`  
-**Objectif** : Prouver que .env.local à la racine est bien ignoré par Git (ligne 7 de .gitignore).
-
-### Test 7 - Intégrité du CSS
-**Commande** : `Measure-Object -Line Website/src/styles/global.css`  
-**Objectif** : Vérifier que le CSS n'a pas été tronqué lors du déplacement (960 lignes attendues).
-
-### Test 8 - .gitignore mis à jour
-**Commande** : `Select-String -Pattern "\.env\.local" .gitignore`  
-**Objectif** : Confirmer que .gitignore contient bien `.env.local` à la ligne 7.
 
 ---
 
