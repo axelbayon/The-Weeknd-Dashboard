@@ -995,7 +995,7 @@ a {
 
 /* Couleurs rang par type (page Caps) */
 .data-table__cell--rank-song {
-  color: #14b8a6; /* Turquoise/teal (titres) */
+  color: #3b82f6; /* Bleu (titres) */
 }
 
 .data-table__cell--rank-album {
@@ -1324,9 +1324,9 @@ a {
 
 /* Badge type (Song/Album) */
 .flag-chip--song {
-  background: rgba(20, 184, 166, 0.12);
-  border-color: rgba(20, 184, 166, 0.35);
-  color: #14b8a6;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #3b82f6;
 }
 
 .flag-chip--album {
@@ -1349,6 +1349,16 @@ a {
   }
 }
 
+/* Headers Caps : taille réduite et typographie homogène */
+.data-table--caps th {
+  font-size: 0.8rem;
+}
+
+.data-table--caps .data-table__header-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Largeurs colonnes tableau Caps */
 .data-table--caps th:nth-child(1),
 .data-table--caps td:nth-child(1) {
@@ -1369,10 +1379,10 @@ a {
 
 .data-table--caps th:nth-child(2),
 .data-table--caps td:nth-child(2) {
-  /* Titre - colonne réduite pour libérer espace + sticky */
+  /* Titre - colonne sticky avec largeur relative 25% */
   position: sticky;
   left: 60px; /* Décalage après colonne # (60px) */
-  width: auto;
+  width: 25%;
   min-width: 260px;
   max-width: 380px;
   background: var(--color-surface);

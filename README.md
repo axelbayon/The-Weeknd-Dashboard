@@ -8,134 +8,30 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
-**2025-10-03 — Prompt 7.3 : Caps imminents - Ajustements UI/UX finaux**
+**2025-01-27 — Prompt 7.4 : Caps imminents — couleur TITRE (bleu), headers compacts, Titres=25%, tri robuste**
 
-*Alignement parfait avec pages Titres/Albums :*
+**Problématique** : La couleur turquoise (Prompt 7.3) est perçue comme verte par l'utilisateur. Les headers pourraient déborder avec les indicateurs de tri. La largeur `auto` pour Titre n'est pas optimale. Le mapping de tri via `sortKeys[]` est fragile : si l'ordre des colonnes change, le tri se désynchronise.
 
-**A) Colonne Titre réduite davantage** :
-- Titre : 280-400px → 260-380px (libère encore plus d'espace pour colonnes numériques)
-- Cover, titre, album subtitle et astérisque * conservés
-- Tri alpha ignore * inchangé
+**Solution** :
+1. **Couleur TITRE bleue (#3b82f6)** : Remplacement de turquoise #14b8a6 par bleu #3b82f6 pour les rangs (`data-table__cell--rank-song`) et badges (`flag-chip--song`). Contraste AA respecté, cohérence visuelle entre rang # et badge Type.
+2. **Headers compacts et homogènes** : Réduction de tous les headers Caps à 0.8rem (vs défaut), ajout de `white-space: nowrap` et `font-weight: 600`. Évite le débordement, typographie uniforme.
+3. **Type centré** : Confirmé déjà implémenté en Prompt 7.3 (class `data-table__cell--numeric`).
+4. **Titres = 25%** : Largeur colonne Titre changée de `auto` à `width: 25%` (avec min 260px / max 380px conservés). Meilleur comportement responsive.
+5. **Tri robuste avec data-attributes** : Ajout de `data-sort-key="rank"` (etc.) sur chaque `<th>` du tableau Caps. Modification de `handleSortClick()` pour lire `th.dataset.sortKey` au lieu d'utiliser l'index et le tableau `sortKeys[]`. Source de vérité unique : HTML contrôle le mapping, plus de désynchronisation si on réordonne les colonnes.
 
-**B) Header Type centré** :
-- Ajout classe `data-table__cell--numeric` au header Type
-- Centrage horizontal et vertical comme les autres headers numériques
-- Contenu des cellules Type déjà centré
+**Critères de validation** :
+- ✅ Couleur TITRE = bleu #3b82f6 (pas verte)
+- ✅ Headers Caps = 0.8rem, nowrap, uniforme
+- ✅ Type centré (déjà fait)
+- ✅ Titres = 25% largeur table
+- ✅ Tri fonctionne sur toutes colonnes sans bug après réordonnancement
 
-**C) Nouvelle couleur turquoise pour TITRE** :
-- Badge Type TITRE : turquoise/teal (#14b8a6) au lieu de rouge
-- Rang # pour lignes TITRE : même turquoise (#14b8a6)
-- Badge et rang ALBUM : violet #7c6dff inchangé
-- Classes CSS : `.flag-chip--song` et `.data-table__cell--rank-song`
-- Contrastes AA validés
+**Fichiers modifiés** :
+- `Website/src/styles/global.css` : lignes 997-1003 (rank colors), 1326-1337 (badge colors), 1347-1355 (compact headers), 1372-1383 (Titres 25%)
+- `Website/index.html` : ajout de `data-sort-key` sur tous les `<th>` de la table Caps (lignes 461-507)
+- `Website/src/caps.js` : suppression du tableau `sortKeys[]`, lecture de `th.dataset.sortKey` dans `handleSortClick()` (lignes 100-120)
 
-**D) Renommer et déplacer colonne ETA** :
-- Header : "ETA" → "Date prévue" (plus clair en français)
-- Position : déplacée juste après "Prochain cap (j)"
-- Nouvel ordre : # | Titre | Type | Prochain cap (j) | **Date prévue** | Streams totaux | Streams quotidiens | Variation (%) | Prochain palier
-- Calcul et format de date inchangés
-- Mapping sortKeys ajusté dans handleSortClick()
-
-**E) Légende * = featuring alignée sur page Titres** :
-- Remplacement `.data-table__header-legend` par `.data-table__legend`
-- Wrapper `.data-table__header-wrapper` comme sur Titres
-- Style badge arrondi identique (border, background, uppercase, padding)
-- Suppression du style italic spécifique 7.2
-- pointer-events géré par le wrapper, tri fonctionne correctement
-
-**F) Colonne Titre sticky** :
-- Colonnes # et Titre sticky sur scroll horizontal
-- # : `position: sticky; left: 0;` avec z-index 7/9
-- Titre : `position: sticky; left: 60px;` avec box-shadow
-- Backgrounds différents pour thead/tbody
-- Comportement identique à Titres/Albums
-
-*Fichiers modifiés :*
-- `Website/index.html` :
-  - Header Type : ajout classe `data-table__cell--numeric`
-  - Header ETA → "Date prévue" et déplacé après "Prochain cap (j)"
-  - Légende Titre : remplacement par markup identique à page Titres (`.data-table__legend` dans `.data-table__header-wrapper`)
-  - Cache-busting v7.3 (CSS et JS)
-- `Website/src/caps.js` :
-  - Badge Type : ajout classe `flag-chip--song` pour titres
-  - Ordre des cellules : Date prévue déplacée après Prochain cap (j)
-  - Suppression ancienne cellule ETA en fin de row
-  - sortKeys mapping ajusté (9 colonnes avec nouvel ordre)
-- `Website/src/styles/global.css` :
-  - `.data-table__cell--rank-song` : color #14b8a6 (turquoise au lieu de rouge)
-  - `.flag-chip--song` : background, border et color turquoise
-  - `.data-table--caps th/td:nth-child(1)` : sticky left:0 avec backgrounds
-  - `.data-table--caps th/td:nth-child(2)` : sticky left:60px, 260-380px, box-shadow
-  - Suppression `.data-table__header-legend` (remplacé par `.data-table__legend` existant)
-
-*Tests de validation :*
-1. ✅ Largeur Titre réduite (260-380px) sans troncation, colonnes numériques plus confortables
-2. ✅ Header Type centré visuellement comme autres headers
-3. ✅ Couleur turquoise (#14b8a6) pour badge TITRE et rang #, violet pour ALBUM
-4. ✅ Contraste AA validé (WCAG)
-5. ✅ Header "Date prévue" visible, colonne après "Prochain cap (j)"
-6. ✅ Tri par Date prévue fonctionne (ordre chronologique)
-7. ✅ Légende * = featuring identique visuellement à page Titres
-8. ✅ Tri par Titre fonctionne, légende ne bloque pas le clic
-9. ✅ Colonnes # et Titre sticky en scroll horizontal avec ombre
-10. ✅ Aucune régression (tri, navigation croisée, auto-refresh, centrages, formats)
-
----
-
-**2025-10-03 — Prompt 7.2 : Caps imminents - Finitions ergonomie et francisation**
-
-*Dernières finitions UI et traduction complète :*
-
-**A) Couleurs rang par type** :
-- Badge # coloré selon type : TITRE (rouge accent rgba(255,54,92,0.95)) | ALBUM (violet #7c6dff)
-- Classes CSS `.data-table__cell--rank-song` et `.data-table__cell--rank-album` appliquées dynamiquement
-- Tri numérique sur rang conservé
-
-**B) Largeur colonne Titre réduite** :
-- Titre : 320-500px → 280-400px (libère espace pour autres colonnes)
-- Astérisque *, tri alpha et alignement cover/nom/album conservés
-
-**C) Légende featuring déplacée** :
-- Légende "* = featuring" maintenant dans header Titre (même ligne que "Titre")
-- Style : `.data-table__header-legend` discret, italic, opacity 0.7, pointer-events:none
-- Ancienne légende en bas du tableau supprimée
-
-**D) Correction tri Type** :
-- Fix mapping sortKeys dans handleSortClick() : ordre corrigé rank | title | type | days | ...
-- Type trie désormais sa propre colonne (plus la colonne suivante)
-- Indicateurs ▲/▼ se placent correctement
-
-**E) Francisation complète "Songs → Titres"** :
-- **Nav-bar** : Onglet "Songs" → "Titres"
-- **Toggles Caps** : "Songs" → "Titres"
-- **Valeurs colonne Type** : "Song" → "TITRE" | "Album" → "ALBUM"
-- Cohérence linguistique totale
-
-*Fichiers modifiés :*
-- `Website/index.html` :
-  - Nav "Songs" → "Titres"
-  - Toggle "Songs" → "Titres"
-  - Légende déplacée dans <th> Titre : `<span class="data-table__header-legend">* = featuring</span>`
-  - Légende `<p class="data-table__legend">` en bas supprimée
-  - Cache-busting v7.2 (CSS et JS)
-- `Website/src/caps.js` :
-  - `createCapsRow()` : Classes rank-song/rank-album ajoutées, "Song"/"Album" → "TITRE"/"ALBUM"
-  - `handleSortClick()` : sortKeys fixé (rank, title, type, days...)
-- `Website/src/styles/global.css` :
-  - `.data-table__cell--rank-song` : color rouge accent
-  - `.data-table__cell--rank-album` : color violet
-  - `.data-table__header-legend` : style discret dans header
-  - `.data-table--caps th:nth-child(2)` : min-width 320→280px, max-width 500→400px
-  - Ancien `.data-table__legend` (bas tableau) supprimé
-
-*Tests de validation :*
-1. ✅ Rang # coloré : titre rouge, album violet
-2. ✅ Colonne Titre plus compacte (280-400px au lieu de 320-500px)
-3. ✅ Légende "* = featuring" visible à côté du header Titre
-4. ✅ Tri Type fonctionne (trie sa propre colonne)
-5. ✅ Indicateur tri sur Type quand trié
-6. ✅ Nav "Titres", toggle "Titres", valeurs "TITRE"/"ALBUM"
-7. ✅ Aucune régression tri, navigation croisée, auto-refresh
+**Cache-busting** : v7.4 (`index.html` lignes 13-14)
 
 ---
 

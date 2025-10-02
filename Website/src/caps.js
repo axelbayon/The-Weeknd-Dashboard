@@ -106,23 +106,14 @@
         if (!button) return;
 
         const th = button.closest('th');
-        const columnIndex = Array.from(th.parentElement.children).indexOf(th);
         
-        // Mapping des colonnes vers les clés de tri
-        // Ordre réel : # | Titre | Type | Prochain cap(j) | Date prévue | Streams totaux | Streams quotidiens | Variation(%) | Prochain palier
-        const sortKeys = [
-            'rank',              // #
-            'title',             // Titre
-            'type',              // Type
-            'days_to_next_cap',  // Prochain cap (j)
-            'eta',               // Date prévue
-            'streams_total',     // Streams totaux
-            'streams_daily',     // Streams quotidiens
-            'variation_pct',     // Variation (%)
-            'next_cap_value'     // Prochain palier
-        ];
-
-        const sortKey = sortKeys[columnIndex];
+        // Lecture de la clé de tri depuis l'attribut data-sort-key (source de vérité unique)
+        const sortKey = th.dataset.sortKey;
+        
+        if (!sortKey) {
+            console.warn('data-sort-key manquant sur', th);
+            return;
+        }
         
         // Inverser la direction si on clique sur la même colonne
         if (currentSortKey === sortKey) {
