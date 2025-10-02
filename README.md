@@ -6,6 +6,38 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+**2025-10-02 — Prompt 6.1 : Fix UI (espacements, centrage, tri + flèches, libellés) + Stats Lead/Feat Kworb**
+
+*Ergonomie nettoyée :*
+- **Espacements** : marge 28px entre tuiles et tableaux, gaps 1rem/1.25rem entre tuiles
+- **Centrage** : toutes les colonnes centrées par défaut, sauf colonne Titre (gauche)
+- **Prochain palier** : libellé en minuscules (pas d'uppercase forcé), affiche "Prochain palier"
+- **Légende** : note discrète "* = featuring" sous les tables Songs et Albums (classe table-legend)
+
+*Tri cliquable (table-sort.js) :*
+- Toutes les colonnes utiles triables : #, Titre, Streams totaux/quotidiens, Variation (%), Prochain cap (j), Prochain palier
+- Clic header → alterne ascendant/descendant, flèches ▲/▼ visibles, état actif (couleur accent + fond)
+- ARIA : role="columnheader" + aria-sort dynamique (ascending/descending/none)
+- Tri alphabétique Titre : ignore * initial (featuring) mais affiche *, utilise Collator FR pour accents
+- Tri par défaut : streams_total desc avec indicateur visuel actif
+- Intégré dans data-renderer.js : réinitialisation après chaque rendu de table
+
+*Stats Lead/Feat depuis Kworb :*
+- Rappel : champ `role` dans `songs.json` reflète déjà la classification Kworb ("lead" / "feat")
+- Agrégats Lead/Feat calculés à partir de `role` = agrégats "as lead artist" et "as featured artist" de Kworb
+- Solo / Lead = tous les titres avec role="lead" (correspond à "as lead artist" Kworb)
+- Feat = tous les titres avec role="feat" (correspond à "as featured artist" Kworb)
+- Validation : `lead_count + feat_count = total_count`
+
+*Technique :*
+- CSS : .page-header--aggregate margin-bottom 28px, gap 1rem/row-gap 1.25rem, td text-align center (sauf th/td:nth-child(2) left)
+- Retrait text-transform uppercase du thead, ajout sur .data-table__header-text pour garder cohérence
+- table-sort.js : normalizeTitle() ignore *, compareValues() gère number/title/text, updateHeaderStates() applique .is-sorted
+- data-sort-value et data-sort-raw ajoutés sur chaque <td> pour tri stable
+- Légende HTML avec classe .table-legend insérée après .table-wrapper
+
+---
+
 **2025-10-02 — Prompt 6 : Connexion UI aux données + Recherche sticky + Formats FR**
 
 *Connexion UI/données :*
@@ -101,9 +133,10 @@ Website/                           # Dossier parent du code applicatif
     data-renderer.js               # Module rendu tables/agrégats (calculs, formatage, DOM)
     formatters.js                  # Module formatage FR (nombres, %, jours, M/B)
     search.js                      # Recherche sticky avec suggestions et navigation
+    table-sort.js                  # Système tri cliquable (flèches, ARIA, tri alpha ignore *)
     meta-refresh.js                # Script de mise à jour dynamique des en-têtes (fetch meta.json)
     styles/
-      global.css                   # CSS canonique (960 lignes, dark theme)
+      global.css                   # CSS canonique (980 lignes, dark theme, espacements/centrage fixés)
   public/
     styles/                        # Assets CSS additionnels (vide pour l'instant)
 

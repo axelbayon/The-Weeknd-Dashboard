@@ -232,6 +232,14 @@ class DataRenderer {
 
             this.lastRenderedData.songs = songs;
             console.log(`✅ Table Songs rendue: ${sortedSongs.length} lignes`);
+
+            // Ajouter la légende featuring si elle n'existe pas déjà
+            this.addTableLegend('songs');
+
+            // Réinitialiser le tri (table-sort.js)
+            if (window.tableSort) {
+                window.tableSort.reinitTable('songs');
+            }
         } catch (error) {
             console.error('❌ Erreur rendu table Songs:', error);
             this.showError('songs-table');
@@ -251,12 +259,16 @@ class DataRenderer {
         // Colonne #
         const tdRank = document.createElement('td');
         tdRank.className = 'data-table__cell--rank';
+        tdRank.setAttribute('data-sort-value', 'rank');
+        tdRank.setAttribute('data-sort-raw', displayRank);
         tdRank.textContent = displayRank;
         tr.appendChild(tdRank);
 
         // Colonne Titre
         const tdTitle = document.createElement('td');
         tdTitle.className = 'data-table__cell--title';
+        tdTitle.setAttribute('data-sort-value', 'title');
+        tdTitle.setAttribute('data-sort-raw', song.title); // Garde * pour tri intelligent
         tdTitle.innerHTML = `
             <div class="data-table__title-wrapper">
                 <div class="data-table__title-cover">
@@ -273,18 +285,24 @@ class DataRenderer {
         // Colonne Streams totaux
         const tdStreamsTotal = document.createElement('td');
         tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
+        tdStreamsTotal.setAttribute('data-sort-raw', song.streams_total);
         tdStreamsTotal.textContent = formatStreams(song.streams_total);
         tr.appendChild(tdStreamsTotal);
 
         // Colonne Streams quotidiens
         const tdStreamsDaily = document.createElement('td');
         tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
+        tdStreamsDaily.setAttribute('data-sort-raw', song.streams_daily);
         tdStreamsDaily.textContent = formatDailyStreams(song.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
         // Colonne Variation (%)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric';
+        tdVariation.setAttribute('data-sort-value', 'variation');
+        tdVariation.setAttribute('data-sort-raw', song.variation_pct || 0);
         const variationText = formatPercent(song.variation_pct);
         
         if (variationText === 'N.D.') {
@@ -299,12 +317,16 @@ class DataRenderer {
         // Colonne Prochain cap (j)
         const tdDaysToCap = document.createElement('td');
         tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.setAttribute('data-sort-value', 'days_to_next_cap');
+        tdDaysToCap.setAttribute('data-sort-raw', song.days_to_next_cap || 999999);
         tdDaysToCap.textContent = formatDays(song.days_to_next_cap);
         tr.appendChild(tdDaysToCap);
 
         // Colonne Prochain palier
         const tdNextCap = document.createElement('td');
         tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.setAttribute('data-sort-value', 'next_cap');
+        tdNextCap.setAttribute('data-sort-raw', formatCap(song.next_cap_value));
         tdNextCap.textContent = formatCap(song.next_cap_value);
         tr.appendChild(tdNextCap);
 
@@ -343,6 +365,14 @@ class DataRenderer {
 
             this.lastRenderedData.albums = albums;
             console.log(`✅ Table Albums rendue: ${sortedAlbums.length} lignes`);
+
+            // Ajouter la légende featuring si elle n'existe pas déjà
+            this.addTableLegend('albums');
+
+            // Réinitialiser le tri (table-sort.js)
+            if (window.tableSort) {
+                window.tableSort.reinitTable('albums');
+            }
         } catch (error) {
             console.error('❌ Erreur rendu table Albums:', error);
             this.showError('albums-table');
@@ -362,12 +392,16 @@ class DataRenderer {
         // Colonne #
         const tdRank = document.createElement('td');
         tdRank.className = 'data-table__cell--rank';
+        tdRank.setAttribute('data-sort-value', 'rank');
+        tdRank.setAttribute('data-sort-raw', displayRank);
         tdRank.textContent = displayRank;
         tr.appendChild(tdRank);
 
         // Colonne Titre
         const tdTitle = document.createElement('td');
         tdTitle.className = 'data-table__cell--title';
+        tdTitle.setAttribute('data-sort-value', 'title');
+        tdTitle.setAttribute('data-sort-raw', album.title);
         tdTitle.innerHTML = `
             <div class="data-table__title-wrapper">
                 <div class="data-table__title-cover">
@@ -383,18 +417,24 @@ class DataRenderer {
         // Colonne Streams totaux
         const tdStreamsTotal = document.createElement('td');
         tdStreamsTotal.className = 'data-table__cell--numeric';
+        tdStreamsTotal.setAttribute('data-sort-value', 'streams_total');
+        tdStreamsTotal.setAttribute('data-sort-raw', album.streams_total);
         tdStreamsTotal.textContent = formatStreams(album.streams_total);
         tr.appendChild(tdStreamsTotal);
 
         // Colonne Streams quotidiens
         const tdStreamsDaily = document.createElement('td');
         tdStreamsDaily.className = 'data-table__cell--numeric';
+        tdStreamsDaily.setAttribute('data-sort-value', 'streams_daily');
+        tdStreamsDaily.setAttribute('data-sort-raw', album.streams_daily);
         tdStreamsDaily.textContent = formatDailyStreams(album.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
         // Colonne Variation (%)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric';
+        tdVariation.setAttribute('data-sort-value', 'variation');
+        tdVariation.setAttribute('data-sort-raw', album.variation_pct || 0);
         const variationText = formatPercent(album.variation_pct);
         
         if (variationText === 'N.D.') {
@@ -409,12 +449,16 @@ class DataRenderer {
         // Colonne Prochain cap (j)
         const tdDaysToCap = document.createElement('td');
         tdDaysToCap.className = 'data-table__cell--numeric';
+        tdDaysToCap.setAttribute('data-sort-value', 'days_to_next_cap');
+        tdDaysToCap.setAttribute('data-sort-raw', album.days_to_next_cap || 999999);
         tdDaysToCap.textContent = formatDays(album.days_to_next_cap);
         tr.appendChild(tdDaysToCap);
 
         // Colonne Prochain palier
         const tdNextCap = document.createElement('td');
         tdNextCap.className = 'data-table__cell--numeric';
+        tdNextCap.setAttribute('data-sort-value', 'next_cap');
+        tdNextCap.setAttribute('data-sort-raw', formatCap(album.next_cap_value));
         tdNextCap.textContent = formatCap(album.next_cap_value);
         tr.appendChild(tdNextCap);
 
@@ -427,6 +471,33 @@ class DataRenderer {
     showError(context) {
         // TODO: Implémenter une notification légère
         console.error(`Erreur de chargement: ${context}`);
+    }
+
+    /**
+     * Ajoute une légende discrète sous la table (featuring)
+     */
+    addTableLegend(tableType) {
+        const tableSection = document.querySelector(`#page-${tableType} .table-section`);
+        if (!tableSection) return;
+
+        // Vérifier si la légende existe déjà
+        const existingLegend = tableSection.querySelector('.table-legend');
+        if (existingLegend) return;
+
+        // Créer la légende
+        const legend = document.createElement('div');
+        legend.className = 'table-legend';
+        legend.innerHTML = `
+            <div class="table-legend__item">
+                <span>* = featuring</span>
+            </div>
+        `;
+
+        // Insérer après le table-wrapper
+        const tableWrapper = tableSection.querySelector('.table-wrapper');
+        if (tableWrapper) {
+            tableWrapper.insertAdjacentElement('afterend', legend);
+        }
     }
 
     /**
