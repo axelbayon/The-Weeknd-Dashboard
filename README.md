@@ -8,6 +8,80 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-03 — Prompt 7.3 : Caps imminents - Ajustements UI/UX finaux**
+
+*Alignement parfait avec pages Titres/Albums :*
+
+**A) Colonne Titre réduite davantage** :
+- Titre : 280-400px → 260-380px (libère encore plus d'espace pour colonnes numériques)
+- Cover, titre, album subtitle et astérisque * conservés
+- Tri alpha ignore * inchangé
+
+**B) Header Type centré** :
+- Ajout classe `data-table__cell--numeric` au header Type
+- Centrage horizontal et vertical comme les autres headers numériques
+- Contenu des cellules Type déjà centré
+
+**C) Nouvelle couleur turquoise pour TITRE** :
+- Badge Type TITRE : turquoise/teal (#14b8a6) au lieu de rouge
+- Rang # pour lignes TITRE : même turquoise (#14b8a6)
+- Badge et rang ALBUM : violet #7c6dff inchangé
+- Classes CSS : `.flag-chip--song` et `.data-table__cell--rank-song`
+- Contrastes AA validés
+
+**D) Renommer et déplacer colonne ETA** :
+- Header : "ETA" → "Date prévue" (plus clair en français)
+- Position : déplacée juste après "Prochain cap (j)"
+- Nouvel ordre : # | Titre | Type | Prochain cap (j) | **Date prévue** | Streams totaux | Streams quotidiens | Variation (%) | Prochain palier
+- Calcul et format de date inchangés
+- Mapping sortKeys ajusté dans handleSortClick()
+
+**E) Légende * = featuring alignée sur page Titres** :
+- Remplacement `.data-table__header-legend` par `.data-table__legend`
+- Wrapper `.data-table__header-wrapper` comme sur Titres
+- Style badge arrondi identique (border, background, uppercase, padding)
+- Suppression du style italic spécifique 7.2
+- pointer-events géré par le wrapper, tri fonctionne correctement
+
+**F) Colonne Titre sticky** :
+- Colonnes # et Titre sticky sur scroll horizontal
+- # : `position: sticky; left: 0;` avec z-index 7/9
+- Titre : `position: sticky; left: 60px;` avec box-shadow
+- Backgrounds différents pour thead/tbody
+- Comportement identique à Titres/Albums
+
+*Fichiers modifiés :*
+- `Website/index.html` :
+  - Header Type : ajout classe `data-table__cell--numeric`
+  - Header ETA → "Date prévue" et déplacé après "Prochain cap (j)"
+  - Légende Titre : remplacement par markup identique à page Titres (`.data-table__legend` dans `.data-table__header-wrapper`)
+  - Cache-busting v7.3 (CSS et JS)
+- `Website/src/caps.js` :
+  - Badge Type : ajout classe `flag-chip--song` pour titres
+  - Ordre des cellules : Date prévue déplacée après Prochain cap (j)
+  - Suppression ancienne cellule ETA en fin de row
+  - sortKeys mapping ajusté (9 colonnes avec nouvel ordre)
+- `Website/src/styles/global.css` :
+  - `.data-table__cell--rank-song` : color #14b8a6 (turquoise au lieu de rouge)
+  - `.flag-chip--song` : background, border et color turquoise
+  - `.data-table--caps th/td:nth-child(1)` : sticky left:0 avec backgrounds
+  - `.data-table--caps th/td:nth-child(2)` : sticky left:60px, 260-380px, box-shadow
+  - Suppression `.data-table__header-legend` (remplacé par `.data-table__legend` existant)
+
+*Tests de validation :*
+1. ✅ Largeur Titre réduite (260-380px) sans troncation, colonnes numériques plus confortables
+2. ✅ Header Type centré visuellement comme autres headers
+3. ✅ Couleur turquoise (#14b8a6) pour badge TITRE et rang #, violet pour ALBUM
+4. ✅ Contraste AA validé (WCAG)
+5. ✅ Header "Date prévue" visible, colonne après "Prochain cap (j)"
+6. ✅ Tri par Date prévue fonctionne (ordre chronologique)
+7. ✅ Légende * = featuring identique visuellement à page Titres
+8. ✅ Tri par Titre fonctionne, légende ne bloque pas le clic
+9. ✅ Colonnes # et Titre sticky en scroll horizontal avec ombre
+10. ✅ Aucune régression (tri, navigation croisée, auto-refresh, centrages, formats)
+
+---
+
 **2025-10-03 — Prompt 7.2 : Caps imminents - Finitions ergonomie et francisation**
 
 *Dernières finitions UI et traduction complète :*

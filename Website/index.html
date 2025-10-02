@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=7.2">
+    <link rel="stylesheet" href="src/styles/global.css?v=7.3">
 </head>
 <body>
     <div class="app-shell">
@@ -464,12 +464,14 @@
                                             </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--title">
-                                            <button type="button" class="data-table__sort-button">
-                                                <span class="data-table__header-text">Titre</span>
-                                            </button>
-                                            <span class="data-table__header-legend">* = featuring</span>
+                                            <div class="data-table__header-wrapper">
+                                                <button type="button" class="data-table__sort-button">
+                                                    <span class="data-table__header-text">Titre</span>
+                                                </button>
+                                                <span class="data-table__legend">* = featuring</span>
+                                            </div>
                                         </th>
-                                        <th scope="col">
+                                        <th scope="col" class="data-table__cell--numeric">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Type</span>
                                             </button>
@@ -477,6 +479,11 @@
                                         <th scope="col" class="data-table__cell--numeric">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain cap (j)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Date prévue</span>
                                             </button>
                                         </th>
                                         <th scope="col" class="data-table__cell--numeric">
@@ -497,11 +504,6 @@
                                         <th scope="col" class="data-table__cell--numeric">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain palier</span>
-                                            </button>
-                                        </th>
-                                        <th scope="col" class="data-table__cell--numeric">
-                                            <button type="button" class="data-table__sort-button">
-                                                <span class="data-table__header-text">ETA</span>
                                             </button>
                                         </th>
                                     </tr>
@@ -537,7 +539,7 @@
     <script src="src/data-renderer.js?v=6.7"></script>
     <script src="src/table-sort.js?v=6.7"></script>
     <script src="src/meta-refresh.js?v=6.7"></script>
-    <script src="src/caps.js?v=7.2"></script>
+    <script src="src/caps.js?v=7.3"></script>
     <script src="src/search.js?v=6.7"></script>
     <script src="src/main.js?v=6.7"></script>
     <script src="src/app.js?v=6.7"></script>

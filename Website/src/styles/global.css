@@ -792,19 +792,6 @@ a {
   white-space: nowrap;
 }
 
-/* Légende dans le header (page Caps) */
-.data-table__header-legend {
-  margin-left: 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--color-text-muted);
-  font-style: italic;
-  opacity: 0.7;
-  pointer-events: none; /* Ne pas intercepter les clics du tri */
-}
-
 .data-table__cell--title {
   font-weight: 600;
   padding-right: 1.5rem;
@@ -1008,7 +995,7 @@ a {
 
 /* Couleurs rang par type (page Caps) */
 .data-table__cell--rank-song {
-  color: rgba(255, 54, 92, 0.95); /* Rouge accent (songs) */
+  color: #14b8a6; /* Turquoise/teal (titres) */
 }
 
 .data-table__cell--rank-album {
@@ -1336,6 +1323,12 @@ a {
 }
 
 /* Badge type (Song/Album) */
+.flag-chip--song {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: rgba(20, 184, 166, 0.35);
+  color: #14b8a6;
+}
+
 .flag-chip--album {
   background: rgba(95, 87, 255, 0.12);
   border-color: rgba(95, 87, 255, 0.35);
@@ -1359,18 +1352,37 @@ a {
 /* Largeurs colonnes tableau Caps */
 .data-table--caps th:nth-child(1),
 .data-table--caps td:nth-child(1) {
-  /* # (rang) */
+  /* # (rang) - sticky */
+  position: sticky;
+  left: 0;
   width: 60px;
   max-width: 60px;
   min-width: 60px;
+  background: var(--color-surface);
+  z-index: 7;
+}
+
+.data-table--caps thead th:nth-child(1) {
+  background: var(--color-surface-alt);
+  z-index: 9;
 }
 
 .data-table--caps th:nth-child(2),
 .data-table--caps td:nth-child(2) {
-  /* Titre - colonne réduite pour libérer espace */
+  /* Titre - colonne réduite pour libérer espace + sticky */
+  position: sticky;
+  left: 60px; /* Décalage après colonne # (60px) */
   width: auto;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: 260px;
+  max-width: 380px;
+  background: var(--color-surface);
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.25);
+  z-index: 7;
+}
+
+.data-table--caps thead th:nth-child(2) {
+  background: var(--color-surface-alt);
+  z-index: 9;
 }
 
 .data-table--caps td:nth-child(2) .data-table__song-name {

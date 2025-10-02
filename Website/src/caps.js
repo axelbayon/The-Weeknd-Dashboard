@@ -109,17 +109,17 @@
         const columnIndex = Array.from(th.parentElement.children).indexOf(th);
         
         // Mapping des colonnes vers les clés de tri
-        // Ordre réel : # | Titre | Type | Prochain cap(j) | Streams totaux | Streams quotidiens | Variation(%) | Prochain palier | ETA
+        // Ordre réel : # | Titre | Type | Prochain cap(j) | Date prévue | Streams totaux | Streams quotidiens | Variation(%) | Prochain palier
         const sortKeys = [
             'rank',              // #
             'title',             // Titre
             'type',              // Type
             'days_to_next_cap',  // Prochain cap (j)
+            'eta',               // Date prévue
             'streams_total',     // Streams totaux
             'streams_daily',     // Streams quotidiens
             'variation_pct',     // Variation (%)
-            'next_cap_value',    // Prochain palier
-            'eta'                // ETA
+            'next_cap_value'     // Prochain palier
         ];
 
         const sortKey = sortKeys[columnIndex];
@@ -352,7 +352,7 @@
         // Type
         const typeCell = document.createElement('td');
         const typeBadge = document.createElement('span');
-        typeBadge.className = item.type === 'song' ? 'flag-chip' : 'flag-chip flag-chip--album';
+        typeBadge.className = item.type === 'song' ? 'flag-chip flag-chip--song' : 'flag-chip flag-chip--album';
         typeBadge.textContent = item.type === 'song' ? 'TITRE' : 'ALBUM';
         typeBadge.setAttribute('data-testid', 'caps-type-badge');
         typeCell.appendChild(typeBadge);
@@ -363,6 +363,13 @@
         daysCell.className = 'data-table__cell--numeric';
         daysCell.textContent = item.days_to_next_cap.toFixed(2) + ' j';
         row.appendChild(daysCell);
+
+        // Date prévue (ETA)
+        const etaCell = document.createElement('td');
+        etaCell.className = 'data-table__cell--numeric';
+        etaCell.textContent = etaFormatted;
+        etaCell.setAttribute('data-testid', 'caps-eta');
+        row.appendChild(etaCell);
 
         // Streams totaux
         const streamsCell = document.createElement('td');
@@ -413,13 +420,6 @@
             capCell.textContent = item.next_cap_value.toLocaleString('fr-FR');
         }
         row.appendChild(capCell);
-
-        // ETA
-        const etaCell = document.createElement('td');
-        etaCell.className = 'data-table__cell--numeric';
-        etaCell.textContent = etaFormatted;
-        etaCell.setAttribute('data-testid', 'caps-eta');
-        row.appendChild(etaCell);
 
         // Navigation croisée au clic
         row.addEventListener('click', () => {
