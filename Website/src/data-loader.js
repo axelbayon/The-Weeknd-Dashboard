@@ -8,14 +8,17 @@ class DataLoader {
         this.cache = {
             songs: null,
             albums: null,
+            meta: null,
             lastFetch: {
                 songs: null,
-                albums: null
+                albums: null,
+                meta: null
             }
         };
         this.isLoading = {
             songs: false,
-            albums: false
+            albums: false,
+            meta: false
         };
         this.CACHE_DURATION = 5000; // 5 secondes
         this.MAX_RETRIES = 3;
@@ -95,6 +98,42 @@ class DataLoader {
     }
 
     /**
+     * Charge les données meta.json avec cache et retry
+     */
+    async loadMeta(forceRefresh = false) {
+        // Vérifier le cache
+        if (!forceRefresh && this.cache.meta && this._isCacheValid('meta')) {
+            return this.cache.meta;
+        }
+
+        // Éviter les requêtes simultanées
+        if (this.isLoading.meta) {
+            return this._waitForLoad('meta');
+        }
+
+        this.isLoading.meta = true;
+
+        try {
+            const data = await this._fetchWithRetry('/data/meta.json');
+            this.cache.meta = data;
+            this.cache.lastFetch.meta = Date.now();
+            this._emitDataLoaded('meta', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Erreur chargement meta.json:', error);
+            this._emitLoadError('meta', error);
+            // Retourner le cache si disponible, sinon erreur
+            if (this.cache.meta) {
+                console.warn('⚠️ Utilisation du cache meta.json');
+                return this.cache.meta;
+            }
+            throw error;
+        } finally {
+            this.isLoading.meta = false;
+        }
+    }
+
+    /**
      * Invalide le cache pour forcer un rechargement
      */
     invalidateCache(type = 'all') {
@@ -105,6 +144,10 @@ class DataLoader {
         if (type === 'all' || type === 'albums') {
             this.cache.albums = null;
             this.cache.lastFetch.albums = null;
+        }
+        if (type === 'all' || type === 'meta') {
+            this.cache.meta = null;
+            this.cache.lastFetch.meta = null;
         }
         console.log(`🔄 Cache invalidé: ${type}`);
     }
@@ -211,7 +254,23 @@ class DataLoader {
                 count: this.cache.albums?.length || 0,
                 lastFetch: this.cache.lastFetch.albums,
                 valid: this._isCacheValid('albums')
+            },
+            meta: {
+                cached: !!this.cache.meta,
+                lastFetch: this.cache.lastFetch.meta,
+                valid: this._isCacheValid('meta')
             }
+        };
+    }
+
+    /**
+     * Getter pour accéder au cache (compatibilité avec code existant)
+     */
+    get cachedData() {
+        return {
+            songs: this.cache.songs,
+            albums: this.cache.albums,
+            meta: this.cache.meta
         };
     }
 }
