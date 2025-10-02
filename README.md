@@ -6,6 +6,12 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+**2025-10-02 — Prompt 0.1-fix**
+- Harmonisation CSS : conservation de `Website/global.css` comme référence unique
+- Suppression du doublon `public/styles/global.css`
+- Renforcement de `.gitignore` pour les secrets (patterns `.env*`, `*/.env*`, `Website/.env.local`)
+- Clarification de la structure du projet
+
 **2025-10-02 — Prompt 0.1**
 - Création de l'arborescence initiale du projet
 - Ajout de la documentation de base (README, sécurité-scraping, roadmap placeholder)
@@ -22,10 +28,10 @@ data/
     songs/        # Snapshots quotidiens des chansons (J, J-1, J-2)
     albums/       # Snapshots quotidiens des albums (J, J-1, J-2)
 src/              # Code source de l'application (à venir)
-public/
-  styles/
-    global.css    # CSS global (à intégrer)
 scripts/          # Scripts de scraping et traitement (à venir)
+Website/
+  global.css      # CSS canonique (pour l'instant)
+  .env.local      # Secrets Spotify (non tracké, ignoré par Git)
 docs/
   roadmap.md              # Feuille de route (à compléter)
   securité-scraping.md    # Règles de sécurité pour le scraping
@@ -34,6 +40,8 @@ README.md         # Ce fichier
 .gitattributes    # Normalisation des fins de ligne
 LICENSE           # Licence (placeholder MIT)
 ```
+
+**Note** : CSS canonique : `Website/global.css` (pour l'instant).
 
 ---
 
@@ -45,13 +53,15 @@ LICENSE           # Licence (placeholder MIT)
 
 ## Variables d'environnement
 
-Les secrets (ex. clés Spotify API) doivent être stockés dans un fichier `.env` ou `.env.local` **jamais commité**.
+Les secrets (ex. clés Spotify API) doivent être stockés dans le fichier `Website/.env.local` **jamais commité**.
 
 Exemple :
 ```
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 ```
+
+Le fichier `.env.local` est explicitement ignoré par Git (voir `.gitignore`).
 
 ---
 

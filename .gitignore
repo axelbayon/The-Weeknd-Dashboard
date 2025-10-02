@@ -1,7 +1,10 @@
 # Secrets & variables d'environnement
 .env
-.env.local
+.env.*
 .env*.local
+*/.env
+*/.env.*
+Website/.env.local
 
 # Logs
 *.log
