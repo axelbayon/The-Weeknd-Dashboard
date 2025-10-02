@@ -1016,6 +1016,93 @@ a {
   border: 0;
 }
 
+/* === Badge "Prochaine MAJ" + Tooltip === */
+.next-update {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nu-badge {
+  display: inline-block;
+  min-width: 3.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color 0.3s ease;
+}
+
+.nu-badge.is-ready {
+  background: #10b981; /* green-600 */
+  color: #fff;
+}
+
+.nu-badge.is-wait {
+  background: #f59e0b; /* amber-600 */
+  color: #000;
+}
+
+.nu-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nu-info:hover,
+.nu-info:focus {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(95, 87, 255, 0.1);
+}
+
+.nu-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  background: rgba(12, 14, 24, 0.98);
+  border: 1px solid rgba(95, 87, 255, 0.3);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  max-width: 22rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-text);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  white-space: normal;
+}
+
+.nu-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 1rem;
+  border: 8px solid transparent;
+  border-top-color: rgba(95, 87, 255, 0.3);
+}
+
+.nu-tooltip[hidden] {
+  display: none;
+}
+
+.nu-eta {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
 @media (max-width: 1100px) {
   .page-header {
     flex-direction: column;

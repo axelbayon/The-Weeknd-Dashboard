@@ -77,7 +77,7 @@
     }
     
     /**
-     * Calcule et met à jour le compte à rebours
+     * Calcule et met à jour le compte à rebours avec badge
      */
     function updateCountdown() {
         if (!nextUpdateTime) return;
@@ -86,7 +86,30 @@
         const remainingMs = nextUpdateTime - now;
         const remainingS = Math.max(0, Math.floor(remainingMs / 1000));
         
-        updateElement('header-next-update', formatCountdown(remainingS));
+        // Trouver tous les badges (Songs et Albums)
+        const badges = document.querySelectorAll('.nu-badge');
+        const etas = document.querySelectorAll('.nu-eta');
+        
+        badges.forEach(badge => {
+            if (remainingS <= 0) {
+                badge.textContent = 'Prête';
+                badge.classList.remove('is-wait');
+                badge.classList.add('is-ready');
+            } else {
+                badge.textContent = formatCountdown(remainingS);
+                badge.classList.remove('is-ready');
+                badge.classList.add('is-wait');
+            }
+        });
+        
+        // Mettre à jour l'ETA dans le tooltip
+        etas.forEach(eta => {
+            const nextDate = new Date(nextUpdateTime);
+            const hours = String(nextDate.getHours()).padStart(2, '0');
+            const minutes = String(nextDate.getMinutes()).padStart(2, '0');
+            const seconds = String(nextDate.getSeconds()).padStart(2, '0');
+            eta.textContent = `${hours}:${minutes}:${seconds}`;
+        });
         
         // Si le compte à rebours atteint 0, recharger les métadonnées
         if (remainingS === 0) {
@@ -178,12 +201,47 @@
     }
     
     /**
+     * Configure les tooltips interactifs (survol + focus)
+     */
+    function setupTooltips() {
+        const infoButtons = document.querySelectorAll('.nu-info');
+        
+        infoButtons.forEach(button => {
+            const tooltipId = button.getAttribute('aria-describedby');
+            const tooltip = document.getElementById(tooltipId);
+            
+            if (!tooltip) return;
+            
+            // Afficher au survol
+            button.addEventListener('mouseenter', () => {
+                tooltip.hidden = false;
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                tooltip.hidden = true;
+            });
+            
+            // Afficher au focus (accessibilité clavier)
+            button.addEventListener('focusin', () => {
+                tooltip.hidden = false;
+            });
+            
+            button.addEventListener('focusout', () => {
+                tooltip.hidden = true;
+            });
+        });
+    }
+    
+    /**
      * Initialisation au chargement de la page
      */
     function init() {
         console.log('[Meta-Refresh] Initializing...');
         console.log('[Meta-Refresh] Fetch interval:', FETCH_INTERVAL_MS / 1000, 'seconds');
         console.log('[Meta-Refresh] Refresh interval:', REFRESH_INTERVAL_S / 60, 'minutes');
+        
+        // Configurer les tooltips
+        setupTooltips();
         
         // Premier fetch immédiat
         fetchMeta();

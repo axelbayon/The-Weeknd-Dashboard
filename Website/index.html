@@ -245,7 +245,13 @@
                             </div>
                             <div class="stat-card" data-testid="header-next-update">
                                 <div class="stat-card__label">Prochaine mise à jour</div>
-                                <div class="stat-card__value countdown-text">—</div>
+                                <div class="next-update">
+                                    <span class="nu-badge" aria-live="polite">—</span>
+                                    <button class="nu-info" aria-describedby="nu-tip-albums" type="button" title="Informations">ℹ️</button>
+                                    <div id="nu-tip-albums" class="nu-tooltip" role="tooltip" hidden>
+                                        La synchro est limitée par un délai de sécurité. Prochaine mise à jour estimée à <strong class="nu-eta">—</strong>.
+                                    </div>
+                                </div>
                             </div>
                             <div class="stat-card" data-testid="header-spotify-data-date">
                                 <div class="stat-card__label">Date données Spotify</div>
