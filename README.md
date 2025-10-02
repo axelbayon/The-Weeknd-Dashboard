@@ -8,72 +8,84 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
-**2025-10-03 — Prompt 7.1 : Caps imminents - Rééquilibrage colonnes et ergonomie**
+**2025-10-03 — Prompt 7.2 : Caps imminents - Finitions ergonomie et francisation**
 
-*Ajustements lisibilité, formats, et labels dynamiques pour page Caps :*
+*Dernières finitions UI et traduction complète :*
 
-**A) Réorganisation colonnes et largeurs** :
-- **Nouvel ordre** : # (rang) | Titre | Type | Prochain cap (j) | Streams totaux | Streams quotidiens | Variation (%) | Prochain palier | ETA
-- **Colonne Titre prioritaire** : 
-  - Largeur élargie (min 320px, max 500px) pour meilleure lisibilité
-  - Texte titre plus grand (`font-size:1rem`, `font-weight:600`)
-  - Album sous le titre (`font-size:0.85rem`)
-- **Colonnes numériques resserrées** : Largeurs fixes 60-140px selon contenu (rang 60px, type 90px, prochain cap 110px, etc.)
-- **Colonne rang (#)** : Ajoutée en premier, affiche le rang source (song/album) avec tri numérique
+**A) Couleurs rang par type** :
+- Badge # coloré selon type : TITRE (rouge accent rgba(255,54,92,0.95)) | ALBUM (violet #7c6dff)
+- Classes CSS `.data-table__cell--rank-song` et `.data-table__cell--rank-album` appliquées dynamiquement
+- Tri numérique sur rang conservé
 
-**B) Formats et légende** :
-- **"Prochain palier" en M/B** : Utilise `formatCap()` du module formatters (aligné avec Songs/Albums)
-  - Ex : 5 100 000 000 → 5,1 B | 300 000 000 → 300 M
-- **Légende featuring** : `* = featuring` ajoutée sous le tableau (style discret, `.data-table__legend`)
-- **Tri sur astérisque** : L'astérisque * reste visible mais est ignoré lors du tri alphabétique
+**B) Largeur colonne Titre réduite** :
+- Titre : 320-500px → 280-400px (libère espace pour autres colonnes)
+- Astérisque *, tri alpha et alignement cover/nom/album conservés
 
-**C) Cartes header avec fenêtre dynamique** :
-- **Labels renommés** :
-  - "Total éléments" → "Nombre total d'éléments"
-  - "Songs" → "Nombre de titres (XX j)"
-  - "Albums" → "Nombre d'albums (XX j)"
-- **Injection dynamique** : Nouvelle fonction `updateCardLabels()` qui met à jour les labels avec `currentWindow`
-  - Ex : Fenêtre 30j → "Nombre de titres (30 j)"
-  - Appelée dans `renderCapsTable()` à chaque refresh
+**C) Légende featuring déplacée** :
+- Légende "* = featuring" maintenant dans header Titre (même ligne que "Titre")
+- Style : `.data-table__header-legend` discret, italic, opacity 0.7, pointer-events:none
+- Ancienne légende en bas du tableau supprimée
 
-**D) Contrôles rapprochés** :
-- **Sélecteur fenêtre** : Rapproché visuellement du tableau (margin-bottom 1.5rem→0.75rem)
-- **Style compact** : Padding réduit (0.75rem→0.65rem, font-size 0.9rem→0.85rem)
+**D) Correction tri Type** :
+- Fix mapping sortKeys dans handleSortClick() : ordre corrigé rank | title | type | days | ...
+- Type trie désormais sa propre colonne (plus la colonne suivante)
+- Indicateurs ▲/▼ se placent correctement
 
-**E) JavaScript amélioré** :
-- **Tri colonne rank** : Gestion des valeurs manquantes (Infinity pour mettre à la fin)
-- **Indices de tri mis à jour** : Array sortKeys adapté au nouvel ordre (rank, title, type, days, etc.)
-- **Fonction formatCap** : Utilise `window.formatters.formatCap()` si disponible, sinon fallback sur formatNumber
+**E) Francisation complète "Songs → Titres"** :
+- **Nav-bar** : Onglet "Songs" → "Titres"
+- **Toggles Caps** : "Songs" → "Titres"
+- **Valeurs colonne Type** : "Song" → "TITRE" | "Album" → "ALBUM"
+- Cohérence linguistique totale
 
 *Fichiers modifiés :*
 - `Website/index.html` :
-  - Ordre colonnes <th> modifié : # | Titre | Type | ... | ETA
-  - Labels cartes avec attribut `data-caps-label` pour sélection JS
-  - Légende `<p class="data-table__legend">* = featuring</p>` ajoutée
-  - Cache-busting CSS v7.0, JS v7.1
+  - Nav "Songs" → "Titres"
+  - Toggle "Songs" → "Titres"
+  - Légende déplacée dans <th> Titre : `<span class="data-table__header-legend">* = featuring</span>`
+  - Légende `<p class="data-table__legend">` en bas supprimée
+  - Cache-busting v7.2 (CSS et JS)
 - `Website/src/caps.js` :
-  - `createCapsRow()` : Colonne rank ajoutée, type déplacée après titre, formatCap() utilisé pour prochain palier
-  - `sortData()` : Cas spécial rank avec gestion Infinity
-  - `updateSortIndicators()` : SortKeys array mis à jour
-  - `updateCardLabels()` : Nouvelle fonction pour injection fenêtre dynamique
-  - `renderCapsTable()` : Appel updateCardLabels() ajouté
+  - `createCapsRow()` : Classes rank-song/rank-album ajoutées, "Song"/"Album" → "TITRE"/"ALBUM"
+  - `handleSortClick()` : sortKeys fixé (rank, title, type, days...)
 - `Website/src/styles/global.css` :
-  - `.caps-controls` : margin-bottom réduit, padding/font-size compactés
-  - `.data-table--caps th:nth-child(X)` : Largeurs fixes pour chaque colonne (# 60px, Titre 320-500px, Type 90px, etc.)
-  - `.data-table--caps td:nth-child(2) .data-table__song-name` : font-size 1rem, font-weight 600
-  - `.data-table__legend` : Style légende featuring (0.75rem, muted, italic)
+  - `.data-table__cell--rank-song` : color rouge accent
+  - `.data-table__cell--rank-album` : color violet
+  - `.data-table__header-legend` : style discret dans header
+  - `.data-table--caps th:nth-child(2)` : min-width 320→280px, max-width 500→400px
+  - Ancien `.data-table__legend` (bas tableau) supprimé
 
 *Tests de validation :*
-1. ✅ Ordre colonnes exact : # | Titre | Type | Prochain cap(j) | ... | ETA
-2. ✅ Colonne Titre visiblement plus large que colonnes numériques
-3. ✅ Texte titre plus grand et plus lisible (1rem, font-weight 600)
-4. ✅ "Prochain palier" affiche M/B (2,3 M, 5,1 B...) comme Songs/Albums
-5. ✅ Légende "* = featuring" présente sous tableau
-6. ✅ Labels cartes : "Nombre total d'éléments", "Nombre de titres (30 j)", "Nombre d'albums (30 j)"
-7. ✅ Changement fenêtre (7/14/30/60j) met à jour labels cartes dynamiquement
-8. ✅ Sélecteur fenêtre visuellement rapproché du tableau
-9. ✅ Tri sur toutes colonnes fonctionne (rank, title, type, etc.)
-10. ✅ Navigation croisée et auto-refresh toujours OK
+1. ✅ Rang # coloré : titre rouge, album violet
+2. ✅ Colonne Titre plus compacte (280-400px au lieu de 320-500px)
+3. ✅ Légende "* = featuring" visible à côté du header Titre
+4. ✅ Tri Type fonctionne (trie sa propre colonne)
+5. ✅ Indicateur tri sur Type quand trié
+6. ✅ Nav "Titres", toggle "Titres", valeurs "TITRE"/"ALBUM"
+7. ✅ Aucune régression tri, navigation croisée, auto-refresh
+
+---
+
+**2025-10-03 — Prompt 7.1 : Caps imminents - Rééquilibrage colonnes et ergonomie**
+
+*Ajustements lisibilité, formats M/B, et labels dynamiques :*
+
+**Réorganisation colonnes et largeurs** :
+- Nouvel ordre : # (rang) | Titre | Type | Prochain cap (j) | Streams totaux | Streams quotidiens | Variation (%) | Prochain palier | ETA
+- Colonne Titre élargie (320-500px) avec texte 1rem, font-weight 600
+- Colonnes numériques resserrées (60-140px)
+
+**Formats et légende** :
+- "Prochain palier" en M/B via formatCap() (5,1 B, 300 M...)
+- Légende "* = featuring" ajoutée sous tableau
+- Tri ignore * mais l'affiche
+
+**Cartes header dynamiques** :
+- Labels renommés avec fenêtre temporelle : "Nombre de titres (30 j)", "Nombre d'albums (30 j)"
+- Fonction updateCardLabels() pour injection dynamique
+
+**Contrôles rapprochés** :
+- Sélecteur fenêtre rapproché du tableau (margin-bottom 0.75rem)
+- Style compact
 
 ---
 
@@ -81,130 +93,25 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 *Page complète listant titres/albums proches de leur prochain palier :*
 
-**A) Structure HTML** :
-- **Header cards** : 3 cartes meta identiques Songs/Albums (Dernière sync locale, Mise à jour données, Date données actuelles)
-- **Compteurs agrégés** : Total éléments, Songs, Albums avec data-testid (caps-total-count, caps-songs-count, caps-albums-count)
-- **Contrôles filtrage** :
-  - Sélecteur fenêtre temporelle : 7j / 14j / 30j (défaut) / 60j
-  - Toggles : Songs (coché) / Albums (coché)
-- **Tableau** : 8 colonnes sortables (Type, Titre+cover+album, Prochain cap(j), Streams totaux/quotidiens, Variation%, Prochain palier, ETA)
-- **Légende** : Pas encore ajoutée (sera dans 7.1)
+**Structure** :
+- Header cards (sync, update, date) + compteurs (total/songs/albums)
+- Contrôles : fenêtre 7/14/30/60j + toggles Songs/Albums
+- Tableau 8 colonnes sortables
 
-**B) Module caps.js (517 lignes)** :
-- **État module** : allSongs[], allAlbums[], spotifyDataDate, currentWindow=30, showSongs=true, showAlbums=true, currentSortKey='days_to_next_cap', currentSortDirection='asc'
-- **Chargement données** : `loadAllData()` Promise.all avec fetch cache-busting (?t=Date.now())
-- **Filtrage** : `filterData()` vérifie `typeof days_to_next_cap === 'number' && !isNaN && <= currentWindow`, ajoute propriété type
-- **Tri** : `sortData()` avec cas spéciaux :
-  - title : Ignore * via `.replace(/^\*\s*/, '')`
-  - variation_pct : "N.D." → -Infinity
-  - eta : Calcule Date.getTime() pour tri temporel
-- **Calcul ETA** : `calculateETA(days)` parse spotify_data_date, ajoute Math.ceil(days), retourne Date
-- **Format ETA** : `formatETA(date)` retourne DD/MM/YYYY avec padStart
-- **Rendu** : `renderCapsTable()` filtre → trie → compte → met à jour compteurs → updateSortIndicators → crée lignes
-- **Ligne tableau** : `createCapsRow(item)` crée 8 cellules (type badge, titre+cover+album, days.toFixed(2), streams formatNumber, variation avec delta--positive/negative/neutral/na, cap formatNumber, ETA)
-- **Navigation croisée** : `navigateToItem(item)` active onglet Songs/Albums, setTimeout(100ms), scrollIntoView({smooth, center}), ajoute .row-highlighted 2s
-- **Auto-refresh** : Listener `data-sync-updated` appelle loadAllData() pour refresh
+**Module caps.js (517 lignes)** :
+- Filtrage : days_to_next_cap ≤ window
+- Tri avec cas spéciaux (title ignore *, variation N.D., eta timestamp)
+- Calcul ETA : spotify_data_date + ceil(days)
+- Navigation croisée : scroll + highlight 2s
+- Auto-refresh via data-sync-updated
 
-**C) CSS Caps (135 lignes)** :
-- `.caps-controls` : Flex layout, background rgba(12,14,24,0.6), gap 2rem, padding 1rem 1.5rem, border-radius 0.8rem
-- `.caps-controls__select` : Custom dropdown, appearance:none, SVG arrow, hover/focus states
-- `.caps-toggle input[type="checkbox"]` : Custom checkbox, appearance:none, checked::after avec ✓
-- `.flag-chip--album` : Badge violet rgba(95,87,255,0.12), border rgba(95,87,255,0.35), color #7c6dff
-- `.row-highlighted` : Animation highlight-pulse 2s, @keyframes rgba(255,54,92,0.15) à 25%/75%
-
-**D) Intégration auto-refresh** :
-- **Compatibilité meta-refresh.js** : Utilise querySelectorAll('.nu-badge') et querySelectorAll('.nu-info') → Met à jour toutes pages (Songs, Albums, Caps)
-- **Event data-sync-updated** : Caps écoute cet event pour recharger données
-
-*Fichiers modifiés :*
-- `Website/index.html` :
-  - Section page-caps complète (lignes 377-507) : header cards, compteurs, contrôles, tableau 8 colonnes
-  - Script caps.js v7.0 chargé entre meta-refresh et search
-- `Website/src/caps.js` : Nouveau fichier 517 lignes
-- `Website/src/styles/global.css` : 135 lignes CSS ajoutées (lignes 1205-1339)
-
-*Tests de validation :*
-1. ✅ Chargement page : window=30j, toggles cochés, données affichées
-2. ✅ Compteurs : total = songs + albums, décocher toggle → count=0
-3. ✅ Tri initial : days_to_next_cap asc, indicateur ▲ visible
-4. ✅ Tri changement : Clic colonne → indicateur se déplace, lignes réordonnées
-5. ✅ Format FR : Streams avec espaces fines (1 234 567)
-6. ✅ Variation format : +X,YY % / -X,YY % / N.D. correctement affiché
-7. ✅ ETA calcul : spotify_date + ceil(days) vérifié manuellement
-8. ✅ Navigation clic : Clic ligne → autre page ouvre, scroll centre, highlight 2s visible
-9. ✅ Fenêtre 7j : Seulement lignes days≤7 restent
-10. ✅ Auto-refresh : Après orchestrator, données se mettent à jour sans F5
+**CSS (135 lignes)** :
+- .caps-controls layout
+- Custom dropdown/checkbox
+- Badge album violet
+- Animation highlight-pulse
 
 ---
-
-**2025-10-02 — Prompt 6.7 (fix) : Espacements gap pure + Tooltip collé/harmonisé + Zéro margin gros blocs**
-
-*Uniformisation complète des espacements et perfection finale du tooltip :*
-
-**A) Cartes d'en-tête - Gap uniquement (zéro margin)** :
-- **Problème** : Espacements incohérents entre titre et valeur dans certaines cartes (margins résiduels)
-- **Solution** : Harmonisation totale sur TOUTES les cartes (Songs & Albums) :
-  - `.stat-card` : `gap:0.35rem` (déjà présent, conservé)
-  - `.stat-card__label` : `margin:0` ajouté explicitement
-  - `.stat-card__value` : `margin:0` ajouté explicitement
-  - `.nu-header` : `margin:0` (suppression `margin-bottom:0.5rem`)
-  - `.nu-body` : `margin:0` (suppression `margin-top:0.5rem`)
-  - `.nu-title` : `margin:0` ajouté
-- **Résultat** : Espacement vertical géré UNIQUEMENT par gap des conteneurs, aucun margin résiduel
-
-**B) Tooltip "Infos synchro" - Collé au bouton, fond harmonisé, bordure chrono** :
-- **Positionnement** : Tooltip collé directement au bouton (`inset-block-end:calc(100% + 0.2rem)`)
-- **Fond** : `background:rgba(8,10,18,0.65)` (identique aux `.stat-card`)
-- **Bordure dynamique** : Couleur = état chrono (plus de règles hover complexes) :
-  - `.nu-card:has(.nu-badge.is-wait) .nu-tooltip` : border ambre `rgba(242,180,34,.65)`
-  - `.nu-card:has(.nu-badge.is-ready) .nu-tooltip` : border vert `rgba(24,160,88,.65)`
-- **Flèche** : Position exacte centre du bouton `inset-inline-end:calc(0.875rem - 0.5rem)` (bouton 1.75rem / 2 = 0.875rem)
-- **Contenu** : `<strong>` en `display:inline` + `margin:0`, texte collé sans espacement (suppression `margin-bottom:0.3rem`)
-- **Padding** : Réduit à `0.8rem 1rem` pour compacité
-
-**C) Zéro margin sur gros blocs "page header"** :
-- **Suppression** : `margin-bottom:28px` sur `.page-header--aggregate` et `.page-header--split` (ligne 204)
-- **Conservation** : `.table-section { margin-block-start:28px }` (espacement légitime entre header-cards et tables)
-- **Logique** : Espacements gérés par gap des conteneurs parents, pas par margins extérieures destructrices
-
-**D) SPA stable + Albums meta (vérifications)** :
-- **SPA** : `main.js` ligne 73 utilise bien `page.hidden=true/false` (pas `display:none`)
-- **Albums** : Cartes `header-last-sync`, `header-next-update`, `header-spotify-data-date` présentes avec data-testid
-- **Mise à jour** : `meta-refresh.js` met automatiquement à jour tous les `data-testid` (Songs + Albums)
-- **Résultat** : Albums affiche et rafraîchit Dernière sync locale, Date Spotify, badge chrono
-
-*Fichiers modifiés :*
-- `Website/src/styles/global.css` : 
-  - Ajout `margin:0` sur `.stat-card__label`, `.stat-card__value`, `.nu-header`, `.nu-body`, `.nu-title`
-  - Refonte `.nu-tooltip` : fond carte, bordure chrono dynamique, collé au bouton, flèche centrée
-  - `.nu-tooltip strong` : `display:inline` + `margin:0` (contenu collé)
-  - Suppression `margin-bottom:28px` sur `.page-header--aggregate` et `.page-header--split`
-- `Website/index.html` : 
-  - Cache-busting v6.7 sur CSS et tous scripts JS
-
-*Tests de validation :*
-1. ✅ Toutes cartes : `getComputedStyle(label/value).margin == 0`, espacement via gap uniquement
-2. ✅ Tooltip collé au bouton, flèche pointe centre du bouton (0.875rem depuis droite)
-3. ✅ Fond tooltip = rgba(8,10,18,0.65) (même que cartes), bordure = couleur chrono
-4. ✅ Contenu tooltip : titre et texte collés (pas d'espacement entre `<strong>` et texte)
-5. ✅ Zéro `margin:28px` sur gros blocs, espacement géré par gap
-6. ✅ Navigation Songs ↔ Albums stable (pas de display:none, wrappers inchangés)
-7. ✅ Albums affiche et met à jour Dernière sync locale + Date Spotify
-
----
-
-**2025-10-02 — Prompt 6.6 (rev) : Tooltip/bouton perfectionné + Fix espacement SPA (hidden) + Albums meta**
-
-*Corrections finales UI tooltip + fix architectural espacement SPA :*
-
-**A) Carte "Prochaine MAJ" - Bouton et tooltip finalisés** :
-- **Bouton "i"** : Bordure blanche (`border:1px solid #fff`) conservant position absolute top-right
-- **Tooltip repositionné** : Aligné au-dessus du bouton (`inset-inline-end:0.6rem`, plus `left:50%`), flèche à droite
-- **Lisibilité améliorée** : `max-inline-size` 22rem→26rem, `padding` 0.75rem/0.9rem→1rem/1.2rem
-- **Style hover dynamique** : Au survol/focus du bouton, border tooltip prend couleur du chrono :
-  - État attente (`.is-wait`) : border ambre `rgba(242,180,34,.65)`
-  - État prêt (`.is-ready`) : border vert `rgba(24,160,88,.65)`
-  - Fond plus contrasté `rgba(12,14,24,.95)`
 - **Sélecteurs CSS** : Utilisation de `:has()` pour détecter état badge et appliquer style correspondant
 
 **B) Fix architectural espacement SPA** :

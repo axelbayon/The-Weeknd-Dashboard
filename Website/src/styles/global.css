@@ -792,6 +792,19 @@ a {
   white-space: nowrap;
 }
 
+/* Légende dans le header (page Caps) */
+.data-table__header-legend {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+  opacity: 0.7;
+  pointer-events: none; /* Ne pas intercepter les clics du tri */
+}
+
 .data-table__cell--title {
   font-weight: 600;
   padding-right: 1.5rem;
@@ -991,6 +1004,15 @@ a {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* Couleurs rang par type (page Caps) */
+.data-table__cell--rank-song {
+  color: rgba(255, 54, 92, 0.95); /* Rouge accent (songs) */
+}
+
+.data-table__cell--rank-album {
+  color: #7c6dff; /* Violet (albums) */
 }
 
 
@@ -1345,10 +1367,10 @@ a {
 
 .data-table--caps th:nth-child(2),
 .data-table--caps td:nth-child(2) {
-  /* Titre - colonne large prioritaire */
+  /* Titre - colonne réduite pour libérer espace */
   width: auto;
-  min-width: 320px;
-  max-width: 500px;
+  min-width: 280px;
+  max-width: 400px;
 }
 
 .data-table--caps td:nth-child(2) .data-table__song-name {
@@ -1416,16 +1438,6 @@ a {
   width: 110px;
   max-width: 110px;
   min-width: 110px;
-}
-
-/* Légende featuring */
-.data-table__legend {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-  text-align: left;
-  padding-left: 0.25rem;
 }
 
 

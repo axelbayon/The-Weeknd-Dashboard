@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=7.0">
+    <link rel="stylesheet" href="src/styles/global.css?v=7.2">
 </head>
 <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
                 <ul class="topbar__nav-list">
                     <li>
                         <a href="#songs" class="topbar__link topbar__link--active" data-testid="nav-songs" data-page="songs">
-                            Songs
+                            Titres
                         </a>
                     </li>
                     <li>
@@ -441,7 +441,7 @@
                             <div class="caps-controls__toggles">
                                 <label class="caps-toggle">
                                     <input type="checkbox" id="caps-toggle-songs" checked data-testid="caps-toggle-songs">
-                                    <span class="caps-toggle__label">Songs</span>
+                                    <span class="caps-toggle__label">Titres</span>
                                 </label>
                                 <label class="caps-toggle">
                                     <input type="checkbox" id="caps-toggle-albums" checked data-testid="caps-toggle-albums">
@@ -467,6 +467,7 @@
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Titre</span>
                                             </button>
+                                            <span class="data-table__header-legend">* = featuring</span>
                                         </th>
                                         <th scope="col">
                                             <button type="button" class="data-table__sort-button">
@@ -509,7 +510,6 @@
                                     <!-- Rempli dynamiquement par caps.js -->
                                 </tbody>
                             </table>
-                            <p class="data-table__legend">* = featuring</p>
                         </div>
                     </section>
                 </div>
@@ -537,7 +537,7 @@
     <script src="src/data-renderer.js?v=6.7"></script>
     <script src="src/table-sort.js?v=6.7"></script>
     <script src="src/meta-refresh.js?v=6.7"></script>
-    <script src="src/caps.js?v=7.1"></script>
+    <script src="src/caps.js?v=7.2"></script>
     <script src="src/search.js?v=6.7"></script>
     <script src="src/main.js?v=6.7"></script>
     <script src="src/app.js?v=6.7"></script>

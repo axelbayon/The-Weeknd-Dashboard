@@ -109,9 +109,11 @@
         const columnIndex = Array.from(th.parentElement.children).indexOf(th);
         
         // Mapping des colonnes vers les clés de tri
+        // Ordre réel : # | Titre | Type | Prochain cap(j) | Streams totaux | Streams quotidiens | Variation(%) | Prochain palier | ETA
         const sortKeys = [
-            'type',              // Type
+            'rank',              // #
             'title',             // Titre
+            'type',              // Type
             'days_to_next_cap',  // Prochain cap (j)
             'streams_total',     // Streams totaux
             'streams_daily',     // Streams quotidiens
@@ -289,9 +291,17 @@
         const etaDate = calculateETA(item.days_to_next_cap);
         const etaFormatted = formatETA(etaDate);
 
-        // Rang (#)
+        // Rang (#) - avec couleur selon type
         const rankCell = document.createElement('td');
         rankCell.className = 'data-table__cell--numeric data-table__cell--rank';
+        
+        // Ajouter classe pour couleur selon type
+        if (item.type === 'song') {
+            rankCell.classList.add('data-table__cell--rank-song');
+        } else {
+            rankCell.classList.add('data-table__cell--rank-album');
+        }
+        
         rankCell.textContent = item.rank || '—';
         row.appendChild(rankCell);
 
@@ -343,7 +353,7 @@
         const typeCell = document.createElement('td');
         const typeBadge = document.createElement('span');
         typeBadge.className = item.type === 'song' ? 'flag-chip' : 'flag-chip flag-chip--album';
-        typeBadge.textContent = item.type === 'song' ? 'Song' : 'Album';
+        typeBadge.textContent = item.type === 'song' ? 'TITRE' : 'ALBUM';
         typeBadge.setAttribute('data-testid', 'caps-type-badge');
         typeCell.appendChild(typeBadge);
         row.appendChild(typeCell);
