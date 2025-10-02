@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Weeknd Dashboard</title>
+    <link rel="stylesheet" href="src/styles/global.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Navigation sticky -->
+        <nav class="topbar">
+            <div class="topbar__inner">
+                <div class="topbar__brand">
+                    <span class="topbar__title">The Weeknd Dashboard</span>
+                </div>
+                <ul class="topbar__nav-list">
+                    <li>
+                        <a href="#songs" class="topbar__link topbar__link--active" data-testid="nav-songs" data-page="songs">
+                            Songs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#albums" class="topbar__link" data-testid="nav-albums" data-page="albums">
+                            Albums
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#caps" class="topbar__link" data-testid="nav-caps" data-page="caps">
+                            Caps imminents
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Contenu principal -->
+        <main class="app-content">
+            <div class="page-container">
+                <!-- Page Songs (visible par défaut) -->
+                <div id="page-songs" class="page page--songs" data-page-content="songs">
+                    <div class="page-header">
+                        <div class="page-header__meta">
+                            <h1>Songs</h1>
+                            <p class="page-header__subtitle">
+                                Classement des titres The Weeknd sur Spotify
+                                <span class="page-header__subtitle-note">(Lead, Solo & Feat)</span>
+                            </p>
+                        </div>
+                        <div class="page-header__cards">
+                            <div class="stat-card" data-testid="header-last-sync">
+                                <div class="stat-card__label">Dernière sync locale</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card" data-testid="header-next-update">
+                                <div class="stat-card__label">Prochaine mise à jour</div>
+                                <div class="stat-card__value countdown-text">—</div>
+                            </div>
+                            <div class="stat-card" data-testid="header-spotify-data-date">
+                                <div class="stat-card__label">Date données Spotify</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page-header page-header--aggregate">
+                        <div class="page-header__cards">
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Total titres</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Streams totaux</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Streams quotidiens</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page-header page-header--split">
+                        <div class="page-header__cards">
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__header">
+                                    <div class="stat-card__label">Solo / Lead</div>
+                                </div>
+                                <dl class="stat-card__rows">
+                                    <dt class="stat-card__row-label">Titres</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                    <dt class="stat-card__row-label">Streams totaux</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                    <dt class="stat-card__row-label">Streams quotidiens</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                </dl>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__header">
+                                    <div class="stat-card__label">Feat</div>
+                                </div>
+                                <dl class="stat-card__rows">
+                                    <dt class="stat-card__row-label">Titres</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                    <dt class="stat-card__row-label">Streams totaux</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                    <dt class="stat-card__row-label">Streams quotidiens</dt>
+                                    <dd class="stat-card__row-value">—</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section class="table-section">
+                        <div class="table-wrapper table-wrapper--has-hscroll">
+                            <table class="data-table data-table--songs" data-testid="songs-table">
+                                <caption class="data-table__caption">Liste des songs The Weeknd</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <span class="data-table__header-text">#</span>
+                                        </th>
+                                        <th scope="col">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Titre</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams totaux</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams quotidiens</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Variation (%)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Prochain cap (j)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Prochain palier</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="data-table__cell--rank">1</td>
+                                        <td class="data-table__cell--title">
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">🎵</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">Blinding Lights</div>
+                                                    <span class="data-table__album">After Hours</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">4,123,456,789</td>
+                                        <td class="data-table__cell--numeric">12,345,678</td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="data-table__delta--na">N.D.</span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">—</td>
+                                        <td class="data-table__cell--numeric">5B</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="data-table__cell--rank">2</td>
+                                        <td class="data-table__cell--title">
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">🎵</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">Starboy</div>
+                                                    <span class="data-table__album">Starboy</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">3,987,654,321</td>
+                                        <td class="data-table__cell--numeric">8,765,432</td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="data-table__delta--na">N.D.</span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">—</td>
+                                        <td class="data-table__cell--numeric">4B</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="data-table__cell--rank">3</td>
+                                        <td class="data-table__cell--title">
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">🎵</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">The Hills</div>
+                                                    <span class="data-table__album">Beauty Behind the Madness</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">2,876,543,210</td>
+                                        <td class="data-table__cell--numeric">5,432,109</td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="data-table__delta--na">N.D.</span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">—</td>
+                                        <td class="data-table__cell--numeric">3B</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Page Albums (cachée par défaut) -->
+                <div id="page-albums" class="page page--albums" data-page-content="albums" style="display: none;">
+                    <div class="page-header">
+                        <div class="page-header__meta">
+                            <h1>Albums</h1>
+                            <p class="page-header__subtitle">
+                                Classement des albums The Weeknd sur Spotify
+                            </p>
+                        </div>
+                        <div class="page-header__cards">
+                            <div class="stat-card" data-testid="header-last-sync">
+                                <div class="stat-card__label">Dernière sync locale</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card" data-testid="header-next-update">
+                                <div class="stat-card__label">Prochaine mise à jour</div>
+                                <div class="stat-card__value countdown-text">—</div>
+                            </div>
+                            <div class="stat-card" data-testid="header-spotify-data-date">
+                                <div class="stat-card__label">Date données Spotify</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page-header page-header--aggregate">
+                        <div class="page-header__cards">
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Total albums</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Streams totaux</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                            <div class="stat-card stat-card--aggregate">
+                                <div class="stat-card__label">Streams quotidiens</div>
+                                <div class="stat-card__value">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section class="table-section">
+                        <div class="table-wrapper table-wrapper--has-hscroll">
+                            <table class="data-table data-table--albums" data-testid="albums-table">
+                                <caption class="data-table__caption">Liste des albums The Weeknd</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <span class="data-table__header-text">#</span>
+                                        </th>
+                                        <th scope="col">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Titre</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams totaux</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Streams quotidiens</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Variation (%)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <button type="button" class="data-table__sort-button">
+                                                <span class="data-table__header-text">Prochain cap (j)</span>
+                                            </button>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Prochain palier</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="data-table__cell--rank">1</td>
+                                        <td class="data-table__cell--title">
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">💿</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">
+                                                        <a href="#album-detail/after-hours" data-album-link>After Hours</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">15,123,456,789</td>
+                                        <td class="data-table__cell--numeric">45,678,901</td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="data-table__delta--na">N.D.</span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">—</td>
+                                        <td class="data-table__cell--numeric">16B</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="data-table__cell--rank">2</td>
+                                        <td class="data-table__cell--title">
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">💿</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">
+                                                        <a href="#album-detail/starboy" data-album-link>Starboy</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">14,987,654,321</td>
+                                        <td class="data-table__cell--numeric">38,765,432</td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="data-table__delta--na">N.D.</span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">—</td>
+                                        <td class="data-table__cell--numeric">15B</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Page Caps imminents (cachée par défaut) -->
+                <div id="page-caps" class="page page--caps" data-page-content="caps" style="display: none;">
+                    <div class="page-header">
+                        <div class="page-header__meta">
+                            <h1>Caps imminents</h1>
+                            <p class="page-header__subtitle">
+                                Titres et albums proches d'atteindre un nouveau palier de streams
+                            </p>
+                        </div>
+                    </div>
+
+                    <section class="table-section">
+                        <div class="table-wrapper">
+                            <table class="data-table" data-testid="caps-table">
+                                <caption class="data-table__caption">Liste des caps imminents</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <span class="data-table__header-text">Type</span>
+                                        </th>
+                                        <th scope="col">
+                                            <span class="data-table__header-text">Titre</span>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Jours (2 déc.)</span>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Date attendue</span>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Streams actuels</span>
+                                        </th>
+                                        <th scope="col" class="data-table__cell--numeric">
+                                            <span class="data-table__header-text">Prochain palier</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <span class="flag-chip">Song</span>
+                                        </td>
+                                        <td>
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">🎵</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">Save Your Tears</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="countdown-chip countdown-chip--pending">
+                                                <span class="countdown-chip__dot"></span>
+                                                14 jours
+                                            </span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">16 oct. 2025</td>
+                                        <td class="data-table__cell--numeric">2,987,654,321</td>
+                                        <td class="data-table__cell--numeric">3B</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <span class="flag-chip">Album</span>
+                                        </td>
+                                        <td>
+                                            <div class="data-table__title-wrapper">
+                                                <div class="data-table__title-cover">
+                                                    <div class="cover-placeholder">💿</div>
+                                                </div>
+                                                <div class="data-table__title-meta">
+                                                    <div class="data-table__song-name">
+                                                        <a href="#album-detail/dawn-fm" data-album-link>Dawn FM</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="data-table__cell--numeric">
+                                            <span class="countdown-chip countdown-chip--ready">
+                                                <span class="countdown-chip__dot"></span>
+                                                2 jours
+                                            </span>
+                                        </td>
+                                        <td class="data-table__cell--numeric">04 oct. 2025</td>
+                                        <td class="data-table__cell--numeric">7,876,543,210</td>
+                                        <td class="data-table__cell--numeric">8B</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Barre de recherche sticky -->
+        <div class="bottombar">
+            <div class="bottombar__inner">
+                <label for="search-input" class="bottombar__label">Rechercher</label>
+                <input 
+                    type="search" 
+                    id="search-input" 
+                    class="bottombar__input" 
+                    placeholder="Rechercher un titre, album..."
+                    aria-label="Rechercher un titre ou album"
+                    data-testid="search-sticky"
+                />
+            </div>
+        </div>
+    </div>
+
+    <script src="src/app.js"></script>
+</body>
+</html>

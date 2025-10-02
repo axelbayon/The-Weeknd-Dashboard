@@ -6,12 +6,18 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
-**2025-10-02 — Prompt 0.2 : Gestion des secrets Spotify**
-- Ajout de `SPOTIFY_REDIRECT_URI` dans `.env.local` (3 clés Spotify complètes)
-- Complétion de `.gitignore` : ajout de `*/.env.local` (7 patterns de protection au total)
-- Création de la section "Variables d'environnement (Spotify)" dans le README
-- Documentation complète : emplacement, clés attendues, avertissements, process d'obtention
-- Validation : .env.local ignoré, aucun .env* tracké, 3 clés présentes (valeurs masquées)
+**2025-10-02 — Prompt 1 : Shell UI & pages (sans logique métier)**
+- Création de l'interface utilisateur complète (HTML/CSS/JS vanilla)
+- Navigation sticky avec 3 onglets : Songs, Albums, Caps imminents
+- En-têtes de page Songs : 9 cartes de stats (sync locale, prochaine MAJ, date Spotify, total titres, streams totaux/quotidiens, Solo/Lead, Feat)
+- En-têtes de page Albums : 6 cartes de stats (sync locale, prochaine MAJ, date Spotify, total albums, streams totaux/quotidiens)
+- En-têtes de page Caps imminents : titre + description
+- Tables structurelles : Songs (7 colonnes, 3 lignes factices), Albums (7 colonnes, 2 lignes factices), Caps imminents (6 colonnes, 2 lignes factices)
+- Colonnes # et Titre sticky (position: sticky via CSS existant)
+- Barre de recherche sticky en bas
+- Import unique de src/styles/global.css
+- Tous les data-testid ajoutés pour tests futurs
+- Aucune logique métier (placeholders uniquement)
 
 ---
 
@@ -24,11 +30,13 @@ README.md                     # Ce fichier (documentation du projet)
 .gitattributes                # Normalisation des fins de ligne
 LICENSE                       # Licence (placeholder MIT)
 Website/                      # Dossier parent du code applicatif
+  index.html                  # Page principale (SPA)
   data/
     history/
       songs/                  # Snapshots quotidiens des chansons (J, J-1, J-2)
       albums/                 # Snapshots quotidiens des albums (J, J-1, J-2)
   src/
+    app.js                    # Script JavaScript (navigation)
     styles/
       global.css              # CSS canonique (960 lignes)
     .gitkeep                  # Préserve le dossier src/
@@ -46,7 +54,13 @@ Website/                      # Dossier parent du code applicatif
 
 ## Comment utiliser / Commandes
 
-*(À compléter lors des prochains prompts)*
+### Lancement local
+
+1. Ouvrir `Website/index.html` dans un navigateur web
+2. Naviguer entre les pages via la barre de navigation (Songs / Albums / Caps imminents)
+3. L'interface est fonctionnelle mais les données sont des placeholders (aucune logique métier implémentée)
+
+**Note** : Pour l'instant, aucun serveur ni build n'est requis. L'application fonctionne directement en ouvrant le fichier HTML.
 
 ---
 
@@ -98,8 +112,11 @@ SPOTIFY_REDIRECT_URI=      # URI de redirection (ex: http://localhost:8888/callb
 
 ## Limites connues
 
-- Projet en phase d'initialisation : aucune logique applicative implémentée pour l'instant.
-- Stack technique non définie (à venir dans les prochains prompts).
+- **Données placeholder** : l'interface affiche des données factices (aucune logique métier implémentée).
+- **Aucun scraping** : pas de récupération de données Kworb pour l'instant.
+- **Aucun calcul** : variations, caps, paliers affichés en dur ou "N.D.".
+- **Recherche non fonctionnelle** : la barre de recherche est présente mais ne filtre rien encore.
+- **Stack technique** : HTML/CSS/JS vanilla (simple SPA sans framework).
 
 ---
 
