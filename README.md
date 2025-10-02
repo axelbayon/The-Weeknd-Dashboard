@@ -6,6 +6,13 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ## Quoi de neuf
 
+**2025-10-02 — Réorganisation finale de l'arborescence**
+- Déplacement du README.md à la racine du projet (avant Website/)
+- Déplacement de .env.local à la racine du projet
+- Réorganisation du CSS : Website/global.css → Website/src/styles/global.css
+- Mise à jour de .gitignore : `.env.local` remplace `Website/.env.local` (ligne 7)
+- Structure finale : fichiers de config à la racine, code applicatif dans Website/
+
 **2025-10-02 — Restructuration (Website parent)**
 - Restructuration complète : `Website/` devient le dossier parent du projet
 - Déplacement de tous les dossiers (data/, src/, public/, scripts/, docs/) dans Website/
@@ -30,27 +37,29 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 ## Structure du repo
 
 ```
-Website/                      # Dossier parent du projet
+README.md                     # Ce fichier (documentation du projet)
+.env.local                    # Secrets Spotify (non tracké, ignoré par Git)
+.gitignore                    # Patterns d'exclusion Git
+.gitattributes                # Normalisation des fins de ligne
+LICENSE                       # Licence (placeholder MIT)
+Website/                      # Dossier parent du code applicatif
   data/
     history/
       songs/                  # Snapshots quotidiens des chansons (J, J-1, J-2)
       albums/                 # Snapshots quotidiens des albums (J, J-1, J-2)
-  src/                        # Code source de l'application (à venir)
+  src/
+    styles/
+      global.css              # CSS canonique (960 lignes)
+    .gitkeep                  # Préserve le dossier src/
   scripts/                    # Scripts de scraping et traitement (à venir)
   public/
-    styles/                   # Assets CSS (vide pour l'instant)
+    styles/                   # Assets CSS additionnels (vide pour l'instant)
   docs/
     roadmap.md                # Feuille de route (à compléter)
     securité-scraping.md      # Règles de sécurité pour le scraping
-  global.css                  # CSS canonique (960 lignes)
-  .env.local                  # Secrets Spotify (non tracké, ignoré par Git)
-  README.md                   # Ce fichier
-.gitignore                    # Patterns d'exclusion Git
-.gitattributes                # Normalisation des fins de ligne
-LICENSE                       # Licence (placeholder MIT)
 ```
 
-**Note** : `Website/` est le dossier racine du projet. CSS canonique : `Website/global.css`.
+**Note** : Fichiers de configuration et documentation à la racine, code applicatif dans `Website/`. CSS canonique : `Website/src/styles/global.css`.
 
 ---
 
@@ -62,7 +71,7 @@ LICENSE                       # Licence (placeholder MIT)
 
 ## Variables d'environnement
 
-Les secrets (ex. clés Spotify API) doivent être stockés dans le fichier `Website/.env.local` **jamais commité**.
+Les secrets (ex. clés Spotify API) doivent être stockés dans le fichier `.env.local` à la racine du projet, **jamais commité**.
 
 Exemple :
 ```
@@ -70,7 +79,7 @@ SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 ```
 
-Le fichier `.env.local` est explicitement ignoré par Git (voir `.gitignore`).
+Le fichier `.env.local` est explicitement ignoré par Git (voir `.gitignore` ligne 7).
 
 ---
 
@@ -93,31 +102,35 @@ Le fichier `.env.local` est explicitement ignoré par Git (voir `.gitignore`).
 
 ### Test 1 - Arborescence complète
 **Commande** : `Get-ChildItem -Recurse -Depth 4`  
-**Objectif** : Vérifier que tous les dossiers (data/, src/, public/, scripts/, docs/) sont bien dans Website/ et qu'il n'y a plus de dossiers à la racine (sauf .git/, LICENSE, .gitignore, .gitattributes, Website/).
+**Objectif** : Vérifier la structure du projet avec README.md et .env.local à la racine, et tous les dossiers applicatifs dans Website/.
 
-### Test 2 - Unicité du CSS
-**Commande** : `Get-ChildItem -Filter "global.css" -Recurse`  
-**Objectif** : Confirmer qu'un seul fichier global.css existe dans le projet (Website/global.css).
-
-### Test 3 - Protection des secrets
-**Commande** : `git check-ignore -v Website/.env.local`  
-**Objectif** : Prouver que Website/.env.local est bien ignoré par Git (ligne 7 de .gitignore).
-
-### Test 4 - README racine supprimé
+### Test 2 - README à la racine
 **Commande** : `Test-Path README.md`  
-**Objectif** : Confirmer que README.md n'existe plus à la racine du projet.
+**Objectif** : Confirmer que README.md est bien à la racine du projet.
 
-### Test 5 - README dans Website
-**Commande** : `Test-Path Website/README.md`  
-**Objectif** : Confirmer que README.md est bien déplacé dans Website/.
+### Test 3 - .env.local à la racine
+**Commande** : `Test-Path .env.local`  
+**Objectif** : Confirmer que .env.local est bien à la racine du projet.
 
-### Test 6 - Intégrité du CSS
-**Commande** : `Measure-Object -Line Website/global.css`  
+### Test 4 - global.css dans src/styles
+**Commande** : `Test-Path Website/src/styles/global.css`  
+**Objectif** : Confirmer que global.css est bien dans Website/src/styles/.
+
+### Test 5 - Unicité du CSS
+**Commande** : `Get-ChildItem -Filter "global.css" -Recurse`  
+**Objectif** : Confirmer qu'un seul fichier global.css existe dans le projet (Website/src/styles/global.css).
+
+### Test 6 - Protection des secrets
+**Commande** : `git check-ignore -v .env.local`  
+**Objectif** : Prouver que .env.local à la racine est bien ignoré par Git (ligne 7 de .gitignore).
+
+### Test 7 - Intégrité du CSS
+**Commande** : `Measure-Object -Line Website/src/styles/global.css`  
 **Objectif** : Vérifier que le CSS n'a pas été tronqué lors du déplacement (960 lignes attendues).
 
-### Test 7 - État Git propre
-**Commande** : `git status --short`  
-**Objectif** : Confirmer les renames détectés (R) et l'absence de fichiers .env* dans les changements.
+### Test 8 - .gitignore mis à jour
+**Commande** : `Select-String -Pattern "\.env\.local" .gitignore`  
+**Objectif** : Confirmer que .gitignore contient bien `.env.local` à la ligne 7.
 
 ---
 
