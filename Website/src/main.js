@@ -67,16 +67,16 @@
             }
         });
 
-        // Cacher toutes les pages
+        // Cacher toutes les pages (attribut hidden, pas display:none - Prompt 6.6)
         const pages = document.querySelectorAll('[data-page-content]');
         pages.forEach(page => {
-            page.style.display = 'none';
+            page.hidden = true;
         });
 
         // Afficher la page sélectionnée
         const targetPage = document.querySelector(`[data-page-content="${pageName}"]`);
         if (targetPage) {
-            targetPage.style.display = 'block';
+            targetPage.hidden = false;
         }
 
         currentPage = pageName;

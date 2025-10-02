@@ -8,6 +8,63 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-02 — Prompt 6.6 (rev) : Tooltip/bouton perfectionné + Fix espacement SPA (hidden) + Albums meta**
+
+*Corrections finales UI tooltip + fix architectural espacement SPA :*
+
+**A) Carte "Prochaine MAJ" - Bouton et tooltip finalisés** :
+- **Bouton "i"** : Bordure blanche (`border:1px solid #fff`) conservant position absolute top-right
+- **Tooltip repositionné** : Aligné au-dessus du bouton (`inset-inline-end:0.6rem`, plus `left:50%`), flèche à droite
+- **Lisibilité améliorée** : `max-inline-size` 22rem→26rem, `padding` 0.75rem/0.9rem→1rem/1.2rem
+- **Style hover dynamique** : Au survol/focus du bouton, border tooltip prend couleur du chrono :
+  - État attente (`.is-wait`) : border ambre `rgba(242,180,34,.65)`
+  - État prêt (`.is-ready`) : border vert `rgba(24,160,88,.65)`
+  - Fond plus contrasté `rgba(12,14,24,.95)`
+- **Sélecteurs CSS** : Utilisation de `:has()` pour détecter état badge et appliquer style correspondant
+
+**B) Fix architectural espacement SPA** :
+- **Problème racine** : `display:none` dans main.js détruisait le flux CSS et créait "sauts" d'espacement
+- **Solution** : Remplacement par attribut `hidden` (ligne 73 main.js) :
+  ```javascript
+  pages.forEach(page => page.hidden = true);  // Au lieu de page.style.display='none'
+  targetPage.hidden = false;                   // Au lieu de targetPage.style.display='block'
+  ```
+- **Avantage** : Attribut HTML natif, ne modifie pas le flux de mise en page, navigation fluide
+- **Nettoyage CSS** : Suppression règle temporaire `.page .table-section { margin-block-start:28px }` (devenue inutile)
+- **Règle conservée** : `.table-section { margin-block-start:28px }` (espacement naturel après header-cards)
+
+**C) Albums - Cartes meta affichées** :
+- **Vérification** : Cartes Albums utilisent les mêmes `data-testid` que Songs :
+  - `header-last-sync` : Dernière sync locale
+  - `header-next-update` : Prochaine mise à jour (avec badge chrono)
+  - `header-spotify-data-date` : Date données Spotify (J-1)
+- **Mécanisme** : `meta-refresh.js` met à jour tous les éléments via `querySelector('[data-testid]')` (universel)
+- **Résultat** : Albums affiche et rafraîchit automatiquement toutes les cartes meta (aucune logique à modifier)
+
+*Fichiers modifiés :*
+- `Website/src/styles/global.css` : 
+  - `.nu-info` : border blanche au lieu de var(--panel-600)
+  - `.nu-tooltip` : repositionné `inset-inline-end:0.6rem` (aligné bouton), padding/taille augmentés
+  - `.nu-tooltip::after` : flèche repositionnée à droite (`inset-inline-end:1rem`)
+  - Ajout sélecteurs hover avec `:has(.nu-badge.is-wait)` et `:has(.nu-badge.is-ready)` pour border dynamique
+  - Suppression règle temporaire `.page .table-section { margin-block-start:28px }`
+- `Website/src/main.js` : 
+  - Remplacement `page.style.display='none'/'block'` par `page.hidden=true/false` (ligne 73)
+  - Fix architectural pour espacement SPA stable
+- `Website/index.html` : 
+  - Cache-busting v6.6 sur CSS et tous scripts JS
+
+*Tests de validation :*
+1. ✅ Bouton "i" bordure blanche, position top-right inchangée
+2. ✅ Tooltip aligné au-dessus du bouton (pas centré sur carte), flèche pointant vers bouton
+3. ✅ Tooltip plus large (26rem), plus lisible (padding 1rem/1.2rem)
+4. ✅ Au hover/focus : border tooltip ambre (attente) ou vert (prêt), fond plus contrasté
+5. ✅ Navigation Songs ↔ Albums ↔ Songs : espacement 28px stable (plus de "saut")
+6. ✅ Albums affiche Dernière sync locale, Date Spotify, badge chrono (via data-testid)
+7. ✅ Date J-1 inchangée, logique meta.spotify_data_date conservée
+
+---
+
 **2025-10-02 — Prompt 6.5 : UI polish "Prochaine MAJ" (icône/tooltip/chrono) + Espacements SPA + Date J-1**
 
 *Polish final de la carte "Prochaine mise à jour" et corrections UI :*

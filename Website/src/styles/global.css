@@ -236,11 +236,6 @@ a {
   width: 100%;
 }
 
-/* Espacement direct page → table-wrap (SPA-proof, Prompt 6.5) */
-.page .table-section {
-  margin-block-start: 28px;
-}
-
 .stat-card {
   padding: 0.9rem 1rem;
   border-radius: 16px;
@@ -1048,7 +1043,7 @@ a {
 .nu-info {
   inline-size: 1.75rem;
   block-size: 1.75rem;
-  border: 1px solid var(--panel-600);
+  border: 1px solid #fff; /* Bordure blanche (Prompt 6.6) */
   border-radius: 50%;
   position: absolute;
   inset-block-start: 0.6rem;
@@ -1069,7 +1064,6 @@ a {
 
 .nu-info:hover,
 .nu-info:focus {
-  border-color: var(--color-accent);
   background: rgba(95, 87, 255, 0.1);
 }
 
@@ -1078,34 +1072,63 @@ a {
   color: var(--color-accent);
 }
 
-/* Tooltip centré au-dessus de la carte */
+/* Tooltip aligné au-dessus du bouton (pas centré sur carte) */
 .nu-tooltip {
   position: absolute;
   inset-block-end: calc(100% + 0.6rem);
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
+  inset-inline-end: 0.6rem; /* Aligné sur le bouton "i" (Prompt 6.6) */
+  transform: none; /* Plus de translateX(-50%) */
   background: var(--panel-900);
   border: 1px solid var(--panel-700);
-  padding: 0.75rem 0.9rem;
+  padding: 1rem 1.2rem; /* Padding augmenté pour lisibilité (Prompt 6.6) */
   border-radius: 0.6rem;
-  max-inline-size: 22rem;
+  max-inline-size: 26rem; /* Élargi de 22rem à 26rem (Prompt 6.6) */
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
   text-align: center;
   font-size: 0.85rem;
   line-height: 1.5;
   z-index: 1000;
   white-space: normal;
+  transition: all 0.25s ease;
 }
 
-/* Flèche du tooltip (pointant vers le bas, centrée) */
+/* Flèche du tooltip (pointant vers le bouton, à droite) */
 .nu-tooltip::after {
   content: "";
   position: absolute;
   inset-block-start: 100%;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
+  inset-inline-end: 1rem; /* Flèche à droite, alignée sur bouton (Prompt 6.6) */
   border: 8px solid transparent;
   border-block-start-color: var(--panel-700);
+  transition: border-block-start-color 0.25s ease;
+}
+
+/* Style hover selon état du chrono (Prompt 6.6) */
+.nu-info:hover ~ .nu-tooltip:not([hidden]),
+.nu-info:focus ~ .nu-tooltip:not([hidden]) {
+  background: rgba(12, 14, 24, 0.95); /* Fond plus contrasté */
+}
+
+/* Border ambre si chrono en attente */
+.nu-card:has(.nu-badge.is-wait) .nu-info:hover ~ .nu-tooltip:not([hidden]),
+.nu-card:has(.nu-badge.is-wait) .nu-info:focus ~ .nu-tooltip:not([hidden]) {
+  border-color: rgba(242, 180, 34, 0.65);
+}
+
+.nu-card:has(.nu-badge.is-wait) .nu-info:hover ~ .nu-tooltip:not([hidden])::after,
+.nu-card:has(.nu-badge.is-wait) .nu-info:focus ~ .nu-tooltip:not([hidden])::after {
+  border-block-start-color: rgba(242, 180, 34, 0.65);
+}
+
+/* Border vert si chrono prêt */
+.nu-card:has(.nu-badge.is-ready) .nu-info:hover ~ .nu-tooltip:not([hidden]),
+.nu-card:has(.nu-badge.is-ready) .nu-info:focus ~ .nu-tooltip:not([hidden]) {
+  border-color: rgba(24, 160, 88, 0.65);
+}
+
+.nu-card:has(.nu-badge.is-ready) .nu-info:hover ~ .nu-tooltip:not([hidden])::after,
+.nu-card:has(.nu-badge.is-ready) .nu-info:focus ~ .nu-tooltip:not([hidden])::after {
+  border-block-start-color: rgba(24, 160, 88, 0.65);
 }
 
 .nu-tooltip[hidden] {
