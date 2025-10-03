@@ -91,21 +91,23 @@
             });
         }
 
-        // Écouter les clics sur les boutons de tri
+        // Écouter les clics sur les en-têtes triables (Prompt 7.9: plein-surface)
         const table = document.querySelector('[data-testid="caps-table"]');
         if (table) {
-            table.addEventListener('click', handleSortClick);
+            const thead = table.querySelector('thead');
+            if (thead) {
+                thead.addEventListener('click', handleSortClick);
+            }
         }
     }
 
     /**
-     * Gère le clic sur les boutons de tri
+     * Gère le clic sur les en-têtes triables (Prompt 7.9: plein-surface)
      */
     function handleSortClick(event) {
-        const button = event.target.closest('.data-table__sort-button');
-        if (!button) return;
-
-        const th = button.closest('th');
+        // Résoudre le <th> cliqué via closest (plein-surface)
+        const th = event.target.closest('th[data-sort-key]');
+        if (!th) return;
         
         // Lecture de la clé de tri depuis l'attribut data-sort-key (source de vérité unique)
         const sortKey = th.dataset.sortKey;
@@ -177,9 +179,9 @@
                 aVal = parseInt(aVal) || Infinity; // Si pas de rang, mettre à la fin
                 bVal = parseInt(bVal) || Infinity;
             } else if (currentSortKey === 'title') {
-                // Ignorer * pour le tri
-                aVal = (a.title || '').replace(/^\*\s*/, '').toLowerCase();
-                bVal = (b.title || '').replace(/^\*\s*/, '').toLowerCase();
+                // Ignorer * et ^ pour le tri (featuring / compilation, Prompt 7.9)
+                aVal = (a.title || '').replace(/^[*^]\s*/, '').toLowerCase();
+                bVal = (b.title || '').replace(/^[*^]\s*/, '').toLowerCase();
             } else if (currentSortKey === 'variation_pct') {
                 // Gérer "N.D."
                 aVal = (typeof aVal === 'string' && aVal === 'N.D.') ? -Infinity : parseFloat(aVal);
@@ -374,26 +376,31 @@
         dailyCell.textContent = window.formatNumber ? window.formatNumber(item.streams_daily) : item.streams_daily.toLocaleString('fr-FR');
         row.appendChild(dailyCell);
 
-        // Variation (%)
+        // Variation (%) - Pipeline unifié formatPercent (Prompt 7.9)
         const variationCell = document.createElement('td');
         variationCell.className = 'data-table__cell--numeric';
         const variationSpan = document.createElement('span');
         
-        if (item.variation_pct === 'N.D.') {
-            variationSpan.className = 'data-table__delta--na';
-            variationSpan.textContent = 'N.D.';
-        } else {
-            const variation = parseFloat(item.variation_pct);
+        const variationValue = item.variation_pct;
+        const isValidNumber = variationValue !== null && variationValue !== undefined && 
+                              variationValue !== 'N.D.' && !isNaN(parseFloat(variationValue));
+        
+        if (isValidNumber) {
+            const variation = parseFloat(variationValue);
+            const variationText = window.formatters.formatPercent(variation);
+            
             if (variation > 0) {
                 variationSpan.className = 'data-table__delta--positive';
-                variationSpan.textContent = '+' + variation.toFixed(2) + ' %';
             } else if (variation < 0) {
                 variationSpan.className = 'data-table__delta--negative';
-                variationSpan.textContent = variation.toFixed(2) + ' %';
             } else {
                 variationSpan.className = 'data-table__delta--neutral';
-                variationSpan.textContent = '0,00 %';
             }
+            variationSpan.textContent = variationText;
+        } else {
+            // N.D. : classe neutre/grisée
+            variationSpan.className = 'data-table__delta--na';
+            variationSpan.textContent = 'N.D.';
         }
         
         variationCell.appendChild(variationSpan);

@@ -8,6 +8,61 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-01-27 — Prompt 7.9 : Caps clic plein-surface Titre + Variations unifiées (3 pages) + Albums tri/légende compilation (^)**
+
+**Problématique** : Header Titre dans Caps n'est cliquable que sur le bouton interne (pas plein-surface comme #). Variations (%) utilisent des formats différents entre pages : Caps avec `.toFixed(2)` (point décimal anglais), Songs/Albums avec `formatPercent` (virgule FR). Albums n'ignorent pas le symbole ^ (compilation) lors du tri alphabétique, et pas de légende explicative pour ^.
+
+**Solution** :
+1. **Caps : clic plein-surface sur Titre** :
+   - Refactorisation `caps.js` : écoute clic au niveau `<thead>`, résolution avec `event.target.closest('th[data-sort-key]')`
+   - Header Titre avec `data-sort-key="title"` (déjà en place)
+   - `pointer-events: none` déjà en place sur éléments décoratifs (header-text, sort-icon, legend) depuis 7.6
+   - Toute la surface du `<th>` déclenche le tri Titre
+
+2. **Variations (%) unifiées sur 3 pages** :
+   - **Caps** : migration de `.toFixed(2)` vers `formatPercent()` (format FR avec virgule)
+   - **Songs/Albums** : déjà avec `formatPercent` depuis 7.8
+   - **Pipeline unifié** : 2 décimales FR + signe (+X,XX % / −X,XX %)
+     - Valeurs numériques : `formatPercent()` avec classes positive (vert) / negative (rouge) / neutral (gris)
+     - Valeurs manquantes : "N.D." avec classe `data-table__delta--na` (gris neutre)
+   - **Résultat** : Format identique sur Songs, Albums, Caps (virgule, 2 déc, signe, N.D. grisé)
+
+3. **Albums : tri ignore ^ + légende compilation** :
+   - **Tri alphabétique** : `normalizeTitle()` modifié pour ignorer `^[*^]\s*` en tête (featuring * ou compilation ^)
+   - Appliqué dans `table-sort.js` (Songs/Albums) et `caps.js` (Caps)
+   - Affichage conservé : titres avec ^ ou * visibles, mais ignorés pour le tri
+   - **Header Albums** :
+     - Label "Titre" → "Albums"
+     - Légende "* = featuring" → "^ = compilation"
+     - Style identique à légende featuring (pointer-events:none, même classes)
+   - **Header Songs et Caps** : "Titre" → "Titres" (ajout du "s")
+
+**Critères de validation** :
+- ✅ Caps : clic n'importe où dans header Titre déclenche le tri, indicateur ▲/▼ sur Titre
+- ✅ Variations (%) : format FR unifié (+X,XX % vert, −X,XX % rouge, N.D. gris) sur les 3 pages
+- ✅ Albums : tri alphabétique ignore ^ (comme *), légende "^ = compilation" visible
+- ✅ Songs/Caps : légende "* = featuring" inchangée, headers "Titres" avec "s"
+- ✅ Aucune régression (tri #, autres colonnes, sticky, widths, couleurs rangs, auto-refresh)
+
+**Fichiers modifiés** :
+- `Website/src/caps.js` :
+  - Lignes 94-100 : refactorisation écoute thead + `closest('th[data-sort-key]')`
+  - Lignes 103-118 : `handleSortClick()` avec plein-surface
+  - Lignes 181-184 : tri Titre ignore `^[*^]\s*` (featuring/compilation)
+  - Lignes 377-403 : pipeline Variation unifié avec `formatPercent()`
+- `Website/src/table-sort.js` :
+  - Lignes 59-68 : `normalizeTitle()` ignore `^[*^]\s*` en tête
+- `Website/index.html` :
+  - Lignes 129-137 : header Songs "Titre" → "Titres"
+  - Lignes 291-299 : header Albums "Titre" → "Albums" + légende "^ = compilation"
+  - Lignes 466-474 : header Caps "Titre" → "Titres"
+  - Ligne 8 : cache-busting CSS v7.9
+  - Lignes 540-542 : cache-busting JS v7.9 (table-sort, caps)
+
+**Cache-busting** : v7.9 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.8 : Tri plein-surface (# & Titre) + Variation (%) correcte sur Songs/Albums**
 
 **Problématique** : Headers # et Titre sur Songs/Albums ne sont pas cliquables sur toute leur surface (clic limité au bouton interne). Variation (%) affiche parfois "0%" au lieu de "N.D." pour valeurs manquantes, et le format n'est pas harmonisé (pas de signe +/−, décimales incohérentes).

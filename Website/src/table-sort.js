@@ -57,13 +57,13 @@
   };
 
   /**
-   * Normalise un titre pour le tri (ignore * initial, minuscules, sans accents)
-   * Garde * dans l'affichage mais l'ignore pour le tri
+   * Normalise un titre pour le tri (ignore * et ^ initiaux, minuscules, sans accents)
+   * Garde * et ^ dans l'affichage mais les ignore pour le tri (Prompt 7.9)
    */
   function normalizeTitle(title) {
     if (!title) return '';
-    // Retire * au début pour le tri
-    const cleaned = title.replace(/^\*\s*/, '').trim();
+    // Retire * ou ^ au début pour le tri (featuring / compilation)
+    const cleaned = title.replace(/^[*^]\s*/, '').trim();
     return cleaned;
   }
 
