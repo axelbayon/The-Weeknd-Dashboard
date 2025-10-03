@@ -344,7 +344,7 @@ class DataRenderer {
         tdStreamsDaily.textContent = formatIntFr(song.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
-        // Colonne Variation (%) - Pipeline Caps (Prompt 7.8)
+        // Colonne Variation (%) - Pipeline Caps, condition triple pour 0 neutre (Prompt 7.10)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
@@ -357,8 +357,15 @@ class DataRenderer {
             tdVariation.setAttribute('data-sort-raw', variationValue);
             const variationText = formatPercent(variationValue);
             const value = Number(variationValue);
-            const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
-            tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+            
+            // Triple condition : >0 vert, <0 rouge, =0 gris (Prompt 7.10)
+            if (value > 0) {
+                tdVariation.innerHTML = `<span class="data-table__delta--positive">${variationText}</span>`;
+            } else if (value < 0) {
+                tdVariation.innerHTML = `<span class="data-table__delta--negative">${variationText}</span>`;
+            } else {
+                tdVariation.innerHTML = `<span class="data-table__delta--neutral">${variationText}</span>`;
+            }
         } else {
             // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
             tdVariation.setAttribute('data-sort-raw', '');
@@ -482,7 +489,7 @@ class DataRenderer {
         tdStreamsDaily.textContent = formatIntFr(album.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
-        // Colonne Variation (%) - Pipeline Caps (Prompt 7.8)
+        // Colonne Variation (%) - Pipeline Caps, condition triple pour 0 neutre (Prompt 7.10)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
@@ -495,8 +502,15 @@ class DataRenderer {
             tdVariation.setAttribute('data-sort-raw', variationValue);
             const variationText = formatPercent(variationValue);
             const value = Number(variationValue);
-            const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
-            tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+            
+            // Triple condition : >0 vert, <0 rouge, =0 gris (Prompt 7.10)
+            if (value > 0) {
+                tdVariation.innerHTML = `<span class="data-table__delta--positive">${variationText}</span>`;
+            } else if (value < 0) {
+                tdVariation.innerHTML = `<span class="data-table__delta--negative">${variationText}</span>`;
+            } else {
+                tdVariation.innerHTML = `<span class="data-table__delta--neutral">${variationText}</span>`;
+            }
         } else {
             // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
             tdVariation.setAttribute('data-sort-raw', '');

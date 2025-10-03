@@ -63,6 +63,32 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-03 — Prompt 7.10 : Variation 0% neutre (Songs/Albums) + tri Albums ignore ^ (compilation)**
+
+**Problématique** : Les variations à 0% étaient affichées en vert (positif) sur Songs et Albums, alors qu'elles doivent être neutres/grises comme sur Caps imminents. Le tri Albums doit ignorer le préfixe ^ (compilation) pour l'ordre alphabétique, mais l'affichage doit conserver le symbole.
+
+**Solution** :
+1. **Variation (%) 0% neutre/grise** :
+   - Correction du pipeline Songs/Albums dans `data-renderer.js` : passage d'une condition binaire (`value >= 0`) à une condition triple (`>0` vert, `<0` rouge, `=0` gris).
+   - 0% s'affiche désormais en gris neutre (`data-table__delta--neutral`), identique à Caps.
+   - N.D. reste grisé (`data-table__delta--na`).
+
+2. **Tri Albums ignore ^ (compilation)** :
+   - Vérification que `normalizeTitle()` dans `table-sort.js` retire bien le préfixe ^ ou * pour le tri alphabétique.
+   - Exemple validé : "Avatar" < "After Hours" < "After Hours (Deluxe)" < "^ Compilation Album".
+
+3. **Cache-busting** :
+   - Passage de v7.9 à v7.10 pour CSS et JS dans `index.html`.
+
+**Critères de validation** :
+- ✅ Songs/Albums : variations à 0% affichées en gris neutre, positives en vert, négatives en rouge, N.D. en gris
+- ✅ Tri Albums : ^ ignoré pour le tri, affiché dans la cellule
+- ✅ Aucune régression sur le tri, le format, les couleurs ou l'interaction
+
+**Fichiers modifiés** :
+- `Website/src/data-renderer.js` : pipeline variation Songs/Albums (condition triple)
+- `Website/src/table-sort.js` : tri Albums (normalizeTitle)
+- `Website/index.html` : cache-busting v7.10
 
 ---
 
