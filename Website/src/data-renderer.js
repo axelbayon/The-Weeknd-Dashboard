@@ -344,19 +344,25 @@ class DataRenderer {
         tdStreamsDaily.textContent = formatIntFr(song.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
-        // Colonne Variation (%)
+        // Colonne Variation (%) - Pipeline Caps (Prompt 7.8)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
-        tdVariation.setAttribute('data-sort-raw', song.variation_pct || 0);
-        const variationText = formatPercent(song.variation_pct);
         
-        if (variationText === 'N.D.') {
-            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
-        } else {
-            const value = Number(song.variation_pct);
+        // Gérer les valeurs manquantes correctement
+        const variationValue = song.variation_pct;
+        const isValidNumber = variationValue !== null && variationValue !== undefined && !isNaN(variationValue);
+        
+        if (isValidNumber) {
+            tdVariation.setAttribute('data-sort-raw', variationValue);
+            const variationText = formatPercent(variationValue);
+            const value = Number(variationValue);
             const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
             tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+        } else {
+            // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
+            tdVariation.setAttribute('data-sort-raw', '');
+            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
         }
         tr.appendChild(tdVariation);
 
@@ -476,19 +482,25 @@ class DataRenderer {
         tdStreamsDaily.textContent = formatIntFr(album.streams_daily);
         tr.appendChild(tdStreamsDaily);
 
-        // Colonne Variation (%)
+        // Colonne Variation (%) - Pipeline Caps (Prompt 7.8)
         const tdVariation = document.createElement('td');
         tdVariation.className = 'data-table__cell--numeric cell-num';
         tdVariation.setAttribute('data-sort-value', 'variation');
-        tdVariation.setAttribute('data-sort-raw', album.variation_pct || 0);
-        const variationText = formatPercent(album.variation_pct);
         
-        if (variationText === 'N.D.') {
-            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
-        } else {
-            const value = Number(album.variation_pct);
+        // Gérer les valeurs manquantes correctement
+        const variationValue = album.variation_pct;
+        const isValidNumber = variationValue !== null && variationValue !== undefined && !isNaN(variationValue);
+        
+        if (isValidNumber) {
+            tdVariation.setAttribute('data-sort-raw', variationValue);
+            const variationText = formatPercent(variationValue);
+            const value = Number(variationValue);
             const deltaClass = value >= 0 ? 'data-table__delta--positive' : 'data-table__delta--negative';
             tdVariation.innerHTML = `<span class="${deltaClass}">${variationText}</span>`;
+        } else {
+            // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
+            tdVariation.setAttribute('data-sort-raw', '');
+            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
         }
         tr.appendChild(tdVariation);
 

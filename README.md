@@ -8,6 +8,53 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-01-27 — Prompt 7.8 : Tri plein-surface (# & Titre) + Variation (%) correcte sur Songs/Albums**
+
+**Problématique** : Headers # et Titre sur Songs/Albums ne sont pas cliquables sur toute leur surface (clic limité au bouton interne). Variation (%) affiche parfois "0%" au lieu de "N.D." pour valeurs manquantes, et le format n'est pas harmonisé (pas de signe +/−, décimales incohérentes).
+
+**Solution** :
+1. **Tri plein-surface généralisé (Songs & Albums)** :
+   - Refactorisation `table-sort.js` : écoute clic au niveau `<thead>`, résolution avec `closest('th[data-sort-key]')`
+   - Source de vérité unique : attribut `data-sort-key` du `<th>` (plus de dépendance à l'index ou tableau parallèle)
+   - `aria-sort` appliqué sur le `<th>` actif (ascending/descending)
+   - Indicateurs ▲/▼ positionnés sur le header actif uniquement
+   - `cursor: pointer` sur `th[data-sort-key]` pour feedback visuel
+   - `data-sort-key="rank"` et `data-sort-key="title"` validés sur Songs/Albums (déjà en place depuis 7.7)
+
+2. **Variation (%) harmonisée (Songs & Albums)** :
+   - Pipeline identique Caps : `formatPercent()` pour format FR avec virgule
+   - **Valeurs numériques** : 2 décimales + signe (+X,XX % / −X,XX %)
+     - Positif : classe `data-table__delta--positive` (vert #4ae3c8)
+     - Négatif : classe `data-table__delta--negative` (rouge #ff8678)
+   - **Valeurs manquantes** : "N.D." avec classe `data-table__delta--na` (gris neutre rgba(255,255,255,0.55))
+   - Correction `data-sort-raw` : plus de fallback à `|| 0` (valeurs manquantes = `''`)
+   - Classes d'état déjà communes aux 3 pages (définies globalement dans `global.css`)
+
+**Critères de validation** :
+- ✅ Songs & Albums : clic n'importe où dans headers # et Titre déclenche le tri, indicateur ▲/▼ sur ce header
+- ✅ `aria-sort` bascule correctement (none → ascending → descending)
+- ✅ Variation (%) Songs/Albums : +X,XX % vert, −X,XX % rouge, N.D. gris (jamais "0%")
+- ✅ Caps strictement inchangé (format, tri, styles)
+- ✅ `cursor: pointer` sur tous les headers triables (# et Titre)
+- ✅ Aucune régression (sticky, formats FR, auto-refresh, navigation)
+
+**Fichiers modifiés** :
+- `Website/src/table-sort.js` :
+  - Lignes 164-198 : refactorisation `handleHeaderClick()` avec `closest('th[data-sort-key]')`
+- `Website/src/styles/global.css` :
+  - Lignes 726-730 : ajout `cursor: pointer` sur `th[data-sort-key]`
+  - Lignes 967-983 : classes delta déjà globales (positive/negative/na)
+- `Website/src/data-renderer.js` :
+  - Lignes 347-367 : pipeline Variation Songs (2 déc FR + signe + N.D. grisé)
+  - Lignes 485-505 : pipeline Variation Albums (2 déc FR + signe + N.D. grisé)
+- `Website/index.html` :
+  - Ligne 8 : cache-busting CSS v7.8
+  - Lignes 539-540 : cache-busting JS v7.8 (data-renderer, table-sort)
+
+**Cache-busting** : v7.8 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.7 : Tailles uniformes headers (toutes pages) + Clic 100% surface (Titre & #)**
 
 **Problématique** : Font-sizes headers définis en dur dans multiples sélecteurs (0.75rem répété), risque de désynchronisation. Headers Caps avec overrides spécifiques (font-size, font-weight) dupliquant les règles globales. Colonnes Caps avec th+td mixés (headers et data cells partagent les mêmes font-sizes). Headers Titre et # pas cliquables sur 100% de leur surface sur Songs et Albums (data-sort-key manquants).

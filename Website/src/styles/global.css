@@ -730,6 +730,11 @@ a {
   white-space: nowrap;
 }
 
+/* Headers triables : cursor pointer sur toute la surface (Prompt 7.8) */
+.data-table th[data-sort-key] {
+  cursor: pointer;
+}
+
 /* Colonne Titre: alignée à gauche */
 .data-table th:nth-child(2),
 .data-table td:nth-child(2),

@@ -168,12 +168,11 @@
 
   /**
    * Gère le clic sur un header pour trier
+   * Écoute au niveau du thead, résout avec closest('th[data-sort-key]') (Prompt 7.8)
    */
   function handleHeaderClick(event) {
-    const button = event.target.closest('.data-table__sort-button');
-    if (!button) return;
-
-    const th = button.closest('th[data-sort-key]');
+    // Résoudre le <th> cliqué via closest (plein-surface)
+    const th = event.target.closest('th[data-sort-key]');
     if (!th) return;
 
     const table = th.closest('table');
