@@ -279,9 +279,6 @@ class DataRenderer {
             this.lastRenderedData.songs = songs;
             console.log(`✅ Table Songs rendue: ${sortedSongs.length} lignes`);
 
-            // Ajouter la légende featuring si elle n'existe pas déjà
-            this.addTableLegend('songs');
-
             // Réinitialiser le tri (table-sort.js)
             if (window.tableSort) {
                 window.tableSort.reinitTable('songs');
@@ -425,9 +422,6 @@ class DataRenderer {
             this.lastRenderedData.albums = albums;
             console.log(`✅ Table Albums rendue: ${sortedAlbums.length} lignes`);
 
-            // Ajouter la légende featuring si elle n'existe pas déjà
-            this.addTableLegend('albums');
-
             // Réinitialiser le tri (table-sort.js)
             if (window.tableSort) {
                 window.tableSort.reinitTable('albums');
@@ -543,33 +537,6 @@ class DataRenderer {
     showError(context) {
         // TODO: Implémenter une notification légère
         console.error(`Erreur de chargement: ${context}`);
-    }
-
-    /**
-     * Ajoute une légende discrète sous la table (featuring)
-     */
-    addTableLegend(tableType) {
-        const tableSection = document.querySelector(`#page-${tableType} .table-section`);
-        if (!tableSection) return;
-
-        // Vérifier si la légende existe déjà
-        const existingLegend = tableSection.querySelector('.table-legend');
-        if (existingLegend) return;
-
-        // Créer la légende
-        const legend = document.createElement('div');
-        legend.className = 'table-legend';
-        legend.innerHTML = `
-            <div class="table-legend__item">
-                <span>* = featuring</span>
-            </div>
-        `;
-
-        // Insérer après le table-wrapper
-        const tableWrapper = tableSection.querySelector('.table-wrapper');
-        if (tableWrapper) {
-            tableWrapper.insertAdjacentElement('afterend', legend);
-        }
     }
 
     /**
