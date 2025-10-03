@@ -453,14 +453,10 @@
         if (!table) return;
 
         const headers = table.querySelectorAll('th');
-        // Nouvel ordre des colonnes : rank, title, type, days_to_next_cap, streams_total, streams_daily, variation_pct, next_cap_value, eta
-        const sortKeys = [
-            'rank', 'title', 'type', 'days_to_next_cap', 'streams_total',
-            'streams_daily', 'variation_pct', 'next_cap_value', 'eta'
-        ];
 
-        headers.forEach((th, index) => {
+        headers.forEach((th) => {
             th.classList.remove('is-sorted');
+            th.removeAttribute('aria-sort');
             
             // Supprimer les anciens indicateurs
             const oldIndicator = th.querySelector('[data-testid="caps-sort-indicator"]');
@@ -468,9 +464,13 @@
                 oldIndicator.remove();
             }
 
+            // Lire la clé de tri depuis data-sort-key (source de vérité unique)
+            const thSortKey = th.dataset.sortKey;
+            
             // Ajouter le nouvel indicateur si c'est la colonne active
-            if (sortKeys[index] === currentSortKey) {
+            if (thSortKey === currentSortKey) {
                 th.classList.add('is-sorted');
+                th.setAttribute('aria-sort', currentSortDirection === 'asc' ? 'ascending' : 'descending');
                 
                 const button = th.querySelector('.data-table__sort-button');
                 if (button) {

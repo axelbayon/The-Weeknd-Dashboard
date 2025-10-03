@@ -8,6 +8,52 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-01-27 — Prompt 7.5 : Caps imminents — couleurs nettement distinctes (cyan), headers ultra-compacts 0.75rem, tri 100% fiable**
+
+**Problématique** : Le bleu #3b82f6 (Prompt 7.4) reste visuellement proche du violet #7c6dff, risque de confusion. Headers 0.8rem pourraient encore déborder avec certains labels longs. Le tri utilise encore un tableau `sortKeys[]` obsolète dans `updateSortIndicators()`, risque de désynchronisation.
+
+**Solution** :
+1. **Couleurs TITRE/ALBUM nettement distinctes** : 
+   - TITRE : cyan vif **#06b6d4** (teinte éloignée du violet, excellente distinction visuelle)
+   - ALBUM : violet **#7c6dff** (inchangé)
+   - Contraste AA respecté (WCAG), appliqué aux rangs # et badges Type
+   - Δ teinte élevée : cyan (180°) vs violet (260°) = 80° de séparation sur la roue chromatique
+
+2. **Headers ultra-compacts** : 
+   - Réduction 0.8rem → **0.75rem** pour tous les headers Caps
+   - `white-space: nowrap` + `font-weight: 600` conservés
+   - Aucun débordement même avec indicateurs ▲/▼ et labels longs
+
+3. **Tri 100% fiable par header** :
+   - Suppression complète du tableau `sortKeys[]` dans `updateSortIndicators()`
+   - Lecture de `th.dataset.sortKey` pour chaque header (source de vérité unique)
+   - Ajout `aria-sort="ascending|descending"` sur le header actif
+   - `pointer-events: none` sur `.data-table__legend` (légende * = featuring ne capture plus les clics)
+   - Indicateurs ▲/▼ toujours sur le bon header, pas de décalage
+
+**Critères de validation** :
+- ✅ Couleurs cyan #06b6d4 (TITRE) vs violet #7c6dff (ALBUM) clairement distinctes
+- ✅ Contraste AA validé (ratio > 4.5:1 sur fond sombre)
+- ✅ Headers 0.75rem, aucun débordement avec ▲/▼
+- ✅ Tri parfaitement aligné : clic sur header → trie sa colonne, indicateur sur ce header
+- ✅ `aria-sort` correctement positionné (accessibilité)
+- ✅ Titres = 25% sticky conservé, aucune régression UX
+
+**Fichiers modifiés** :
+- `Website/src/styles/global.css` : 
+  - Lignes 997-1003 : rank colors (cyan #06b6d4)
+  - Lignes 1326-1337 : badge colors (cyan rgba)
+  - Lignes 1347-1355 : headers 0.8rem → 0.75rem
+  - Lignes 780-795 : ajout `pointer-events: none` sur `.data-table__legend`
+- `Website/src/caps.js` :
+  - Lignes 455-485 : suppression `sortKeys[]` dans `updateSortIndicators()`
+  - Lecture `th.dataset.sortKey` pour chaque header
+  - Ajout `aria-sort` sur header actif
+
+**Cache-busting** : v7.5 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.4 : Caps imminents — couleur TITRE (bleu), headers compacts, Titres=25%, tri robuste**
 
 **Problématique** : La couleur turquoise (Prompt 7.3) est perçue comme verte par l'utilisateur. Les headers pourraient déborder avec les indicateurs de tri. La largeur `auto` pour Titre n'est pas optimale. Le mapping de tri via `sortKeys[]` est fragile : si l'ordre des colonnes change, le tri se désynchronise.
