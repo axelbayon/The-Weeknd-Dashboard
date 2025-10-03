@@ -64,6 +64,7 @@
     if (!title) return '';
     // Retire * ou ^ au début pour le tri (featuring / compilation)
     const cleaned = title.replace(/^[\*\^]\s*/, '').trim();
+    console.log(`[DEBUG] normalizeTitle: "${title}" -> "${cleaned}"`);
     return cleaned;
   }
 
