@@ -180,8 +180,8 @@
                 bVal = parseInt(bVal) || Infinity;
             } else if (currentSortKey === 'title') {
                 // Ignorer * et ^ pour le tri (featuring / compilation, Prompt 7.9)
-                aVal = (a.title || '').replace(/^[*^]\s*/, '').toLowerCase();
-                bVal = (b.title || '').replace(/^[*^]\s*/, '').toLowerCase();
+                aVal = (a.title || '').replace(/^[\*\^]\s*/, '').toLowerCase();
+                bVal = (b.title || '').replace(/^[\*\^]\s*/, '').toLowerCase();
             } else if (currentSortKey === 'variation_pct') {
                 // Gérer "N.D."
                 aVal = (typeof aVal === 'string' && aVal === 'N.D.') ? -Infinity : parseFloat(aVal);
