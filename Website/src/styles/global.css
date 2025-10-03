@@ -12,6 +12,9 @@
   --font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --shadow-elevated: 0 12px 24px rgba(5, 6, 12, 0.45);
   
+  /* Taille uniforme pour tous les headers de tableaux (Prompt 7.7) */
+  --table-th-font-size: 0.75rem;
+  
   /* Variables pour les tooltips et badges */
   --panel-600: rgba(255, 255, 255, 0.12);
   --panel-700: rgba(255, 255, 255, 0.18);
@@ -706,7 +709,7 @@ a {
 
 .data-table thead {
   background: rgba(255, 255, 255, 0.04);
-  font-size: 0.75rem;
+  font-size: var(--table-th-font-size); /* Taille uniforme (Prompt 7.7) */
   letter-spacing: 0.05em;
 }
 
@@ -718,6 +721,13 @@ a {
   vertical-align: middle;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   word-break: break-word;
+}
+
+/* Headers : typographie uniforme pour tous les tableaux (Prompt 7.7) */
+.data-table th {
+  font-size: var(--table-th-font-size);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Colonne Titre: alignée à gauche */
@@ -1361,15 +1371,9 @@ a {
   }
 }
 
-/* Headers Caps : taille réduite et typographie homogène */
+/* Headers Caps : padding ajusté pour matcher Titres/Albums (taille et typo héritées de .data-table th, Prompt 7.7) */
 .data-table--caps th {
-  font-size: 0.75rem; /* Encore plus compact pour éviter tout débordement */
   padding: 0.9rem 1rem; /* Légèrement plus de hauteur pour matcher Titres/Albums (Prompt 7.6) */
-}
-
-.data-table--caps .data-table__header-text {
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 /* Largeurs colonnes tableau Caps */
@@ -1425,7 +1429,10 @@ a {
   width: 90px;
   max-width: 90px;
   min-width: 90px;
-  font-size: 0.88rem; /* Légèrement plus petit (Prompt 7.6) */
+}
+
+.data-table--caps td:nth-child(3) {
+  font-size: 0.88rem; /* Légèrement plus petit pour cellules de données (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(4),
@@ -1450,7 +1457,10 @@ a {
   width: 130px;
   max-width: 130px;
   min-width: 130px;
-  font-size: 0.88rem; /* Réduit (Prompt 7.6) */
+}
+
+.data-table--caps td:nth-child(6) {
+  font-size: 0.88rem; /* Réduit pour cellules de données (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(7),
@@ -1459,7 +1469,10 @@ a {
   width: 140px;
   max-width: 140px;
   min-width: 140px;
-  font-size: 0.88rem; /* Même taille que Streams totaux (Prompt 7.6) */
+}
+
+.data-table--caps td:nth-child(7) {
+  font-size: 0.88rem; /* Même taille que Streams totaux pour cellules de données (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(8),
@@ -1468,7 +1481,10 @@ a {
   width: 110px;
   max-width: 110px;
   min-width: 110px;
-  font-size: 0.86rem; /* Réduit (Prompt 7.6) */
+}
+
+.data-table--caps td:nth-child(8) {
+  font-size: 0.86rem; /* Réduit pour cellules de données (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(9),
@@ -1477,7 +1493,10 @@ a {
   width: 120px;
   max-width: 120px;
   min-width: 120px;
-  font-size: 0.93rem; /* Légèrement augmenté (Prompt 7.6) */
+}
+
+.data-table--caps td:nth-child(9) {
+  font-size: 0.93rem; /* Légèrement augmenté pour cellules de données (Prompt 7.6) */
 }
 
 

@@ -8,6 +8,59 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-01-27 — Prompt 7.7 : Tailles uniformes headers (toutes pages) + Clic 100% surface (Titre & #)**
+
+**Problématique** : Font-sizes headers définis en dur dans multiples sélecteurs (0.75rem répété), risque de désynchronisation. Headers Caps avec overrides spécifiques (font-size, font-weight) dupliquant les règles globales. Colonnes Caps avec th+td mixés (headers et data cells partagent les mêmes font-sizes). Headers Titre et # pas cliquables sur 100% de leur surface sur Songs et Albums (data-sort-key manquants).
+
+**Solution** :
+1. **Variable CSS centralisée** :
+   - Création de `--table-th-font-size: 0.75rem` dans `:root`
+   - Application à `.data-table thead` et `.data-table th` (global)
+   - Source de vérité unique, fin des hard-coded values
+
+2. **Uniformisation headers (toutes pages)** :
+   - `.data-table th` : `font-size: var(--table-th-font-size)`, `font-weight: 600`, `white-space: nowrap`
+   - Appliqué aux 3 pages : Songs, Albums, Caps
+   - Headers Caps simplifiés : suppression font-size/font-weight/nowrap (hérités), seul padding 0.9rem conservé
+
+3. **Séparation th/td pour Caps** :
+   - **Headers (th)** : héritent 0.75rem uniform de `.data-table th`
+   - **Data cells (td)** : conservent sizes custom pour lisibilité
+     - Type : 0.88rem
+     - Streams totaux : 0.88rem
+     - Streams quotidiens : 0.88rem
+     - Variation (%) : 0.86rem
+     - Prochain palier : 0.93rem
+   - Headers uniformes ✅, data cells optimisés ✅
+
+4. **data-sort-key Songs & Albums** :
+   - Ajout `data-sort-key="rank"`, `"title"`, `"streams_total"`, `"streams_daily"`, `"variation_pct"`, `"days_to_next_cap"`, `"next_cap_value"`
+   - Appliqué aux headers Songs et Albums (Caps déjà OK depuis 7.4)
+   - Clic full-surface activé : Titre et # clickables partout (3 pages)
+   - pointer-events:none déjà en place depuis 7.6 (header-text, sort-icon, legend)
+
+**Critères de validation** :
+- ✅ Tous les headers : 0.75rem, 600, nowrap (Songs, Albums, Caps)
+- ✅ Aucun header ne déborde, même avec ▲/▼ (labels longs testés : "Streams quotidiens", "Prochain palier", "Date prévue")
+- ✅ Clic partout dans Titre et # déclenche le tri (3 pages)
+- ✅ Data cells Caps conservent sizes custom (lisibilité préservée)
+- ✅ Aucune régression (sticky, couleurs harmonisées, formats FR/M·B, tri robuste)
+
+**Fichiers modifiés** :
+- `Website/src/styles/global.css` :
+  - Ligne 15 : ajout variable `--table-th-font-size: 0.75rem`
+  - Lignes 710-730 : application variable à `.data-table thead` et `.data-table th` (global)
+  - Lignes 1373-1376 : simplification `.data-table--caps th` (padding only)
+  - Lignes 1426-1497 : séparation th/td pour colonnes Caps (headers uniform, data cells custom)
+- `Website/index.html` :
+  - Lignes 123-164 : ajout data-sort-key sur 7 headers Songs
+  - Lignes 286-325 : ajout data-sort-key sur 7 headers Albums
+  - Ligne 8 : cache-busting v7.7
+
+**Cache-busting** : v7.7 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.6 : Harmonisation couleurs rangs (toutes pages), micro-layout Caps, clic 100% headers, hauteur uniforme**
 
 **Problématique** : Incohérence des couleurs de rangs # entre pages (Titres cyan vs blanc, Albums violet vs blanc). Micro-ajustements nécessaires sur Caps pour optimiser l'espace et la lisibilité. Zones cliquables des headers # et Titre pas toujours réactives (éléments décoratifs capturent les clics). Hauteur des headers Caps légèrement différente de Titres/Albums.

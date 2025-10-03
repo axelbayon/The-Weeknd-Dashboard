@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Weeknd Dashboard</title>
     <base href="/Website/">
-    <link rel="stylesheet" href="src/styles/global.css?v=7.6">
+    <link rel="stylesheet" href="src/styles/global.css?v=7.7">
 </head>
 <body>
     <div class="app-shell">
@@ -123,10 +123,10 @@
                                 <caption class="data-table__caption">Liste des songs The Weeknd</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col" class="cell-num">
+                                        <th scope="col" class="cell-num" data-sort-key="rank">
                                             <span class="data-table__header-text">#</span>
                                         </th>
-                                        <th scope="col" class="col-title">
+                                        <th scope="col" class="col-title" data-sort-key="title">
                                             <div class="data-table__header-wrapper">
                                                 <button type="button" class="data-table__sort-button">
                                                     <span class="data-table__header-text">Titre</span>
@@ -134,27 +134,27 @@
                                                 <span class="data-table__legend">* = featuring</span>
                                             </div>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric cell-num">
+                                        <th scope="col" class="data-table__cell--numeric cell-num" data-sort-key="streams_total">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams totaux</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric cell-num">
+                                        <th scope="col" class="data-table__cell--numeric cell-num" data-sort-key="streams_daily">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams quotidiens</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric cell-num">
+                                        <th scope="col" class="data-table__cell--numeric cell-num" data-sort-key="variation_pct">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Variation (%)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric cell-num">
+                                        <th scope="col" class="data-table__cell--numeric cell-num" data-sort-key="days_to_next_cap">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain cap (j)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric cell-num">
+                                        <th scope="col" class="data-table__cell--numeric cell-num" data-sort-key="next_cap_value">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain palier</span>
                                             </button>
@@ -285,10 +285,10 @@
                                 <caption class="data-table__caption">Liste des albums The Weeknd</caption>
                                 <thead>
                                     <tr>
-                                        <th scope="col">
+                                        <th scope="col" data-sort-key="rank">
                                             <span class="data-table__header-text">#</span>
                                         </th>
-                                        <th scope="col">
+                                        <th scope="col" data-sort-key="title">
                                             <div class="data-table__header-wrapper">
                                                 <button type="button" class="data-table__sort-button">
                                                     <span class="data-table__header-text">Titre</span>
@@ -296,27 +296,27 @@
                                                 <span class="data-table__legend">* = featuring</span>
                                             </div>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric" data-sort-key="streams_total">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams totaux</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric" data-sort-key="streams_daily">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Streams quotidiens</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric" data-sort-key="variation_pct">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Variation (%)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric" data-sort-key="days_to_next_cap">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain cap (j)</span>
                                             </button>
                                         </th>
-                                        <th scope="col" class="data-table__cell--numeric">
+                                        <th scope="col" class="data-table__cell--numeric" data-sort-key="next_cap_value">
                                             <button type="button" class="data-table__sort-button">
                                                 <span class="data-table__header-text">Prochain palier</span>
                                             </button>
