@@ -8,6 +8,56 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-01-27 — Prompt 7.6 : Harmonisation couleurs rangs (toutes pages), micro-layout Caps, clic 100% headers, hauteur uniforme**
+
+**Problématique** : Incohérence des couleurs de rangs # entre pages (Titres cyan vs blanc, Albums violet vs blanc). Micro-ajustements nécessaires sur Caps pour optimiser l'espace et la lisibilité. Zones cliquables des headers # et Titre pas toujours réactives (éléments décoratifs capturent les clics). Hauteur des headers Caps légèrement différente de Titres/Albums.
+
+**Solution** :
+1. **Harmonisation couleurs rangs # (toutes pages)** :
+   - Page Titres : rang # = cyan **#06b6d4** (même couleur que TITRE Caps)
+   - Page Albums : rang # = violet **#7c6dff** (même couleur que ALBUM Caps)
+   - Cohérence visuelle totale entre les 3 pages, contraste AA préservé
+
+2. **Micro-ajustements layout Caps** :
+   - **Date prévue** : largeur 110px → **100px** (plus compacte)
+   - **Prochain cap** : header "(j)" retiré → "Prochain cap" uniquement (Caps seulement)
+   - **Type** : font-size réduit à **0.88rem**
+   - **Streams totaux** : font-size réduit à **0.88rem**
+   - **Streams quotidiens** : font-size aligné à **0.88rem** (même que Streams totaux)
+   - **Variation (%)** : font-size réduit à **0.86rem**
+   - **Prochain palier** : font-size augmenté à **0.93rem**
+
+3. **Clic 100% surface headers Titre et #** :
+   - Ajout `pointer-events: none` sur `.data-table__header-text` et `.data-table__sort-icon`
+   - Les éléments décoratifs (texte, icônes ▲/▼, légende *) ne capturent plus les clics
+   - Toute la surface du header <th> déclenche le tri (3 pages : Titres, Albums, Caps)
+   - `aria-sort` et indicateurs ▲/▼ toujours corrects
+
+4. **Hauteur headers uniformisée** :
+   - Headers Caps : padding **0.85rem → 0.9rem** (vertical)
+   - Hauteur visuelle alignée avec Titres et Albums
+
+**Critères de validation** :
+- ✅ Rangs # harmonisés : Titres cyan, Albums violet (même couleurs que Caps)
+- ✅ Caps "Date prévue" 100px, "Prochain cap" sans (j), tailles ajustées
+- ✅ Clic n'importe où dans headers # et Titre déclenche le tri (3 pages)
+- ✅ Hauteur headers identique entre Titres, Albums et Caps
+- ✅ Aucune régression (sticky, tri, formats, navigation, auto-refresh)
+
+**Fichiers modifiés** :
+- `Website/src/styles/global.css` :
+  - Lignes 1007-1014 : harmonisation couleurs rangs # (Songs cyan, Albums violet)
+  - Lignes 772-777 : pointer-events:none sur `.data-table__header-text`
+  - Lignes 934-936 : pointer-events:none sur `.data-table__sort-icon`
+  - Lignes 1365-1367 : padding headers Caps 0.9rem
+  - Lignes 1419-1492 : ajustements font-size et largeurs colonnes Caps
+- `Website/index.html` :
+  - Ligne 481 : "Prochain cap (j)" → "Prochain cap"
+
+**Cache-busting** : v7.6 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.5 : Caps imminents — couleurs nettement distinctes (cyan), headers ultra-compacts 0.75rem, tri 100% fiable**
 
 **Problématique** : Le bleu #3b82f6 (Prompt 7.4) reste visuellement proche du violet #7c6dff, risque de confusion. Headers 0.8rem pourraient encore déborder avec certains labels longs. Le tri utilise encore un tableau `sortKeys[]` obsolète dans `updateSortIndicators()`, risque de désynchronisation.

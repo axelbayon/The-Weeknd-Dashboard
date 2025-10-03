@@ -775,6 +775,7 @@ a {
   gap: 0.45rem;
   white-space: nowrap;
   text-transform: uppercase;
+  pointer-events: none; /* Ne pas intercepter les clics, déléguer au button parent (Prompt 7.6) */
 }
 
 .data-table__legend {
@@ -931,6 +932,7 @@ a {
 
 .data-table__sort-icon {
   font-size: 0.75rem;
+  pointer-events: none; /* Ne pas intercepter les clics, déléguer au button parent (Prompt 7.6) */
 }
 
 .table-legend {
@@ -1001,6 +1003,15 @@ a {
 
 .data-table__cell--rank-album {
   color: #7c6dff; /* Violet (albums) */
+}
+
+/* Harmonisation couleurs rangs # sur toutes les pages (Prompt 7.6) */
+.data-table--songs .data-table__cell--rank {
+  color: #06b6d4; /* Même cyan que TITRE Caps */
+}
+
+.data-table--albums .data-table__cell--rank {
+  color: #7c6dff; /* Même violet que ALBUM Caps */
 }
 
 
@@ -1353,6 +1364,7 @@ a {
 /* Headers Caps : taille réduite et typographie homogène */
 .data-table--caps th {
   font-size: 0.75rem; /* Encore plus compact pour éviter tout débordement */
+  padding: 0.9rem 1rem; /* Légèrement plus de hauteur pour matcher Titres/Albums (Prompt 7.6) */
 }
 
 .data-table--caps .data-table__header-text {
@@ -1413,11 +1425,12 @@ a {
   width: 90px;
   max-width: 90px;
   min-width: 90px;
+  font-size: 0.88rem; /* Légèrement plus petit (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(4),
 .data-table--caps td:nth-child(4) {
-  /* Prochain cap (j) */
+  /* Prochain cap */
   width: 110px;
   max-width: 110px;
   min-width: 110px;
@@ -1425,42 +1438,46 @@ a {
 
 .data-table--caps th:nth-child(5),
 .data-table--caps td:nth-child(5) {
-  /* Streams totaux */
-  width: 130px;
-  max-width: 130px;
-  min-width: 130px;
+  /* Date prévue (ETA) */
+  width: 100px; /* Réduit de 110px à 100px (Prompt 7.6) */
+  max-width: 100px;
+  min-width: 100px;
 }
 
 .data-table--caps th:nth-child(6),
 .data-table--caps td:nth-child(6) {
-  /* Streams quotidiens */
-  width: 140px;
-  max-width: 140px;
-  min-width: 140px;
+  /* Streams totaux */
+  width: 130px;
+  max-width: 130px;
+  min-width: 130px;
+  font-size: 0.88rem; /* Réduit (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(7),
 .data-table--caps td:nth-child(7) {
-  /* Variation (%) */
-  width: 110px;
-  max-width: 110px;
-  min-width: 110px;
+  /* Streams quotidiens */
+  width: 140px;
+  max-width: 140px;
+  min-width: 140px;
+  font-size: 0.88rem; /* Même taille que Streams totaux (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(8),
 .data-table--caps td:nth-child(8) {
-  /* Prochain palier */
-  width: 120px;
-  max-width: 120px;
-  min-width: 120px;
+  /* Variation (%) */
+  width: 110px;
+  max-width: 110px;
+  min-width: 110px;
+  font-size: 0.86rem; /* Réduit (Prompt 7.6) */
 }
 
 .data-table--caps th:nth-child(9),
 .data-table--caps td:nth-child(9) {
-  /* ETA */
-  width: 110px;
-  max-width: 110px;
-  min-width: 110px;
+  /* Prochain palier */
+  width: 120px;
+  max-width: 120px;
+  min-width: 120px;
+  font-size: 0.93rem; /* Légèrement augmenté (Prompt 7.6) */
 }
 
 
