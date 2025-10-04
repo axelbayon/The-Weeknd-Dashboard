@@ -312,10 +312,16 @@ class DataRenderer {
         tdTitle.className = 'data-table__cell--title col-title';
         tdTitle.setAttribute('data-sort-value', 'title');
         tdTitle.setAttribute('data-sort-raw', song.title); // Garde * pour tri intelligent
+        
+        // Cover : utiliser cover_url si disponible, sinon placeholder
+        const coverHtml = song.cover_url
+            ? `<img src="${this.escapeHtml(song.cover_url)}" alt="Cover ${this.escapeHtml(song.title)}" class="cover-image">`
+            : `<div class="cover-placeholder">🎵</div>`;
+        
         tdTitle.innerHTML = `
             <div class="data-table__title-wrapper">
                 <div class="data-table__title-cover">
-                    <div class="cover-placeholder">🎵</div>
+                    ${coverHtml}
                 </div>
                 <div class="data-table__title-meta">
                     <div class="data-table__song-name">${this.escapeHtml(song.title)}</div>
@@ -455,10 +461,16 @@ class DataRenderer {
         tdTitle.className = 'data-table__cell--title col-title';
         tdTitle.setAttribute('data-sort-value', 'title');
         tdTitle.setAttribute('data-sort-raw', album.title);
+        
+        // Cover : utiliser cover_url si disponible, sinon placeholder
+        const coverHtml = album.cover_url
+            ? `<img src="${this.escapeHtml(album.cover_url)}" alt="Cover ${this.escapeHtml(album.title)}" class="cover-image">`
+            : `<div class="cover-placeholder">💿</div>`;
+        
         tdTitle.innerHTML = `
             <div class="data-table__title-wrapper">
                 <div class="data-table__title-cover">
-                    <div class="cover-placeholder">💿</div>
+                    ${coverHtml}
                 </div>
                 <div class="data-table__title-meta">
                     <div class="data-table__song-name">${this.escapeHtml(album.title)}</div>

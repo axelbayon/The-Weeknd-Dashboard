@@ -92,6 +92,102 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-04 — Prompt 8.0 : Affichage covers Spotify (Titres, Albums, Caps) + Résolveur business rules**
+
+**Problématique** : Les covers des chansons et albums sont affichées avec des émojis placeholder (🎵/💿). Il faut intégrer les vraies covers Spotify avec des règles métier strictes pour gérer les cas complexes : albums Original vs Deluxe, feat songs vers albums d'autres artistes, Trilogy allowlist, blacklists, mixtapes originales, BOF, live albums, etc.
+
+**Solution** :
+1. **Client Spotify API** (`scripts/spotify_client.py`) :
+   - Client Credentials Flow avec token caching (expiration 1h, marge 5min)
+   - Méthodes : `search_track()`, `search_album()`, `get_album()`
+   - Cache MD5 persistant dans `data/cache/spotify_api_cache.json`
+   - Rate limiting : retry 429 avec Retry-After header + backoff exponentiel
+   - Market : "US" (configurable via `SPOTIFY_MARKET`)
+
+2. **Résolveur business rules** (`scripts/cover_resolver.py`) :
+   - **Blacklist** : "The Highlights" jamais utilisé pour les songs
+   - **Removals** : Albums "Avatar" et "Music" supprimés complètement de l'affichage (25 albums au lieu de 27)
+   - **Trilogy Allowlist** : Seulement 3 chansons utilisent la cover Trilogy : "Twenty Eight", "Valerie", "Till Dawn (Here Comes the Sun)"
+   - **Explicit Mappings (45+)** : Mappings directs pour cas spéciaux
+     - **Mixtapes originales** : "Wicked Games" → "House Of Balloons (Original)", "Lonely Star" → "Thursday (Original)", "D.D." → "Echoes Of Silence (Original)"
+     - **Feat songs** : "*Love Me Harder" → "My Everything (Deluxe)" (Ariana Grande), "*Moth To A Flame" → "Paradise Again" (Swedish House Mafia), "*Wild Love" → "9" (Cashmere Cat)
+     - **BO Soundtracks** : "Elastic Heart" → "Hunger Games OST", "Where You Belong" → "Fifty Shades OST", "Nothing Is Lost" → "Avatar OST"
+     - **Singles** : "Dancing In The Flames", "Timeless", "Double Fantasy"
+     - **Cas spéciaux** : "Save Your Tears" → After Hours (original), "Save Your Tears (Remix)" → After Hours (Deluxe)
+   - **Artist Overrides** : Pour feat songs et OST, cherche avec l'artiste correct (Ariana Grande, Swedish House Mafia, Cashmere Cat, Various Artists)
+   - **Direct Album IDs** : Pour albums difficiles à trouver (OST), utilise IDs Spotify directs
+   - **Scoring heuristique** :
+     - album_type : album studio (100), single (50), compilation (10)
+     - Pénalités : Deluxe -30 (sauf si remix), Live -50 (sauf si "live" dans titre cherché)
+     - Bonus : Popularité ×0.1, match nom album dans titre +30
+   - **Titre normalization** : Retire `^[*^]\s*` (feat/compilation), supprime " - from..." segments, conserve (Remix), (Live), (Instrumental)
+
+3. **Script d'enrichissement** (`scripts/enrich_covers.py`) :
+   - Charge credentials depuis `.env.local` (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
+   - Enrichit `data/songs.json` et `data/albums.json` avec 2 nouveaux champs :
+     - `spotify_album_id` : ID Spotify de l'album source
+     - `cover_url` : URL HD de la cover (640×640)
+   - Filtrage Avatar/Music AVANT enrichissement (suppression complète)
+   - Détection lead/feat basée sur préfixe `*` dans le titre
+   - Gestion gracieuse des échecs (N/A si cover introuvable)
+
+4. **Intégration UI** :
+   - `Website/src/data-renderer.js` : Affichage conditionnel dans `renderSongsTable()` et `renderAlbumsTable()`
+     - Si `cover_url` présent : `<img src="..." class="cover-image">`
+     - Sinon : placeholder emoji `<div class="cover-placeholder">🎵</div>`
+   - `Website/src/styles/global.css` : Classe `.cover-image` (border-radius 12px, object-fit cover, 100% dimensions)
+   - Cache-busting v8.0 pour CSS et JS
+
+**Critères de validation** :
+- ✅ Songs : 314/315 enrichis (99.68%), 1 seul échec (Love Me Harder - Gregor Salto Amsterdam Mix introuvable)
+- ✅ Albums : 24/25 enrichis (96%), Avatar/Music supprimés (total 25 au lieu de 27)
+- ✅ Cas spécifiques validés :
+  - Save Your Tears → After Hours (original, pas Deluxe)
+  - Save Your Tears (Remix) → After Hours (Deluxe)
+  - Trilogy allowlist : Twenty Eight ✅, Valerie ✅, Till Dawn ✅ (autres chansons → mixtapes originales)
+  - Mixtapes : Wicked Games → House Of Balloons (Original), Lonely Star → Thursday (Original), D.D. → Echoes Of Silence (Original)
+  - Love Me Harder → My Everything (Deluxe) (Ariana Grande)
+  - Moth To A Flame → Paradise Again (Swedish House Mafia)
+  - Wild Love → 9 (Cashmere Cat)
+  - Elastic Heart → Hunger Games OST
+  - Where You Belong → Fifty Shades OST
+  - Nothing Is Lost → Avatar OST
+  - Live versions → Live At SoFi Stadium
+  - Devil May Cry → Hunger Games OST
+- ✅ The Highlights jamais utilisé pour songs (blacklist fonctionne)
+- ✅ Avatar/Music absents de la liste albums (2 supprimés)
+- ✅ After Hours ≠ After Hours (Deluxe) : covers distinctes
+- ✅ Covers HD (640×640) affichées avec border-radius 12px
+
+**Commandes** :
+```bash
+# Enrichir covers (nécessite .env.local avec credentials Spotify)
+python scripts/enrich_covers.py
+
+# Credentials requis dans .env.local :
+SPOTIFY_CLIENT_ID=your_id
+SPOTIFY_CLIENT_SECRET=your_secret
+SPOTIFY_MARKET=US  # optionnel, défaut US
+```
+
+**Fichiers créés** :
+- `scripts/spotify_client.py` (204 lignes) : Client Spotify API
+- `scripts/cover_resolver.py` (323 lignes) : Résolveur business rules avec 45+ mappings explicites
+- `scripts/enrich_covers.py` (179 lignes) : Orchestrateur enrichissement
+
+**Fichiers modifiés** :
+- `Website/src/data-renderer.js` : Rendu conditionnel covers (lignes 316-327, 462-473)
+- `Website/src/styles/global.css` : Classe .cover-image (lignes 855-861)
+- `Website/index.html` : Cache-busting v8.0 (lignes 8, 543)
+
+**Cache-busting** : v8.0 (`index.html`)
+
+**Structure cache** :
+- `data/cache/spotify_api_cache.json` : Cache API Spotify (clés MD5, réponses complètes)
+- Pas de fichier covers séparé : `spotify_album_id` + `cover_url` directement dans songs.json/albums.json
+
+---
+
 ## Structure du repo
 
 ```
