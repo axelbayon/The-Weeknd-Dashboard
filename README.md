@@ -139,7 +139,7 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
    - Cache-busting v8.0 pour CSS et JS
 
 **Critères de validation** :
-- ✅ Songs : 314/315 enrichis (99.68%), 1 seul échec (Love Me Harder - Gregor Salto Amsterdam Mix introuvable)
+- ✅ Songs : 316/317 enrichis (99.68%), 1 seul échec (Love Me Harder - Gregor Salto Amsterdam Mix introuvable)
 - ✅ Albums : 24/25 enrichis (96%), Avatar/Music supprimés (total 25 au lieu de 27)
 - ✅ Cas spécifiques validés :
   - Save Your Tears → After Hours (original, pas Deluxe)
@@ -204,7 +204,7 @@ SPOTIFY_MARKET=US  # optionnel, défaut US
    - Attribute `title` ajouté pour afficher le nom complet au survol (ellipsis)
 
 3. **Résultats** :
-   - 317/318 chansons enrichies ont un `album_name` affiché
+   - 316/317 chansons enrichies ont un `album_name` affiché
    - 1 échec (Love Me Harder - Gregor Salto Amsterdam Mix) affiche "Inconnu" comme prévu
    - Format unifié sur les 3 pages : "After Hours", "After Hours (Deluxe)", "Paradise Again", "My Everything (Deluxe)", "Thursday (Original)", etc.
 
@@ -247,14 +247,14 @@ data/                              # Données du dashboard
     meta-schema.json               # Schéma pour data/meta.json
     snapshot-songs-schema.json     # Schéma pour snapshots songs
     snapshot-albums-schema.json    # Schéma pour snapshots albums
-  songs.json                       # Vue courante des chansons (315 items avec calculs)
+  songs.json                       # Vue courante des chansons (317 items avec calculs)
   albums.json                      # Vue courante des albums (27 items avec calculs)
   meta.json                        # Métadonnées globales (dates, historique)
   history/                         # Snapshots journaliers
     songs/                         # Snapshots quotidiens des chansons (J, J-1, J-2)
       2025-09-29.json              # Fixture J-2
       2025-09-30.json              # Fixture J-1
-      2025-10-01.json              # Snapshot J actuel (315 chansons, IDs stables)
+      2025-10-01.json              # Snapshot J actuel (317 chansons, IDs stables)
     albums/                        # Snapshots quotidiens des albums
       2025-09-29.json              # Fixture J-2
       2025-09-30.json              # Fixture J-1
@@ -264,7 +264,7 @@ data/                              # Données du dashboard
 scripts/                           # Scripts Python de scraping, génération et validation
   start_dashboard.py               # 🚀 Script de lancement complet (orchestrateur + serveur web)
   auto_refresh.py                  # Orchestrateur auto-refresh (pipeline 10 min, lock, jitter, rotation J/J-1/J-2)
-  scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 315 chansons, IDs stables)
+  scrape_kworb_songs.py            # Scraper Kworb Songs (extraction 317 chansons, IDs stables)
   scrape_kworb_albums.py           # Scraper Kworb Albums (extraction 27 albums)
   generate_current_views.py        # Génère data/songs.json et albums.json depuis snapshots
   validate_data.py                 # Valide conformité des données (schémas, arrondis, unicité, dates)
@@ -360,7 +360,7 @@ python scripts/auto_refresh.py --interval 30
 python scripts/scrape_kworb_songs.py
 ```
 
-Récupère 315 chansons depuis Kworb, crée snapshot dans `data/history/songs/{date}.json`, met à jour `data/songs.json` avec paliers 100M.
+Récupère 317 chansons depuis Kworb, crée snapshot dans `data/history/songs/{date}.json`, met à jour `data/songs.json` avec paliers 100M.
 
 **Scraper Albums** :
 ```bash
