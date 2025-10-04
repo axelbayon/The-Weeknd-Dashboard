@@ -291,6 +291,12 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
                     "streams_daily": streams_daily
                 }
                 
+                # Filtrer le doublon "XO / The Host" avec 0 streams quotidiens
+                # (conserve uniquement la version avec des streams actifs)
+                if title == "XO / The Host" and streams_daily == 0:
+                    print(f"[FILTER] Exclusion doublon: {title} (rang {rank}, 0 streams quotidiens)")
+                    continue
+                
                 songs.append(song)
             
             print(f"[OK] {len(songs)} chansons extraites avec succès")
