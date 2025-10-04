@@ -315,7 +315,7 @@ class DataRenderer {
         
         // Cover : utiliser cover_url si disponible, sinon placeholder
         const coverHtml = song.cover_url
-            ? `<img src="${this.escapeHtml(song.cover_url)}" alt="Cover ${this.escapeHtml(song.title)}" class="cover-image">`
+            ? `<img src="${this.escapeHtml(song.cover_url)}" alt="Cover ${this.escapeHtml(song.title)}" class="data-table__cover-image">`
             : `<div class="cover-placeholder">🎵</div>`;
         
         tdTitle.innerHTML = `
@@ -464,7 +464,7 @@ class DataRenderer {
         
         // Cover : utiliser cover_url si disponible, sinon placeholder
         const coverHtml = album.cover_url
-            ? `<img src="${this.escapeHtml(album.cover_url)}" alt="Cover ${this.escapeHtml(album.title)}" class="cover-image">`
+            ? `<img src="${this.escapeHtml(album.cover_url)}" alt="Cover ${this.escapeHtml(album.title)}" class="data-table__cover-image">`
             : `<div class="cover-placeholder">💿</div>`;
         
         tdTitle.innerHTML = `

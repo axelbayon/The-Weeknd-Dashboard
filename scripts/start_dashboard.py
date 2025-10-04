@@ -3,12 +3,16 @@
 Script de lancement complet du dashboard The Weeknd.
 1. Lance l'orchestrateur auto-refresh en arrière-plan
 2. Lance un serveur HTTP local pour visualiser le dashboard
+
+Options:
+  --skip-covers : Skip l'enrichissement Spotify (démarrage ultra-rapide)
 """
 
 import subprocess
 import sys
 import os
 import threading
+import argparse
 from pathlib import Path
 
 def get_python_executable():
@@ -43,11 +47,21 @@ def get_python_executable():
     return current_python
 
 def main():
+    parser = argparse.ArgumentParser(description="Lance le dashboard The Weeknd")
+    parser.add_argument(
+        "--skip-covers",
+        action="store_true",
+        help="Skip l'enrichissement Spotify pour un demarrage ultra-rapide"
+    )
+    args = parser.parse_args()
+    
     base_path = Path(__file__).parent.parent
     python_exe = get_python_executable()
     
     print("=" * 60)
     print("The Weeknd Dashboard - Lancement complet")
+    if args.skip_covers:
+        print("Mode: RAPIDE (sans enrichissement covers)")
     print("=" * 60)
     
     # Étape 1 : Lancement orchestrateur en arrière-plan
@@ -74,7 +88,7 @@ def main():
     print("OK Orchestrateur demarre en arriere-plan (refresh toutes les 10 min)\n")
     
     # Étape 2 : Premier scraping synchrone (pour avoir des données immédiatement)
-    print("Etape 2/3 : Synchronisation initiale des donnees...")
+    print("Etape 2/4 : Synchronisation initiale des donnees...")
     
     # Forcer l'encodage UTF-8 pour éviter les problèmes
     env = os.environ.copy()
@@ -99,8 +113,51 @@ def main():
     except Exception as e:
         print(f"Avertissement sync initiale: {e}\n")
     
-    # Étape 3 : Lancement du serveur
-    print("Etape 3/3 : Lancement du serveur HTTP...")
+    # Étape 3 : Enrichissement des covers Spotify (en arrière-plan)
+    if not args.skip_covers:
+        print("Etape 3/4 : Enrichissement des covers Spotify (en arriere-plan)...")
+        
+        def run_cover_enrichment():
+            """Enrichit les covers en arrière-plan sans bloquer le démarrage."""
+            try:
+                subprocess.run(
+                    [python_exe, str(base_path / "scripts" / "enrich_covers.py")],
+                    cwd=str(base_path),
+                    env=env,
+                    capture_output=True,
+                    timeout=300  # 5 minutes max
+                )
+            except Exception:
+                pass  # Silencieux en arrière-plan
+        
+        # Vérifier si les covers existent déjà
+        songs_file = base_path / "data" / "songs.json"
+        needs_enrichment = True
+        
+        if songs_file.exists():
+            try:
+                import json
+                with open(songs_file, 'r', encoding='utf-8') as f:
+                    songs_data = json.load(f)
+                    # Vérifier si au moins 50% des songs ont une cover
+                    covers_count = sum(1 for s in songs_data if s.get('cover_url'))
+                    if covers_count > len(songs_data) * 0.5:
+                        needs_enrichment = False
+                        print(f"OK Covers deja presentes ({covers_count}/{len(songs_data)})\n")
+            except Exception:
+                pass
+        
+        if needs_enrichment:
+            print("Enrichissement lance en arriere-plan (pas de delai au demarrage)\n")
+            cover_thread = threading.Thread(target=run_cover_enrichment, daemon=True)
+            cover_thread.start()
+        else:
+            print("(Reenrichissement automatique via orchestrateur toutes les 10 min)\n")
+    else:
+        print("Etape 3/4 : Enrichissement covers SKIP (mode rapide)\n")
+    
+    # Étape 4 : Lancement du serveur
+    print("Etape 4/4 : Lancement du serveur HTTP...")
     # Servir depuis la racine du projet pour accéder à /data et /Website
     server_path = base_path
     port = 8000

@@ -82,7 +82,7 @@ def get_python_executable() -> str:
     return current_python
 
 
-def run_script(script_path: Path, python_exe: str, base_path: Path) -> Tuple[bool, Optional[str]]:
+def run_script(script_path: Path, python_exe: str, base_path: Path, timeout: int = 120) -> Tuple[bool, Optional[str]]:
     """
     Exécute un script Python.
     Retourne (succès, message_erreur).
@@ -97,7 +97,7 @@ def run_script(script_path: Path, python_exe: str, base_path: Path) -> Tuple[boo
             cwd=str(base_path),
             capture_output=True,
             text=True,
-            timeout=120,  # 2 minutes max par script
+            timeout=timeout,
             env=env
         )
         
@@ -107,7 +107,7 @@ def run_script(script_path: Path, python_exe: str, base_path: Path) -> Tuple[boo
             error_msg = result.stderr[:200] if result.stderr else "Erreur inconnue"
             return False, error_msg
     except subprocess.TimeoutExpired:
-        return False, "Timeout (>2min)"
+        return False, f"Timeout (>{timeout}s)"
     except Exception as e:
         return False, str(e)[:200]
 
@@ -172,7 +172,7 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
     1. Scrape Songs
     2. Scrape Albums
     3. Régénère data/songs.json et data/albums.json
-    4. Met à jour meta.json
+    4. Enrichit avec covers Spotify
     5. Rotation snapshots
     
     Retourne True si succès complet.
@@ -185,7 +185,7 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
     error_messages = []
     
     # Étape 1 : Scrape Songs
-    print("\n[1/4] Scraping Songs...")
+    print("\n[1/5] Scraping Songs...")
     success, error = run_script(
         base_path / "scripts" / "scrape_kworb_songs.py",
         python_exe,
@@ -199,7 +199,7 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
         error_messages.append(f"Songs: {error}")
     
     # Étape 2 : Scrape Albums
-    print("\n[2/4] Scraping Albums...")
+    print("\n[2/5] Scraping Albums...")
     success, error = run_script(
         base_path / "scripts" / "scrape_kworb_albums.py",
         python_exe,
@@ -213,10 +213,24 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
         error_messages.append(f"Albums: {error}")
     
     # Étape 3 : Régénération des vues (déjà fait par les scrapers)
-    print("\n[3/4] Vues courantes régénérées par scrapers")
+    print("\n[3/5] Vues courantes régénérées par scrapers")
     
-    # Étape 4 : Rotation snapshots
-    print("\n[4/4] Rotation snapshots (maintien J/J-1/J-2)...")
+    # Étape 4 : Enrichissement covers Spotify
+    print("\n[4/5] Enrichissement covers Spotify...")
+    success, error = run_script(
+        base_path / "scripts" / "enrich_covers.py",
+        python_exe,
+        base_path,
+        timeout=300  # 5 minutes pour l'enrichissement Spotify
+    )
+    if success:
+        print("✅ Covers enrichies")
+    else:
+        print(f"⚠️  Covers: {error} (non-bloquant)")
+        # Ne pas bloquer le pipeline si l'enrichissement échoue
+    
+    # Étape 5 : Rotation snapshots
+    print("\n[5/5] Rotation snapshots (maintien J/J-1/J-2)...")
     rotate_snapshots(base_path, keep_count=3)
     print("✅ Rotation terminée")
     

@@ -52,7 +52,7 @@ class SpotifyClient:
         
         try:
             with open(cache_path, 'w', encoding='utf-8') as f:
-                json.dump(self._cache, f, indent=2)
+                json.dump(self.cache, f, indent=2)
         except Exception as e:
             print(f"WARNING Erreur sauvegarde cache: {e}")
     

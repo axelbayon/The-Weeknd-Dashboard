@@ -30,6 +30,7 @@ class CoverResolver:
         "High For This": "House Of Balloons (Original)",
         "What You Need": "House Of Balloons (Original)",
         "House of Balloons / Glass Table Girls": "House Of Balloons (Original)",
+        "House Of Balloons / Glass Table Girls": "House Of Balloons (Original)",  # Variante majuscules
         "The Morning": "House Of Balloons (Original)",
         "Wicked Games": "House Of Balloons (Original)",
         "The Party & The After Party": "House Of Balloons (Original)",
@@ -39,9 +40,11 @@ class CoverResolver:
         
         "Lonely Star": "Thursday (Original)",
         "Life of the Party": "Thursday (Original)",
+        "Life Of The Party": "Thursday (Original)",  # Variante majuscules
         "Thursday": "Thursday (Original)",
         "The Zone": "Thursday (Original)",
         "The Birds Part 1": "Thursday (Original)",
+        "The Birds Pt. 1": "Thursday (Original)",  # Variante ponctuation
         "The Birds Part 2": "Thursday (Original)",
         "The Birds Pt. 2": "Thursday (Original)",
         "Gone": "Thursday (Original)",
@@ -70,6 +73,7 @@ class CoverResolver:
         "*Love Me Harder - Alex Ghenea Remix": "My Everything (Deluxe)",  # Ariana Grande
         "Live For": "Kiss Land",
         "*Wild Love": "9",  # Cashmere Cat
+        "*Creepin'": "HEROES & VILLAINS",  # Metro Boomin
         
         # Bandes originales (titres complets avec "from..." comme dans les données)
         "Elastic Heart": "The Hunger Games: Catching Fire (Original Motion Picture Soundtrack)",
@@ -92,6 +96,7 @@ class CoverResolver:
         "Paradise Again": "Swedish House Mafia",
         "Moth To A Flame": "Swedish House Mafia",
         "9": "Cashmere Cat",
+        "HEROES & VILLAINS": "Metro Boomin",
         "The Hunger Games: Catching Fire (Original Motion Picture Soundtrack)": "Various Artists",
         "Fifty Shades of Grey (Original Motion Picture Soundtrack)": "Various Artists",
         "Avatar: The Way of Water (Original Motion Picture Soundtrack)": "Various Artists",
