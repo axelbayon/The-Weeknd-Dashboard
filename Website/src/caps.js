@@ -329,11 +329,13 @@
         
         titleMeta.appendChild(titleName);
         
-        // Pour les songs, afficher l'album
-        if (item.type === 'song' && item.album) {
+        // Pour les songs, afficher l'album (utiliser album_name sinon "Inconnu")
+        if (item.type === 'song') {
             const albumName = document.createElement('div');
             albumName.className = 'data-table__album';
-            albumName.textContent = item.album;
+            const albumText = item.album_name || 'Inconnu';
+            albumName.textContent = albumText;
+            albumName.setAttribute('title', albumText);
             titleMeta.appendChild(albumName);
         }
         

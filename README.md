@@ -188,6 +188,49 @@ SPOTIFY_MARKET=US  # optionnel, défaut US
 
 ---
 
+**2025-10-04 — Prompt 8.1 : Nom d'album affiché pour chaque titre (Titres, Albums, Caps)**
+
+**Problématique** : Les titres affichent "Unknown" sous le nom de la chanson dans les tableaux, même après l'enrichissement Spotify. L'utilisateur veut voir le nom d'album exact (celui de la cover) au lieu de "Unknown".
+
+**Solution** :
+1. **Backend : Sauvegarde album_name** :
+   - `scripts/enrich_covers.py` modifié : ajout de `song["album_name"]` et `song["album_type"]` lors de l'enrichissement
+   - Ces champs sont maintenant persistés dans `data/songs.json` et `data/albums.json`
+   - Source de vérité unique : le même album choisi pour la cover
+
+2. **Frontend : Affichage avec fallback "Inconnu"** :
+   - `Website/src/data-renderer.js` : Utilisation de `song.album_name || 'Inconnu'` au lieu de `song.album`
+   - `Website/src/caps.js` : Idem pour la page Caps imminents (lignes Type = TITRE)
+   - Attribute `title` ajouté pour afficher le nom complet au survol (ellipsis)
+
+3. **Résultats** :
+   - 317/318 chansons enrichies ont un `album_name` affiché
+   - 1 échec (Love Me Harder - Gregor Salto Amsterdam Mix) affiche "Inconnu" comme prévu
+   - Format unifié sur les 3 pages : "After Hours", "After Hours (Deluxe)", "Paradise Again", "My Everything (Deluxe)", "Thursday (Original)", etc.
+
+**Critères de validation** :
+- ✅ Save Your Tears → After Hours (pas After Hours Deluxe)
+- ✅ Save Your Tears (Remix) → After Hours (Deluxe)
+- ✅ *Moth To A Flame → Paradise Again (Swedish House Mafia)
+- ✅ *Love Me Harder → My Everything (Deluxe) (Ariana Grande)
+- ✅ Lonely Star → Thursday (Original)
+- ✅ *Elastic Heart → The Hunger Games: Catching Fire OST
+- ✅ Love Me Harder - Gregor Salto Amsterdam Mix → "Inconnu" (échec enrichissement attendu)
+- ✅ Aucune régression sur tri, sticky, recherche, variations %
+
+**Fichiers modifiés** :
+- `scripts/enrich_covers.py` : Ajout `album_name` et `album_type` dans enrichissement songs/albums
+- `Website/src/data-renderer.js` : Rendu `song.album_name || 'Inconnu'` avec title attribute
+- `Website/src/caps.js` : Idem pour page Caps (lignes titre)
+
+**Commandes** :
+```bash
+# Ré-enrichir pour ajouter album_name à toutes les chansons
+python scripts/enrich_covers.py
+```
+
+---
+
 ## Structure du repo
 
 ```

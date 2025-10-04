@@ -75,6 +75,8 @@ def enrich_songs(songs_data, resolver: CoverResolver):
         if cover_info and cover_info.get("cover_url"):
             song["spotify_album_id"] = cover_info.get("album_id")
             song["cover_url"] = cover_info.get("cover_url")
+            song["album_name"] = cover_info.get("album_name")
+            song["album_type"] = cover_info.get("album_type")
             enriched_count += 1
             print(f"  OK {title} -> {cover_info.get('album_name')}")
         else:
@@ -126,6 +128,8 @@ def enrich_albums(albums_data, resolver: CoverResolver):
         if cover_info and cover_info.get("cover_url"):
             album["spotify_album_id"] = cover_info.get("album_id")
             album["cover_url"] = cover_info.get("cover_url")
+            album["album_name"] = cover_info.get("album_name")
+            album["album_type"] = cover_info.get("album_type")
             enriched_count += 1
             print(f"  OK {album_name}")
         else:

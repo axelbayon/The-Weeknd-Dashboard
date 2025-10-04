@@ -318,6 +318,9 @@ class DataRenderer {
             ? `<img src="${this.escapeHtml(song.cover_url)}" alt="Cover ${this.escapeHtml(song.title)}" class="data-table__cover-image">`
             : `<div class="cover-placeholder">🎵</div>`;
         
+        // Album name : utiliser album_name si disponible, sinon "Inconnu"
+        const albumName = song.album_name || 'Inconnu';
+        
         tdTitle.innerHTML = `
             <div class="data-table__title-wrapper">
                 <div class="data-table__title-cover">
@@ -325,7 +328,7 @@ class DataRenderer {
                 </div>
                 <div class="data-table__title-meta">
                     <div class="data-table__song-name">${this.escapeHtml(song.title)}</div>
-                    <span class="data-table__album">${this.escapeHtml(song.album)}</span>
+                    <span class="data-table__album" title="${this.escapeHtml(albumName)}">${this.escapeHtml(albumName)}</span>
                 </div>
             </div>
         `;
