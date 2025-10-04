@@ -75,6 +75,13 @@ class CoverResolver:
         "*Wild Love": "9",  # Cashmere Cat
         "*Creepin'": "HEROES & VILLAINS",  # Metro Boomin
         
+        # Séries TV
+        "Popular (with Playboi Carti & Madonna)": "Popular (Music from the HBO Original Series)",
+        "Popular (Sped Up) (with Playboi Carti & Madonna)": "Popular (Music from the HBO Original Series)",
+        "Popular (Slowed) (with Playboi Carti & Madonna)": "Popular (Music from the HBO Original Series)",
+        "Popular (A Cappella) (with Playboi Carti & Madonna)": "Popular (Music from the HBO Original Series)",
+        "Popular (Instrumental) (with Playboi Carti & Madonna)": "Popular (Music from the HBO Original Series)",
+        
         # Bandes originales (titres complets avec "from..." comme dans les données)
         "Elastic Heart": "The Hunger Games: Catching Fire (Original Motion Picture Soundtrack)",
         "*Elastic Heart": "The Hunger Games: Catching Fire (Original Motion Picture Soundtrack)",
