@@ -1,7 +1,7 @@
 {
   "kworb_last_update_utc": "2025-10-05T00:00:00+00:00",
   "spotify_data_date": "2025-10-04",
-  "last_sync_local_iso": "2025-10-05T22:05:51.143690",
+  "last_sync_local_iso": "2025-10-06T00:24:39.883981",
   "history": {
     "available_dates": [
       "2025-10-04",
@@ -27,5 +27,7 @@
       "streams_total": 16625574778,
       "streams_daily": 7114508
     }
-  }
+  },
+  "covers_revision": "8236b3220af2",
+  "kworb_day": "2025-10-05"
 }

@@ -90,15 +90,19 @@ class RankRail {
     debouncedRebuild(delay = 50) {
         clearTimeout(this.rebuildTimeout);
         this.rebuildTimeout = setTimeout(() => {
-            this.rebuild(this.badgesData);
+            // Prompt 8.8: récupérer meta depuis dataLoader pour validation date
+            const meta = window.dataLoader?.cache?.meta;
+            this.rebuild(this.badgesData, meta);
         }, delay);
     }
 
     /**
      * Reconstruit tous les badges selon l'ordre actuel du DOM
-     * @param {Array} items - Données avec id, rank_delta, rank_prev
+     * Prompt 8.8: Valide delta_for_date avant affichage badge
+     * @param {Array} items - Données avec id, rank_delta, rank_prev, delta_for_date
+     * @param {Object} meta - Metadata avec spotify_data_date pour validation
      */
-    rebuild(items) {
+    rebuild(items, meta = null) {
         if (!this.rail || !this.wrapper || !items) {
             return;
         }
@@ -116,6 +120,14 @@ class RankRail {
 
         // Pour chaque item avec mouvement de rang
         items.forEach(item => {
+            // Prompt 8.8: Valider que le delta est bien pour le jour courant
+            if (meta?.spotify_data_date && item.delta_for_date) {
+                if (item.delta_for_date !== meta.spotify_data_date) {
+                    // Badge périmé : delta calculé pour un jour différent
+                    return;
+                }
+            }
+            
             if (!item.rank_delta || item.rank_delta === 0) return;
 
             // Trouver la ligne correspondante dans le DOM actuel

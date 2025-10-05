@@ -8,6 +8,290 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-06 — Prompt 8.9 : Carte Date + SWR no-flicker + 5 min refresh**
+
+**Problématique** : 
+1. Pas d'affichage de la date Kworb dans le header (seule `spotify_data_date` visible)
+2. Les covers d'albums clignotent (flash blanc) lors du refresh toutes les 10 minutes (clear complet du `tbody`)
+3. Interval de refresh de 10 minutes trop long pour un suivi actif
+
+**Objectifs** :
+- **A) Carte Date** : Afficher `"Date des données actuelles : DD/MM/YYYY (Kworb : DD/MM/YYYY)"` dans le header
+- **B) SWR (Stale-While-Revalidate)** : Éliminer le flicker des covers/album_names via dataset unifié + mise à jour progressive
+- **C) Auto-refresh** : Réduire l'intervalle de 10 minutes → 5 minutes
+
+**Solution** :
+
+**Backend** :
+1. **Dataset unifié (covers dans songs.json/albums.json)** :
+   - **`scripts/generate_current_views.py`** :
+     - Nouvelle fonction `load_covers_cache(filepath)` : extrait `cover_url` et `album_name` depuis `songs.json`/`albums.json` enrichis
+     - Modification `generate_current_view()` : paramètre `covers_cache` ajouté, injection des covers dans chaque item
+     - Modification `main()` : chargement des covers avant génération, passage au `generate_current_view()`
+   - Résultat : `songs.json` et `albums.json` contiennent maintenant `cover_url` et `album_name` directement
+   - Test : 316/317 songs (99.7%) et 24/27 albums (88.9%) avec covers
+
+2. **Tracking des covers avec `covers_revision`** :
+   - **`scripts/generate_current_views.py`** :
+     - Nouvelle fonction `calculate_covers_revision(songs_data, albums_data)` : hash SHA-256 des covers (12 premiers caractères)
+     - Combine tous les `id:cover_url:album_name` des songs + albums
+     - Hash stable (tri alphabétique) pour détecter changements uniquement quand covers modifiées
+   - Ajout dans `meta.json` : `"covers_revision": "8236b3220af2"` (exemple)
+   - Usage frontend : vérifier si covers_revision change → invalider cache images si nécessaire
+
+3. **Extraction date Kworb avec `kworb_day`** :
+   - **`scripts/generate_current_views.py`** :
+     - Nouvelle fonction `extract_kworb_day(meta_path)` : extrait date YYYY-MM-DD depuis `kworb_last_update_utc`
+     - Parse `"2025-10-05T00:00:00+00:00"` → `"2025-10-05"`
+   - Ajout dans `meta.json` : `"kworb_day": "2025-10-05"`
+   - Nouvelle fonction `update_meta_with_covers_info()` : sauvegarde `covers_revision` + `kworb_day` dans `meta.json`
+
+**Frontend** :
+4. **Affichage date Kworb dans header** :
+   - **`Website/src/meta-refresh.js`** :
+     - Modification section `if (meta.spotify_data_date)` :
+       ```javascript
+       let displayText = formatDate(meta.spotify_data_date);
+       if (meta.kworb_day) {
+           displayText += ` (Kworb : ${formatDate(meta.kworb_day)})`;
+       }
+       updateElement('header-spotify-data-date', displayText);
+       ```
+     - Résultat visuel : `"Date des données actuelles : 04/10/2025 (Kworb : 05/10/2025)"`
+
+5. **SWR (Stale-While-Revalidate) - No flicker** :
+   - **`Website/src/data-renderer.js`** :
+     - **Songs** :
+       - Modification `renderSongsTable()` : 
+         - Premier render : `tbody.innerHTML = ''` + création lignes
+         - Refresh : appel `updateSongsTableProgressive(tbody, sortedSongs)` (pas de clear)
+       - Nouvelle fonction `updateSongsTableProgressive(tbody, sortedSongs)` :
+         - Map des lignes existantes par `data-row-id`
+         - Parcours nouvelles données : mise à jour si existe, création si nouvelle
+         - Suppression des lignes qui n'existent plus
+       - Nouvelle fonction `updateSongRowProgressive(row, song, displayRank)` :
+         - Mise à jour sélective des cellules modifiées : rank, streams, variation, etc.
+         - **Image preloading** : `new Image()` + `onload` avant swap de `img.src` (évite flash blanc)
+     
+     - **Albums** :
+       - Modification `renderAlbumsTable()` : même logique SWR que Songs
+       - Nouvelle fonction `updateAlbumsTableProgressive(tbody, sortedAlbums)`
+       - Nouvelle fonction `updateAlbumRowProgressive(row, album, displayRank)` avec image preloading
+
+6. **Réduction intervalle de refresh** :
+   - **`Website/src/meta-refresh.js`** :
+     - Modification : `const REFRESH_INTERVAL_S = 300; // Prompt 8.9: 5 minutes (changé depuis 10 minutes)`
+     - Ancien : 600 secondes (10 min)
+     - Nouveau : 300 secondes (5 min)
+
+**Avantages** :
+- ✅ Date Kworb visible dans header (contexte complet pour l'utilisateur)
+- ✅ **Zéro flicker** lors du refresh : covers restent affichées, seules les valeurs numériques changent
+- ✅ Dataset unifié : une seule source de données (songs.json/albums.json), pas de chargement covers séparé
+- ✅ Image preloading : nouvelle cover préchargée avant swap → transition invisible
+- ✅ Performance : diff by id + mise à jour progressive = moins de DOM manipulation
+- ✅ Refresh 2x plus rapide (5 min) pour suivi temps réel amélioré
+- ✅ `covers_revision` : tracking des changements de covers pour invalidation cache future
+
+**Flux SWR** :
+```
+1. Premier render:
+   - tbody.innerHTML = '' (clear)
+   - Création toutes lignes (createSongRow/createAlbumRow)
+   - lastRenderedData.songs/albums = données actuelles
+
+2. Refresh (auto toutes les 5 min):
+   - Fetch nouvelles données
+   - Détection: lastRenderedData existe + tbody a des lignes
+   - Appel updateSongsTableProgressive():
+     a. Map lignes existantes (data-row-id → row)
+     b. Pour chaque nouvelle donnée:
+        - Si ligne existe: updateSongRowProgressive()
+          → Mise à jour cellules modifiées
+          → Preload nouvelle cover avant swap img.src
+        - Si ligne nouvelle: createSongRow() + appendChild()
+     c. Supprimer lignes obsolètes
+   - Résultat: tableau mis à jour sans clear, covers ne clignotent pas
+```
+
+**Image preloading** :
+```javascript
+// Éviter flash blanc lors du changement de cover
+const preloadImg = new Image();
+preloadImg.onload = () => {
+    img.src = newSrc;  // Swap atomique après chargement
+    img.alt = `Cover ${song.title}`;
+};
+preloadImg.onerror = () => {
+    img.src = '/Website/img/album-placeholder.svg';  // Fallback
+};
+preloadImg.src = newSrc;  // Déclenche préchargement
+```
+
+**Fichiers modifiés** :
+
+**Backend** :
+- `scripts/generate_current_views.py` :
+  - Ajout `import hashlib`
+  - Fonction `load_covers_cache(filepath)` : extraction covers depuis enriched files
+  - Fonction `calculate_covers_revision()` : hash SHA-256 des covers
+  - Fonction `extract_kworb_day()` : parse date depuis kworb_last_update_utc
+  - Fonction `update_meta_with_covers_info()` : sauvegarde dans meta.json
+  - Modification `generate_current_view()` : paramètre `covers_cache` + injection covers
+  - Modification `main()` : load covers + call update_meta
+  - Résultat : `data/songs.json`, `data/albums.json`, `data/meta.json` mis à jour
+
+**Frontend** :
+- `Website/src/meta-refresh.js` :
+  - Ligne ~168 : ajout affichage `(Kworb : ${formatDate(meta.kworb_day)})`
+  - Ligne 12 : `REFRESH_INTERVAL_S = 300` (changé de 600)
+
+- `Website/src/data-renderer.js` :
+  - Fonction `updateSongsTableProgressive(tbody, sortedSongs)` : nouvelle (50 lignes)
+  - Fonction `updateSongRowProgressive(row, song, displayRank)` : nouvelle (90 lignes)
+  - Fonction `updateAlbumsTableProgressive(tbody, sortedAlbums)` : nouvelle (50 lignes)
+  - Fonction `updateAlbumRowProgressive(row, album, displayRank)` : nouvelle (90 lignes)
+  - Modification `renderSongsTable()` : condition SWR (initial vs refresh)
+  - Modification `renderAlbumsTable()` : condition SWR (initial vs refresh)
+
+**Tests automatisés** : `test_prompt_8_9.py`
+- T1 : `meta.json` contient `covers_revision` et `kworb_day` ✅
+- T2 : Dataset unifié (cover_url + album_name dans songs/albums) ✅ 99.7% songs, 88.9% albums
+- T3 : `meta-refresh.js` utilise `meta.kworb_day` ✅
+- T4 : `REFRESH_INTERVAL_S = 300` (5 min) ✅
+- T5 : SWR progressive updates (updateSongsTableProgressive/updateAlbumsTableProgressive) ✅
+- T6 : Image preloading (`new Image().onload`) ✅
+
+**Résultat** : **6/6 tests passés** 🎉
+
+**Cache-busting** : 
+- Songs/Albums : déjà géré par Prompt 8.8 (`?v=meta.generated_at`)
+- Pas besoin de cache-busting additionnel pour covers (intégrées dans songs/albums)
+- `covers_revision` disponible pour tracking futur
+
+**Tests manuels** :
+- Vérifier affichage "Date des données actuelles : ... (Kworb : ...)" dans header
+- Attendre 5 min → observer refresh automatique
+- Vérifier que les covers **ne clignotent pas** lors du refresh
+- Vérifier que les valeurs numériques (streams, rank) se mettent à jour progressivement
+- Vérifier console : logs "Table Songs mise à jour (progressive): 317 lignes"
+
+---
+
+**2025-10-05 — Prompt 8.8 : Badges de mouvement de rang strictement éphémères (J vs J-1 uniquement)**
+
+**Problématique** : Les badges de mouvement de rang (▲/▼) pouvaient s'afficher avec des deltas calculés pour des jours précédents, même après rotation vers un nouveau jour sans nouveau mouvement. Résultat : badges « fantômes » persistant alors que le rang n'a pas bougé entre J et J-1.
+
+**Règle métier** :
+- Un badge ▲/▼ s'affiche **uniquement** si le delta est calculé pour le jour **courant** (J) par rapport à J-1
+- Après rotation vers J+1, si le rang n'a pas changé, le delta devient 0 et le badge disparaît
+- Les champs `delta_base_date` (J-1) et `delta_for_date` (J) permettent au front de valider la fraîcheur du delta
+- Cache-busting basé sur `meta.generated_at` pour garantir le refetch après sync
+
+**Solution** :
+
+**Backend** :
+1. **`scripts/generate_current_views.py`** :
+   - Ajout de 2 nouveaux champs dans `songs.json` et `albums.json` :
+     - `"delta_base_date"` : date du snapshot J-1 utilisé pour calculer `rank_prev` (ex: `"2025-10-03"`)
+     - `"delta_for_date"` : date du snapshot J courant pour lequel ce delta est valide (ex: `"2025-10-04"`)
+   - Fonction `generate_current_view()` modifiée :
+     - Paramètres ajoutés : `date_j: str`, `date_j1: Optional[str]`
+     - Enrichissement : `enriched["delta_base_date"] = date_j1`, `enriched["delta_for_date"] = date_j`
+     - Appels dans `main()` : `generate_current_view(..., date_j, date_j1)`
+   - Calcul `rank_delta` **inchangé** : `rank_prev - current["rank"]` (toujours J vs J-1)
+   - Régénération : `python scripts/generate_current_views.py` → nouveaux champs ajoutés
+
+**Front-end** :
+2. **`Website/src/data-loader.js`** (Cache-busting) :
+   - Méthode `_fetchWithRetry()` modifiée :
+     - Détecte si URL = `songs.json` ou `albums.json`
+     - Si `meta.generated_at` disponible : `?v=${meta.generated_at}`
+     - Sinon fallback : `?t=${Date.now()}`
+   - Garantit un refetch quand `meta.generated_at` change (post-rotation)
+
+3. **`Website/src/rank-rail.js`** (Validation badges) :
+   - Méthode `rebuild(items, meta)` : paramètre `meta` ajouté pour accès à `spotify_data_date`
+   - Méthode `debouncedRebuild()` : récupère `meta` depuis `window.dataLoader.cache.meta`
+   - Boucle `items.forEach()` : 
+     - **Validation ajoutée** : `if (item.delta_for_date !== meta.spotify_data_date) return;`
+     - Si dates ne matchent pas → badge **pas affiché** (delta périmé)
+     - Si `rank_delta === 0` ou `!item.rank_delta` → badge **pas affiché** (aucun mouvement)
+
+4. **`Website/src/data-renderer.js`** (Invalidation + rebuild) :
+   - Écouteur `data-sync-updated` modifié :
+     - Appel `dataLoader.invalidateCache('songs')` + `invalidateCache('albums')`
+     - Appel `rankRailSongs.debouncedRebuild()` + `rankRailAlbums.debouncedRebuild()` après 200ms
+     - Force refetch + re-validation des badges après un sync
+
+**Flux de validation** :
+```
+1. Sync détecte nouveau meta.generated_at
+2. Event data-sync-updated émis
+3. data-renderer invalide cache songs/albums
+4. Fetch songs.json?v=<nouveau_generated_at>
+5. rank-rail.rebuild() vérifie delta_for_date === spotify_data_date
+6. Si delta_for_date obsolète → pas de badge
+7. Si rank_delta === 0 → pas de badge
+8. Sinon → badge affiché ▲/▼
+```
+
+**Exemple de fonctionnement** :
+- **Jour J (2025-10-04)** :
+  - Song A : `rank=5`, `rank_prev=8`, `rank_delta=3`, `delta_for_date="2025-10-04"`, `delta_base_date="2025-10-03"`
+  - Validation front : `"2025-10-04" === meta.spotify_data_date` → ✅ Badge ▲3 affiché
+
+- **Jour J+1 (2025-10-05), sans nouveau mouvement** :
+  - Song A : `rank=5`, `rank_prev=5`, `rank_delta=0`, `delta_for_date="2025-10-05"`, `delta_base_date="2025-10-04"`
+  - Validation front : `rank_delta === 0` → ❌ Badge **pas affiché** (disparition attendue)
+
+- **Jour J+1, avec mouvement** :
+  - Song B : `rank=10`, `rank_prev=12`, `rank_delta=2`, `delta_for_date="2025-10-05"`, `delta_base_date="2025-10-04"`
+  - Validation front : `"2025-10-05" === meta.spotify_data_date` → ✅ Badge ▲2 affiché
+
+**Critères d'acceptation** :
+- ✅ Backend ajoute `delta_base_date` et `delta_for_date` dans `songs.json` / `albums.json`
+- ✅ Front valide `delta_for_date === meta.spotify_data_date` avant affichage badge
+- ✅ Cache-busting avec `?v=meta.generated_at` pour songs/albums
+- ✅ Invalidation cache + rebuild rail sur `data-sync-updated`
+- ✅ Badges disparaissent automatiquement si `rank_delta=0` ou date obsolète
+- ✅ Nouveaux mouvements jour suivant affichent de nouveaux badges
+
+**Fichiers modifiés** :
+- **Backend** :
+  - `scripts/generate_current_views.py` : 
+    - Signature `generate_current_view()` : ajout `date_j`, `date_j1`
+    - Ligne 158-159 : `"delta_base_date": date_j1`, `"delta_for_date": date_j`
+    - Ligne 221-222 : appels fonctions avec dates
+    - Régénération : `python scripts/generate_current_views.py`
+
+- **Front-end** :
+  - `Website/src/data-loader.js` :
+    - Ligne 157-166 : cache-busting basé sur `meta.generated_at` pour songs/albums
+  - `Website/src/rank-rail.js` :
+    - Ligne 86-93 : `rebuild(items, meta)` avec validation `delta_for_date`
+    - Ligne 97-102 : check `item.delta_for_date !== meta.spotify_data_date` → skip badge
+  - `Website/src/data-renderer.js` :
+    - Ligne 14-31 : handler `data-sync-updated` avec `invalidateCache()` + `debouncedRebuild()`
+
+**Cache-busting** : 
+- Songs/Albums : `?v=<meta.generated_at>` (changement garanti post-rotation)
+- Meta : `?t=<Date.now()>` (pas d'autodépendance)
+
+**Tests manuels** :
+- **T1 (Disparition badges)** : Jour J : badges visibles → Jour J+1 sans mouvement → badges disparus
+- **T2 (Nouveaux badges)** : Jour J+1 : nouveaux mouvements → nouveaux badges ▲/▼ affichés
+- **T3 (Anti-cache)** : Forcer F5 avec devtools "Disable cache" → refetch garanti avec `?v=`
+- **T4 (Non-régressions)** : Tri, pagination, scroll → badges restent correctement positionnés
+
+**Avantages** :
+- ✅ Badges strictement éphémères (durée de vie : 1 jour max)
+- ✅ Pas de pollution visuelle avec mouvements obsolètes
+- ✅ Traçabilité complète : `delta_base_date` et `delta_for_date` dans les données
+- ✅ Cache-busting robuste : pas de badges "fantômes" dus à un cache navigateur
+
+---
+
 **2025-10-05 — Prompt 8.7 : Cartes d'en-tête calculées depuis les lignes visibles du tableau**
 
 **Problématique** : Les cartes d'agrégats (Nombre de titres, Streams totaux, Streams quotidiens) étaient calculées depuis `meta.json.songs_role_stats` ou depuis les données JSON chargées. Résultat : pas de cohérence avec ce qui est **réellement affiché** dans le tableau (après filtrage potentiel).

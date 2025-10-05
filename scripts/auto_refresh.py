@@ -2,7 +2,7 @@
 """
 Orchestrateur auto-refresh pour The Weeknd Dashboard.
 Exécute périodiquement le pipeline : scrape Songs/Albums, régénère vues, met à jour meta.json.
-Intervalle par défaut : 10 minutes (600 secondes).
+Intervalle par défaut : 5 minutes (300 secondes) - Prompt 8.9.
 """
 
 import json
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 # Configuration
-DEFAULT_REFRESH_INTERVAL = 600  # 10 minutes en secondes
+DEFAULT_REFRESH_INTERVAL = 300  # Prompt 8.9: 5 minutes (changé de 600)
 JITTER_SECONDS = 15  # ±15 secondes
 LOCK_FILE = ".sync.lock"
 
@@ -91,14 +91,26 @@ def run_script(script_path: Path, python_exe: str, base_path: Path, timeout: int
         # Forcer l'encodage UTF-8 pour éviter les problèmes avec les emojis
         env = os.environ.copy()
         env['PYTHONIOENCODING'] = 'utf-8'
+        env['PYTHONLEGACYWINDOWSSTDIO'] = '0'  # Désactive le mode legacy sur Windows
+        
+        # Sur Windows, utiliser creationflags pour éviter les erreurs de threads
+        kwargs = {
+            'cwd': str(base_path),
+            'capture_output': True,
+            'text': True,
+            'encoding': 'utf-8',
+            'errors': 'ignore',  # Ignorer les erreurs d'encodage au lieu de crash
+            'timeout': timeout,
+            'env': env
+        }
+        
+        # Ajouter flag Windows pour créer sans fenêtre console
+        if os.name == 'nt':
+            kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
         
         result = subprocess.run(
             [python_exe, str(script_path)],
-            cwd=str(base_path),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            env=env
+            **kwargs
         )
         
         if result.returncode == 0:
@@ -164,59 +176,83 @@ def rotate_snapshots(base_path: Path, keep_count: int = 3):
                     print(f"⚠️  Erreur purge {old_snapshot.name}: {e}")
 
 
-def run_pipeline(base_path: Path, python_exe: str) -> bool:
+def run_pipeline(base_path: Path, python_exe: str, cycle_number: int = 1) -> bool:
     """
     Exécute le pipeline complet de synchronisation.
     
     Étapes :
-    1. Scrape Songs
-    2. Scrape Albums
-    3. Régénère data/songs.json et data/albums.json
-    4. Enrichit avec covers Spotify
-    5. Rotation snapshots
+    1. Scrape Songs     : Récupère données Kworb → Crée snapshot J → Régénère songs.json
+    2. Scrape Albums    : Récupère données Kworb → Crée snapshot J → Régénère albums.json
+    3. Enrichissement   : Ajoute cover_url Spotify dans songs.json et albums.json
+    
+    Note: La rotation des snapshots (J, J-1, J-2) est gérée automatiquement 
+          par les scrapers via date_manager.py (basée sur kworb_day).
+    
+    Args:
+        base_path: Racine du projet
+        python_exe: Chemin de l'exécutable Python
+        cycle_number: Numéro du cycle (pour affichage)
     
     Retourne True si succès complet.
     """
-    print("\n" + "=" * 60)
-    print(f"🔄 Pipeline START — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+    print("\n" + "═" * 70)
+    print(f"{'':^70}")
+    print(f"🔄 CYCLE #{cycle_number} — {datetime.now().strftime('%H:%M:%S')}".center(70))
+    print(f"{'':^70}")
+    print("═" * 70)
     
     all_success = True
     error_messages = []
     
     # Étape 1 : Scrape Songs
-    print("\n[1/5] Scraping Songs...")
+    print("\n┌────────────────────────────────────────────────────────────────────┐")
+    print("│ [1/3] 📊 SCRAPING SONGS                                            │")
+    print("│                                                                    │")
+    print("│ • Récupère données depuis Kworb                                    │")
+    print("│ • Crée snapshot journalier (data/history/songs/YYYY-MM-DD.json)    │")
+    print("│ • Régénère data/songs.json avec calculs (delta, badges)            │")
+    print("└────────────────────────────────────────────────────────────────────┘")
     success, error = run_script(
         base_path / "scripts" / "scrape_kworb_songs.py",
         python_exe,
         base_path
     )
     if success:
-        print("✅ Songs scraped")
+        print("│ ✅ Songs scraped avec succès")
     else:
-        print(f"❌ Erreur Songs: {error}")
+        print(f"│ ❌ Erreur: {error}")
         all_success = False
         error_messages.append(f"Songs: {error}")
     
     # Étape 2 : Scrape Albums
-    print("\n[2/5] Scraping Albums...")
+    print("\n┌────────────────────────────────────────────────────────────────────┐")
+    print("│ [2/3] 💿 SCRAPING ALBUMS                                           │")
+    print("│                                                                    │")
+    print("│ • Récupère données depuis Kworb                                    │")
+    print("│ • Crée snapshot journalier (data/history/albums/YYYY-MM-DD.json)   │")
+    print("│ • Régénère data/albums.json avec calculs (delta, badges)           │")
+    print("└────────────────────────────────────────────────────────────────────┘")
     success, error = run_script(
         base_path / "scripts" / "scrape_kworb_albums.py",
         python_exe,
         base_path
     )
     if success:
-        print("✅ Albums scraped")
+        print("│ ✅ Albums scraped avec succès")
     else:
-        print(f"❌ Erreur Albums: {error}")
+        print(f"│ ❌ Erreur: {error}")
         all_success = False
         error_messages.append(f"Albums: {error}")
     
-    # Étape 3 : Régénération des vues (déjà fait par les scrapers)
-    print("\n[3/5] Vues courantes régénérées par scrapers")
-    
-    # Étape 4 : Enrichissement covers Spotify
-    print("\n[4/5] Enrichissement covers Spotify...")
+    # Étape 3 : Enrichissement covers Spotify
+    print("\n┌────────────────────────────────────────────────────────────────────┐")
+    print("│ [3/3] 🎨 ENRICHISSEMENT SPOTIFY                                    │")
+    print("│                                                                    │")
+    print("│ • Lit songs.json et albums.json                                    │")
+    print("│ • Recherche tracks/albums manquants sur Spotify API                │")
+    print("│ • Ajoute cover_url + album_name dans les fichiers JSON             │")
+    print("│ • Incrémente covers_revision dans meta.json                        │")
+    print("└────────────────────────────────────────────────────────────────────┘")
     success, error = run_script(
         base_path / "scripts" / "enrich_covers.py",
         python_exe,
@@ -224,27 +260,33 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
         timeout=300  # 5 minutes pour l'enrichissement Spotify
     )
     if success:
-        print("✅ Covers enrichies")
+        print("│ ✅ Covers enrichies avec succès")
     else:
-        print(f"⚠️  Covers: {error} (non-bloquant)")
+        print(f"│ ⚠️  Avertissement: {error} (non-bloquant)")
         # Ne pas bloquer le pipeline si l'enrichissement échoue
     
-    # Étape 5 : Rotation gérée automatiquement par les scrapers
-    print("\n[5/5] Rotation snapshots gérée par les scrapers")
-    print("✅ Rotation automatique (basée sur kworb_day)")
+    # Footer avec info rotation
+    print("\n┌────────────────────────────────────────────────────────────────────┐")
+    print("│ 🔄 ROTATION SNAPSHOTS                                              │")
+    print("│                                                                    │")
+    print("│ Gérée automatiquement par les scrapers via date_manager.py         │")
+    print("│ • Maintient 3 jours : J (aujourd'hui), J-1, J-2                    │")
+    print("│ • Rotation basée sur kworb_day (changement UTC 00:00)              │")
+    print("└────────────────────────────────────────────────────────────────────┘")
+    print("│ ✅ Rotation automatique active")
     
     # Mise à jour du statut dans meta.json
     if all_success:
         update_meta_status(base_path, "ok")
-        print("\n" + "=" * 60)
-        print(f"✅ Pipeline END — Succès complet")
-        print("=" * 60)
+        print("\n" + "═" * 70)
+        print(f"{'✅ CYCLE #' + str(cycle_number) + ' TERMINÉ — Succès complet':^70}")
+        print("═" * 70)
     else:
         error_summary = "; ".join(error_messages[:2])  # Max 2 erreurs
         update_meta_status(base_path, "error", error_summary)
-        print("\n" + "=" * 60)
-        print(f"⚠️  Pipeline END — Erreurs partielles")
-        print("=" * 60)
+        print("\n" + "═" * 70)
+        print(f"{'⚠️  CYCLE #' + str(cycle_number) + ' TERMINÉ — Erreurs partielles':^70}")
+        print("═" * 70)
     
     return all_success
 
@@ -308,7 +350,7 @@ def main():
                     time.sleep(jitter)
                 
                 # Exécuter le pipeline
-                run_pipeline(base_path, python_exe)
+                run_pipeline(base_path, python_exe, cycle_number=iteration)
                 
             finally:
                 # Toujours libérer le verrou
@@ -321,8 +363,12 @@ def main():
             
             # Attendre l'intervalle avant la prochaine exécution
             next_run = datetime.fromtimestamp(time.time() + interval)
-            print(f"\n⏰ Prochaine exécution : {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
-            print(f"   (dans {interval}s)")
+            print(f"\n{'═' * 70}")
+            print(f"{'⏰ PROCHAIN CYCLE':^70}")
+            print(f"{'═' * 70}")
+            print(f"📅 Date: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"⏱️  Dans: {interval}s ({interval/60:.0f} minutes)")
+            print(f"{'═' * 70}\n")
             
             time.sleep(interval)
     

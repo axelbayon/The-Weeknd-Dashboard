@@ -117,6 +117,9 @@ def scrape_kworb_albums(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
             
+            # Forcer l'encodage UTF-8 pour éviter les erreurs cp1252 sur Windows
+            response.encoding = 'utf-8'
+            
             # Throttle
             time.sleep(THROTTLE_SECONDS)
             

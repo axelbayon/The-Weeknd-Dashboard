@@ -12,9 +12,23 @@ class DataRenderer {
         };
         
         // Écouter l'événement de synchronisation pour rafraîchir les badges
-        window.addEventListener('data-sync-updated', () => {
-            console.log('[DataRenderer] 🔄 Rafraîchissement badges après sync');
-            // Le rebuild sera automatique via MutationObserver
+        // Prompt 8.8: Invalider cache + rebuild rail si spotify_data_date change
+        window.addEventListener('data-sync-updated', async (event) => {
+            console.log('[DataRenderer] 🔄 Event data-sync-updated reçu');
+            
+            // Invalider cache songs/albums pour forcer refetch avec nouveaux deltas
+            if (window.dataLoader) {
+                window.dataLoader.invalidateCache('songs');
+                window.dataLoader.invalidateCache('albums');
+                console.log('[DataRenderer] 🗑️ Cache songs/albums invalidé');
+            }
+            
+            // Attendre un court instant pour que les rails se rebuilds avec nouvelles données
+            setTimeout(() => {
+                if (window.rankRailSongs) window.rankRailSongs.debouncedRebuild();
+                if (window.rankRailAlbums) window.rankRailAlbums.debouncedRebuild();
+                console.log('[DataRenderer] ✅ Rails rebuilds déclenchés');
+            }, 200);
         });
         
         // Écouter le resize de la fenêtre avec debounce
@@ -296,6 +310,135 @@ class DataRenderer {
     }
 
     /**
+     * Prompt 8.9: Mise à jour progressive de la table Songs (SWR - no flicker)
+     * Compare les lignes existantes avec les nouvelles données et met à jour uniquement ce qui change
+     * Précharge les images avant swap pour éviter le flash blanc
+     */
+    updateSongsTableProgressive(tbody, sortedSongs) {
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
+        
+        // Créer un map des lignes existantes par data-row-id
+        const existingRows = new Map();
+        tbody.querySelectorAll('tr[data-row-id]').forEach(row => {
+            existingRows.set(row.getAttribute('data-row-id'), row);
+        });
+        
+        // Parcourir les nouvelles données et mettre à jour/ajouter
+        sortedSongs.forEach((song, index) => {
+            const existingRow = existingRows.get(song.id);
+            
+            if (existingRow) {
+                // Ligne existe: mise à jour sélective des cellules modifiées
+                this.updateSongRowProgressive(existingRow, song, index + 1);
+                existingRows.delete(song.id); // Marquer comme traitée
+            } else {
+                // Nouvelle ligne: créer et ajouter
+                const newRow = this.createSongRow(song, index + 1);
+                tbody.appendChild(newRow);
+            }
+        });
+        
+        // Supprimer les lignes qui n'existent plus dans les nouvelles données
+        existingRows.forEach(row => row.remove());
+    }
+
+    /**
+     * Prompt 8.9: Met à jour une ligne existante avec préchargement d'image
+     */
+    updateSongRowProgressive(row, song, displayRank) {
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
+        
+        // Mettre à jour le rank (colonne 1)
+        const tdRank = row.querySelector('.data-table__cell--rank');
+        if (tdRank) {
+            tdRank.setAttribute('data-sort-raw', displayRank);
+            const rankSpan = tdRank.querySelector('.num');
+            if (rankSpan) rankSpan.textContent = formatIntFr(displayRank);
+        }
+        
+        // Mettre à jour le cover (colonne 2) avec préchargement
+        const tdCover = row.querySelector('td:nth-child(2)');
+        if (tdCover && song.cover_url) {
+            const img = tdCover.querySelector('img');
+            const currentSrc = img ? img.src : null;
+            const newSrc = song.cover_url;
+            
+            // Précharger nouvelle image avant swap (évite flash blanc)
+            if (img && currentSrc !== newSrc) {
+                const preloadImg = new Image();
+                preloadImg.onload = () => {
+                    img.src = newSrc;
+                    img.alt = `Cover ${song.title}`;
+                };
+                preloadImg.onerror = () => {
+                    img.src = '/Website/img/album-placeholder.svg';
+                    img.alt = 'Cover indisponible';
+                };
+                preloadImg.src = newSrc;
+            }
+        }
+        
+        // Mettre à jour titre + album (colonne 3)
+        const tdTitle = row.querySelector('.data-table__cell--title');
+        if (tdTitle) {
+            const titleText = tdTitle.querySelector('.song-title__text');
+            const albumText = tdTitle.querySelector('.song-title__album');
+            if (titleText) titleText.textContent = song.title;
+            if (albumText) albumText.textContent = song.album_name || 'Album inconnu';
+        }
+        
+        // Mettre à jour streams totaux (colonne 4)
+        const tdStreamsTotal = row.querySelector('td:nth-child(4)');
+        if (tdStreamsTotal) {
+            tdStreamsTotal.setAttribute('data-sort-raw', song.streams_total);
+            const numSpan = tdStreamsTotal.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(song.streams_total);
+        }
+        
+        // Mettre à jour streams quotidiens (colonne 5)
+        const tdStreamsDaily = row.querySelector('td:nth-child(5)');
+        if (tdStreamsDaily) {
+            tdStreamsDaily.setAttribute('data-sort-raw', song.streams_daily);
+            const numSpan = tdStreamsDaily.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(song.streams_daily);
+        }
+        
+        // Mettre à jour variation (colonne 6)
+        const tdVariation = row.querySelector('td:nth-child(6)');
+        if (tdVariation) {
+            tdVariation.setAttribute('data-sort-raw', song.streams_delta);
+            const numSpan = tdVariation.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(song.streams_delta);
+        }
+        
+        // Mettre à jour % variation (colonne 7)
+        const tdVariationPercent = row.querySelector('td:nth-child(7)');
+        if (tdVariationPercent) {
+            tdVariationPercent.setAttribute('data-sort-raw', song.streams_delta_percent);
+            const numSpan = tdVariationPercent.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatPercent(song.streams_delta_percent);
+        }
+        
+        // Mettre à jour palier (colonne 8)
+        const tdMilestone = row.querySelector('td:nth-child(8)');
+        if (tdMilestone) {
+            const cap = formatCap(song.next_milestone);
+            tdMilestone.setAttribute('data-sort-raw', song.next_milestone);
+            const numSpan = tdMilestone.querySelector('.num');
+            if (numSpan) numSpan.textContent = cap;
+        }
+        
+        // Mettre à jour jours restants (colonne 9)
+        const tdDaysLeft = row.querySelector('td:nth-child(9)');
+        if (tdDaysLeft) {
+            const formatted = formatDays(song.days_to_next_milestone);
+            tdDaysLeft.setAttribute('data-sort-raw', song.days_to_next_milestone);
+            const numSpan = tdDaysLeft.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatted;
+        }
+    }
+
+    /**
      * Rend la table Songs
      */
     async renderSongsTable() {
@@ -316,17 +459,22 @@ class DataRenderer {
                 return;
             }
 
-            // Vider le tbody
-            tbody.innerHTML = '';
-
-            // Générer les lignes
-            sortedSongs.forEach((song, index) => {
-                const row = this.createSongRow(song, index + 1);
-                tbody.appendChild(row);
-            });
+            // Prompt 8.9: SWR (Stale-While-Revalidate) - Mise à jour progressive sans clear
+            // Premier render: créer toutes les lignes
+            if (!this.lastRenderedData.songs || tbody.children.length === 0) {
+                tbody.innerHTML = '';
+                sortedSongs.forEach((song, index) => {
+                    const row = this.createSongRow(song, index + 1);
+                    tbody.appendChild(row);
+                });
+                console.log(`✅ Table Songs rendue (initial): ${sortedSongs.length} lignes`);
+            } else {
+                // Refresh: mise à jour progressive par diff (no clear, no flicker)
+                this.updateSongsTableProgressive(tbody, sortedSongs);
+                console.log(`✅ Table Songs mise à jour (progressive): ${sortedSongs.length} lignes`);
+            }
 
             this.lastRenderedData.songs = songs;
-            console.log(`✅ Table Songs rendue: ${sortedSongs.length} lignes`);
 
             // Réinitialiser le tri (table-sort.js)
             if (window.tableSort) {
@@ -487,6 +635,131 @@ class DataRenderer {
     }
 
     /**
+     * Prompt 8.9: Mise à jour progressive de la table Albums (SWR - no flicker)
+     */
+    updateAlbumsTableProgressive(tbody, sortedAlbums) {
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
+        
+        // Créer un map des lignes existantes par data-row-id
+        const existingRows = new Map();
+        tbody.querySelectorAll('tr[data-row-id]').forEach(row => {
+            existingRows.set(row.getAttribute('data-row-id'), row);
+        });
+        
+        // Parcourir les nouvelles données et mettre à jour/ajouter
+        sortedAlbums.forEach((album, index) => {
+            const existingRow = existingRows.get(album.id);
+            
+            if (existingRow) {
+                // Ligne existe: mise à jour sélective des cellules modifiées
+                this.updateAlbumRowProgressive(existingRow, album, index + 1);
+                existingRows.delete(album.id); // Marquer comme traitée
+            } else {
+                // Nouvelle ligne: créer et ajouter
+                const newRow = this.createAlbumRow(album, index + 1);
+                tbody.appendChild(newRow);
+            }
+        });
+        
+        // Supprimer les lignes qui n'existent plus dans les nouvelles données
+        existingRows.forEach(row => row.remove());
+    }
+
+    /**
+     * Prompt 8.9: Met à jour une ligne Album existante avec préchargement d'image
+     */
+    updateAlbumRowProgressive(row, album, displayRank) {
+        const { formatIntFr, formatPercent, formatDays, formatCap } = window.formatters;
+        
+        // Mettre à jour le rank (colonne 1)
+        const tdRank = row.querySelector('.data-table__cell--rank');
+        if (tdRank) {
+            tdRank.setAttribute('data-sort-raw', displayRank);
+            const rankSpan = tdRank.querySelector('.num');
+            if (rankSpan) rankSpan.textContent = formatIntFr(displayRank);
+        }
+        
+        // Mettre à jour le cover (colonne 2) avec préchargement
+        const tdCover = row.querySelector('td:nth-child(2)');
+        if (tdCover && album.cover_url) {
+            const img = tdCover.querySelector('img');
+            const currentSrc = img ? img.src : null;
+            const newSrc = album.cover_url;
+            
+            // Précharger nouvelle image avant swap (évite flash blanc)
+            if (img && currentSrc !== newSrc) {
+                const preloadImg = new Image();
+                preloadImg.onload = () => {
+                    img.src = newSrc;
+                    img.alt = `Cover ${album.album_name}`;
+                };
+                preloadImg.onerror = () => {
+                    img.src = '/Website/img/album-placeholder.svg';
+                    img.alt = 'Cover indisponible';
+                };
+                preloadImg.src = newSrc;
+            }
+        }
+        
+        // Mettre à jour titre album (colonne 3)
+        const tdTitle = row.querySelector('.data-table__cell--title');
+        if (tdTitle) {
+            const titleText = tdTitle.querySelector('.album-title__text');
+            if (titleText) titleText.textContent = album.album_name || 'Album inconnu';
+        }
+        
+        // Mettre à jour streams totaux (colonne 4)
+        const tdStreamsTotal = row.querySelector('td:nth-child(4)');
+        if (tdStreamsTotal) {
+            tdStreamsTotal.setAttribute('data-sort-raw', album.streams_total);
+            const numSpan = tdStreamsTotal.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(album.streams_total);
+        }
+        
+        // Mettre à jour streams quotidiens (colonne 5)
+        const tdStreamsDaily = row.querySelector('td:nth-child(5)');
+        if (tdStreamsDaily) {
+            tdStreamsDaily.setAttribute('data-sort-raw', album.streams_daily);
+            const numSpan = tdStreamsDaily.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(album.streams_daily);
+        }
+        
+        // Mettre à jour variation (colonne 6)
+        const tdVariation = row.querySelector('td:nth-child(6)');
+        if (tdVariation) {
+            tdVariation.setAttribute('data-sort-raw', album.streams_delta);
+            const numSpan = tdVariation.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatIntFr(album.streams_delta);
+        }
+        
+        // Mettre à jour % variation (colonne 7)
+        const tdVariationPercent = row.querySelector('td:nth-child(7)');
+        if (tdVariationPercent) {
+            tdVariationPercent.setAttribute('data-sort-raw', album.streams_delta_percent);
+            const numSpan = tdVariationPercent.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatPercent(album.streams_delta_percent);
+        }
+        
+        // Mettre à jour palier (colonne 8)
+        const tdMilestone = row.querySelector('td:nth-child(8)');
+        if (tdMilestone) {
+            const cap = formatCap(album.next_milestone);
+            tdMilestone.setAttribute('data-sort-raw', album.next_milestone);
+            const numSpan = tdMilestone.querySelector('.num');
+            if (numSpan) numSpan.textContent = cap;
+        }
+        
+        // Mettre à jour jours restants (colonne 9)
+        const tdDaysLeft = row.querySelector('td:nth-child(9)');
+        if (tdDaysLeft) {
+            const formatted = formatDays(album.days_to_next_milestone);
+            tdDaysLeft.setAttribute('data-sort-raw', album.days_to_next_milestone);
+            const numSpan = tdDaysLeft.querySelector('.num');
+            if (numSpan) numSpan.textContent = formatted;
+        }
+    }
+
+    /**
      * Rend la table Albums
      */
     async renderAlbumsTable() {
@@ -507,17 +780,22 @@ class DataRenderer {
                 return;
             }
 
-            // Vider le tbody
-            tbody.innerHTML = '';
-
-            // Générer les lignes
-            sortedAlbums.forEach((album, index) => {
-                const row = this.createAlbumRow(album, index + 1);
-                tbody.appendChild(row);
-            });
+            // Prompt 8.9: SWR (Stale-While-Revalidate) - Mise à jour progressive sans clear
+            // Premier render: créer toutes les lignes
+            if (!this.lastRenderedData.albums || tbody.children.length === 0) {
+                tbody.innerHTML = '';
+                sortedAlbums.forEach((album, index) => {
+                    const row = this.createAlbumRow(album, index + 1);
+                    tbody.appendChild(row);
+                });
+                console.log(`✅ Table Albums rendue (initial): ${sortedAlbums.length} lignes`);
+            } else {
+                // Refresh: mise à jour progressive par diff (no clear, no flicker)
+                this.updateAlbumsTableProgressive(tbody, sortedAlbums);
+                console.log(`✅ Table Albums mise à jour (progressive): ${sortedAlbums.length} lignes`);
+            }
 
             this.lastRenderedData.albums = albums;
-            console.log(`✅ Table Albums rendue: ${sortedAlbums.length} lignes`);
 
             // Réinitialiser le tri (table-sort.js)
             if (window.tableSort) {

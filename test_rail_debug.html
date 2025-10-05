@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Rail Debug</title>
+    <style>
+        body { 
+            margin: 20px; 
+            font-family: Arial, sans-serif;
+            background: #0b0d15;
+            color: #f6f7fb;
+        }
+        
+        .table-wrapper {
+            position: relative;
+            width: 800px;
+            overflow-x: auto;
+            border: 1px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        
+        /* Rail styles */
+        .rank-rail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 54px;
+            height: 100%;
+            transform: translateX(-54px);
+            pointer-events: none;
+            z-index: 5;
+            background: rgba(255, 0, 0, 0.1); /* Debug: fond rouge */
+            border: 2px solid red; /* Debug: bordure */
+        }
+        
+        .rank-badge {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        
+        .rank-badge.is-up {
+            color: #4ae3c8;
+            background: rgba(74, 227, 200, 0.15);
+        }
+        
+        .rank-badge.is-down {
+            color: #ff8678;
+            background: rgba(255, 134, 120, 0.15);
+        }
+        
+        .debug-info {
+            background: #1f2436;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Badge Rail Overlay</h1>
+    
+    <div class="debug-info">
+        <h3>Debug Info:</h3>
+        <div id="debugInfo"></div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Streams</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>70</td><td>*Might Not</td><td>244,260,135</td></tr>
+                <tr><td>71</td><td>Take My Breath</td><td>240,754,203</td></tr>
+                <tr><td>72</td><td>Double Fantasy</td><td>240,705,509</td></tr>
+                <tr><td>73</td><td>Ordinary Life</td><td>239,485,626</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        // Données mock avec rank_delta
+        const mockData = [
+            { title: "*Might Not", rank_delta: 0 },
+            { title: "Take My Breath", rank_delta: 1, rank_prev: 72 },
+            { title: "Double Fantasy", rank_delta: -1, rank_prev: 71 },
+            { title: "Ordinary Life", rank_delta: 0 }
+        ];
+        
+        function layoutRankRail() {
+            console.log("🚀 layoutRankRail() appelé");
+            
+            const table = document.querySelector('.data-table');
+            const wrapper = document.querySelector('.table-wrapper');
+            
+            if (!table || !wrapper) {
+                console.error("❌ Table ou wrapper introuvable");
+                return;
+            }
+            
+            // Créer le rail
+            let rail = wrapper.querySelector('.rank-rail');
+            if (!rail) {
+                rail = document.createElement('div');
+                rail.className = 'rank-rail';
+                rail.setAttribute('aria-hidden', 'true');
+                wrapper.appendChild(rail);
+                console.log("✅ Rail créé");
+            }
+            
+            // Vider
+            rail.innerHTML = '';
+            
+            // Générer badges
+            const rows = table.querySelectorAll('tbody tr');
+            let badgeCount = 0;
+            
+            rows.forEach((tr, index) => {
+                const item = mockData[index];
+                console.log(`Ligne ${index}:`, item);
+                
+                if (!item || !item.rank_delta || item.rank_delta === 0) {
+                    console.log(`  → Pas de badge (delta=${item?.rank_delta})`);
+                    return;
+                }
+                
+                const top = tr.offsetTop;
+                const height = tr.offsetHeight;
+                const centerY = top + (height / 2);
+                
+                console.log(`  → Création badge: top=${top}, height=${height}, centerY=${centerY}`);
+                
+                const badge = document.createElement('span');
+                badge.className = `rank-badge ${item.rank_delta > 0 ? 'is-up' : 'is-down'}`;
+                badge.style.top = `${centerY}px`;
+                
+                const arrow = item.rank_delta > 0 ? '▲' : '▼';
+                const deltaAbs = Math.abs(item.rank_delta);
+                badge.textContent = `${arrow} ${deltaAbs}`;
+                
+                rail.appendChild(badge);
+                badgeCount++;
+            });
+            
+            console.log(`✅ ${badgeCount} badges générés`);
+            
+            // Afficher debug info
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.innerHTML = `
+                <div>Rail présent: ${rail ? 'OUI' : 'NON'}</div>
+                <div>Rail dimensions: ${rail.offsetWidth}x${rail.offsetHeight}px</div>
+                <div>Rail transform: ${getComputedStyle(rail).transform}</div>
+                <div>Badges générés: ${badgeCount}</div>
+                <div>Wrapper position: ${getComputedStyle(wrapper).position}</div>
+            `;
+        }
+        
+        // Lancer au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("📄 DOM chargé");
+            setTimeout(() => {
+                layoutRankRail();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

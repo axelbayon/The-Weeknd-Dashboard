@@ -154,12 +154,20 @@ class DataLoader {
 
     /**
      * Fetch avec retry et backoff exponentiel
+     * Prompt 8.8: Cache-busting basé sur meta.generated_at pour songs/albums
      */
     async _fetchWithRetry(url, retries = this.MAX_RETRIES) {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                // Cache-busting avec timestamp
-                const cacheBuster = `?t=${Date.now()}`;
+                // Cache-busting: utiliser meta.generated_at si disponible, sinon timestamp
+                let cacheBuster;
+                if ((url.includes('songs.json') || url.includes('albums.json')) && this.cache.meta?.generated_at) {
+                    // Prompt 8.8: Version basée sur generated_at pour forcer refetch quand données changent
+                    cacheBuster = `?v=${this.cache.meta.generated_at}`;
+                } else {
+                    // Fallback: timestamp pour meta.json ou si meta pas encore chargé
+                    cacheBuster = `?t=${Date.now()}`;
+                }
                 const response = await fetch(url + cacheBuster);
                 
                 if (!response.ok) {

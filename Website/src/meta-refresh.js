@@ -11,7 +11,7 @@
     
     // Configuration
     const FETCH_INTERVAL_MS = 10000; // 10 secondes
-    const REFRESH_INTERVAL_S = 600; // 10 minutes (par défaut)
+    const REFRESH_INTERVAL_S = 300; // Prompt 8.9: 5 minutes (changé depuis 10 minutes)
     const META_JSON_PATH = '/data/meta.json';
     
     // État
@@ -102,10 +102,12 @@
             }
         });
         
-        // Si le compte à rebours atteint 0, recharger les métadonnées
-        if (remainingS === 0) {
+        // Prompt 8.9: Si le compte à rebours atteint 0, recharger UNE FOIS puis stopper countdown
+        if (remainingS === 0 && countdownInterval) {
             console.log('[Meta-Refresh] Countdown reached 0, fetching meta...');
-            fetchMeta();
+            clearInterval(countdownInterval);  // STOP countdown pour éviter boucle infinie
+            countdownInterval = null;
+            fetchMeta();  // Fetch qui va restart le countdown avec nouvelle nextUpdateTime
         }
     }
     
@@ -163,7 +165,12 @@
             }
             
             if (meta.spotify_data_date) {
-                updateElement('header-spotify-data-date', formatDate(meta.spotify_data_date));
+                // Prompt 8.9: Afficher "Date des données actuelles : DD/MM/YYYY (Kworb : DD/MM/YYYY)"
+                let displayText = formatDate(meta.spotify_data_date);
+                if (meta.kworb_day) {
+                    displayText += ` (Kworb : ${formatDate(meta.kworb_day)})`;
+                }
+                updateElement('header-spotify-data-date', displayText);
                 
                 // Mettre à jour les dates entre parenthèses dans les cartes "Streams quotidiens"
                 const dailyStreamsDateSongs = document.querySelector('[data-testid="daily-streams-date"]');
