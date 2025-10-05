@@ -8,6 +8,73 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-05 — Prompt 8.7 : Cartes d'en-tête calculées depuis les lignes visibles du tableau**
+
+**Problématique** : Les cartes d'agrégats (Nombre de titres, Streams totaux, Streams quotidiens) étaient calculées depuis `meta.json.songs_role_stats` ou depuis les données JSON chargées. Résultat : pas de cohérence avec ce qui est **réellement affiché** dans le tableau (après filtrage potentiel).
+
+**Règle métier** :
+- Les cartes d'en-tête doivent refléter **exactement** les lignes visibles du tableau
+- Split Feat/Solo détecté par astérisque en début de titre (`title.startsWith('*')`)
+- Recalcul après : render initial, changement de page, auto-refresh
+- **PAS** de recalcul après tri (ordre des lignes ne change pas les sommes)
+
+**Solution** :
+1. **Nouvelles fonctions dans `data-renderer.js`** :
+   - `calculateSongsStatsFromDOM()` : lit les `tr[data-row-id]` visibles (via `offsetParent !== null`)
+     - Parse `title` pour détecter Feat (astérisque)
+     - Parse `streams_total` et `streams_daily` depuis cellules td
+     - Agrège : total, totalStreams, dailyStreams, lead, feat
+   - `calculateAlbumsStatsFromDOM()` : même principe sans split Feat/Solo
+   - `parseStreamValue(text)` : convertit "1 234 567" → 1234567, gère "—" et valeurs nulles
+
+2. **Modifications lifecycle** :
+   - `renderSongsAggregates()` et `renderAlbumsAggregates()` : 
+     - Ne chargent **plus** `meta.json` ou `songs.json`
+     - Appellent directement `calculateFromDOM()`
+     - Vérifient que le tableau est rendu avant calcul
+   - `renderSongsTable()` et `renderAlbumsTable()` :
+     - Appellent `renderAggregates()` **après** le render du tableau (dans RAF)
+     - Garantit que les lignes DOM existent avant calcul
+   - `initCurrentPage()` : 
+     - Suppression du `Promise.all([renderAggregates(), renderTable()])`
+     - Appel séquentiel : `renderTable()` qui déclenchera `renderAggregates()` dans RAF
+
+3. **Points de recalcul** :
+   - ✅ Après `renderSongsTable()` / `renderAlbumsTable()` (render initial)
+   - ✅ Après changement de page via `switchPage()` → `initCurrentPage()`
+   - ✅ Après auto-refresh via `data-sync-updated` → `refreshCurrentPage()`
+   - ❌ **PAS** après tri (tri dispatch `table:rows-updated` mais on ne l'écoute pas)
+
+**Avantages** :
+- ✅ Cartes toujours cohérentes avec le tableau affiché
+- ✅ Pas de dépendance à `meta.json.songs_role_stats` (peut être obsolète)
+- ✅ Détection Feat par astérisque côté client (plus flexible que `role` backend)
+- ✅ Prêt pour futur filtrage/recherche avancée
+
+**Fichiers modifiés** :
+- `Website/src/data-renderer.js` :
+  - `calculateSongsStatsFromDOM()` : nouvelle fonction (70 lignes)
+  - `calculateAlbumsStatsFromDOM()` : nouvelle fonction (40 lignes)
+  - `parseStreamValue()` : helper parsing (10 lignes)
+  - `renderSongsAggregates()` : refactorisé pour DOM
+  - `renderAlbumsAggregates()` : refactorisé pour DOM
+  - `renderSongsTable()` : ajout appel `renderAggregates()` dans RAF
+  - `renderAlbumsTable()` : ajout appel `renderAggregates()` dans RAF
+  - `initCurrentPage()` : suppression `Promise.all`, render séquentiel
+
+**Tests manuels** : Voir `TESTS_PROMPT_8_7.md`
+- T1 : Cohérence sommes Titres
+- T2 : Split Feat/Solo correct (astérisque)
+- T3 : Cohérence sommes Albums
+- T4 : Tri ne recalcule pas
+- T5 : Refresh auto recalcule
+- T6 : Changement page recalcule
+- T7 : Résilience valeurs invalides
+
+**Cache-busting** : Aucun (calcul côté client uniquement)
+
+---
+
 **2025-10-05 — Prompt 8.6 : Rotation J/J-1/J-2 basée sur la vraie date Spotify (indépendante de l'horloge locale)**
 
 **Problématique** : La rotation des snapshots et la `spotify_data_date` étaient calculées avec `datetime.now() - 1 jour`, dépendant de l'horloge locale de la machine. Résultat : un scrape à 2h du matin locale pouvait créer un nouveau jour alors que Kworb n'avait pas encore basculé, causant des incohérences.

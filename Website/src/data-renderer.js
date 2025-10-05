@@ -32,23 +32,29 @@ class DataRenderer {
     /**
      * Calcule et rend les agrégats de la page Songs
      */
+    /**
+     * Met à jour les agrégats Songs depuis le DOM (lignes visibles)
+     * Prompt 8.7 : ne plus utiliser meta.json, calculer depuis les tr affichées
+     */
     async renderSongsAggregates() {
         try {
-            // Charger meta.json ET songs.json pour garantir les dernières valeurs
-            const [songs, meta] = await Promise.all([
-                window.dataLoader.loadSongs(),
-                window.dataLoader.loadMeta()
-            ]);
-            
-            if (!songs || songs.length === 0) {
-                console.warn('⚠️ Aucune chanson à afficher');
+            // Attendre que le tableau soit rendu (si appelé trop tôt)
+            const tbody = document.querySelector('#page-songs tbody');
+            if (!tbody || tbody.querySelectorAll('tr[data-row-id]').length === 0) {
+                console.warn('⚠️ Tableau Songs pas encore rendu, attente...');
                 return;
             }
 
-            const stats = this.calculateSongsStats(songs, meta);
+            const stats = this.calculateSongsStatsFromDOM();
+            
+            if (!stats) {
+                console.error('❌ Impossible de calculer les stats Songs depuis le DOM');
+                return;
+            }
+
             this.updateSongsAggregatesUI(stats);
             
-            console.log('✅ Agrégats Songs mis à jour:', stats);
+            console.log('✅ Agrégats Songs mis à jour depuis DOM:', stats);
         } catch (error) {
             console.error('❌ Erreur rendu agrégats Songs:', error);
             this.showError('songs-aggregates');
@@ -56,83 +62,64 @@ class DataRenderer {
     }
 
     /**
-     * Calcule les statistiques des chansons depuis meta.json
-     * Utilise songs_role_stats si disponible, sinon recalcule depuis songs
+     * Calcule les statistiques des chansons depuis les lignes visibles du tableau DOM
+     * Prompt 8.7 : agrégats = somme des lignes affichées, pas depuis Kworb
+     * Split Feat (astérisque) vs Solo/Lead
      */
-    calculateSongsStats(songs, meta = null) {
-        // Utiliser meta passé en paramètre, sinon fallback sur cache
-        if (!meta) {
-            meta = window.dataLoader?.cachedData?.meta || {};
+    calculateSongsStatsFromDOM() {
+        const tbody = document.querySelector('#page-songs tbody');
+        if (!tbody) {
+            console.warn('[Stats] Tbody Songs introuvable, impossible de calculer les stats');
+            return null;
         }
-        
-        const roleStats = meta.songs_role_stats;
-        
-        if (roleStats && roleStats.lead && roleStats.feat) {
-            // Utiliser les stats exactes de Kworb
-            const lead = {
-                count: roleStats.lead.count,
-                totalStreams: roleStats.lead.streams_total,
-                dailyStreams: roleStats.lead.streams_daily
-            };
-            
-            const feat = {
-                count: roleStats.feat.count,
-                totalStreams: roleStats.feat.streams_total,
-                dailyStreams: roleStats.feat.streams_daily
-            };
-            
-            const total = lead.count + feat.count;
-            const totalStreams = lead.totalStreams + feat.totalStreams;
-            const dailyStreams = lead.dailyStreams + feat.dailyStreams;
-            
-            console.log('[Stats] Utilisation des stats Kworb exactes depuis meta.json');
-            console.log(`  Lead: ${lead.count} songs, ${lead.totalStreams} total, ${lead.dailyStreams} daily`);
-            console.log(`  Feat: ${feat.count} songs, ${feat.totalStreams} total, ${feat.dailyStreams} daily`);
-            
-            return {
-                total,
-                totalStreams,
-                dailyStreams,
-                lead,
-                feat
-            };
-        }
-        
-        // Fallback : recalculer depuis songs array (ancienne méthode)
-        console.warn('[Stats] songs_role_stats non disponible dans meta.json, recalcul depuis songs[]');
-        
-        const total = songs.length;
-        
+
+        // Récupérer uniquement les lignes visibles (pas hidden, pas display:none)
+        const rows = Array.from(tbody.querySelectorAll('tr[data-row-id]')).filter(row => {
+            return row.offsetParent !== null; // vérifie si la ligne est visible
+        });
+
+        let total = 0;
         let totalStreams = 0;
         let dailyStreams = 0;
-        
+
         let leadCount = 0;
         let leadTotalStreams = 0;
         let leadDailyStreams = 0;
-        
+
         let featCount = 0;
         let featTotalStreams = 0;
         let featDailyStreams = 0;
 
-        songs.forEach(song => {
-            const streams_total = Number(song.streams_total) || 0;
-            const streams_daily = Number(song.streams_daily) || 0;
-            
-            totalStreams += streams_total;
-            dailyStreams += streams_daily;
+        rows.forEach(row => {
+            total++;
 
-            if (song.role === 'lead') {
-                leadCount++;
-                leadTotalStreams += streams_total;
-                leadDailyStreams += streams_daily;
-            } else if (song.role === 'feat') {
+            // Extraire les données des cellules
+            const titleCell = row.querySelector('td:nth-child(2)');
+            const streamsCell = row.querySelector('td:nth-child(3)');
+            const dailyCell = row.querySelector('td:nth-child(4)');
+
+            const title = titleCell?.textContent?.trim() || '';
+            const streams = this.parseStreamValue(streamsCell?.textContent?.trim() || '0');
+            const daily = this.parseStreamValue(dailyCell?.textContent?.trim() || '0');
+
+            totalStreams += streams;
+            dailyStreams += daily;
+
+            // Détecter Feat par astérisque au début du titre
+            const isFeat = title.startsWith('*');
+
+            if (isFeat) {
                 featCount++;
-                featTotalStreams += streams_total;
-                featDailyStreams += streams_daily;
+                featTotalStreams += streams;
+                featDailyStreams += daily;
+            } else {
+                leadCount++;
+                leadTotalStreams += streams;
+                leadDailyStreams += daily;
             }
         });
 
-        return {
+        const stats = {
             total,
             totalStreams,
             dailyStreams,
@@ -147,6 +134,20 @@ class DataRenderer {
                 dailyStreams: featDailyStreams
             }
         };
+
+        console.log('[Stats] Calcul depuis DOM - Titres visibles:', stats);
+        return stats;
+    }
+
+    /**
+     * Parse une valeur de stream formatée (ex: "1 234 567") en nombre
+     */
+    parseStreamValue(text) {
+        if (!text || text === '—' || text === '-') return 0;
+        // Retirer tous les espaces et parser
+        const cleaned = text.replace(/\s/g, '');
+        const num = parseInt(cleaned, 10);
+        return isNaN(num) ? 0 : num;
     }
 
     /**
@@ -202,21 +203,28 @@ class DataRenderer {
     }
 
     /**
-     * Calcule et rend les agrégats de la page Albums
+     * Met à jour les agrégats Albums depuis le DOM (lignes visibles)
+     * Prompt 8.7 : ne plus utiliser albums.json, calculer depuis les tr affichées
      */
     async renderAlbumsAggregates() {
         try {
-            const albums = await window.dataLoader.loadAlbums();
-            
-            if (!albums || albums.length === 0) {
-                console.warn('⚠️ Aucun album à afficher');
+            // Attendre que le tableau soit rendu
+            const tbody = document.querySelector('#page-albums tbody');
+            if (!tbody || tbody.querySelectorAll('tr[data-row-id]').length === 0) {
+                console.warn('⚠️ Tableau Albums pas encore rendu, attente...');
                 return;
             }
 
-            const stats = this.calculateAlbumsStats(albums);
+            const stats = this.calculateAlbumsStatsFromDOM();
+            
+            if (!stats) {
+                console.error('❌ Impossible de calculer les stats Albums depuis le DOM');
+                return;
+            }
+
             this.updateAlbumsAggregatesUI(stats);
             
-            console.log('✅ Agrégats Albums mis à jour:', stats);
+            console.log('✅ Agrégats Albums mis à jour depuis DOM:', stats);
         } catch (error) {
             console.error('❌ Erreur rendu agrégats Albums:', error);
             this.showError('albums-aggregates');
@@ -224,23 +232,47 @@ class DataRenderer {
     }
 
     /**
-     * Calcule les statistiques des albums
+     * Calcule les statistiques des albums depuis les lignes visibles du tableau DOM
+     * Prompt 8.7 : agrégats = somme des lignes affichées, pas depuis data.json
      */
-    calculateAlbumsStats(albums) {
-        const total = albums.length;
+    calculateAlbumsStatsFromDOM() {
+        const tbody = document.querySelector('#page-albums tbody');
+        if (!tbody) {
+            console.warn('[Stats] Tbody Albums introuvable, impossible de calculer les stats');
+            return null;
+        }
+
+        // Récupérer uniquement les lignes visibles
+        const rows = Array.from(tbody.querySelectorAll('tr[data-row-id]')).filter(row => {
+            return row.offsetParent !== null;
+        });
+
+        let total = 0;
         let totalStreams = 0;
         let dailyStreams = 0;
 
-        albums.forEach(album => {
-            totalStreams += Number(album.streams_total) || 0;
-            dailyStreams += Number(album.streams_daily) || 0;
+        rows.forEach(row => {
+            total++;
+
+            // Extraire les données des cellules (même structure que Songs)
+            const streamsCell = row.querySelector('td:nth-child(3)');
+            const dailyCell = row.querySelector('td:nth-child(4)');
+
+            const streams = this.parseStreamValue(streamsCell?.textContent?.trim() || '0');
+            const daily = this.parseStreamValue(dailyCell?.textContent?.trim() || '0');
+
+            totalStreams += streams;
+            dailyStreams += daily;
         });
 
-        return {
+        const stats = {
             total,
             totalStreams,
             dailyStreams
         };
+
+        console.log('[Stats] Calcul depuis DOM - Albums visibles:', stats);
+        return stats;
     }
 
     /**
@@ -315,6 +347,9 @@ class DataRenderer {
                     if (wrapper) {
                         wrapper.dispatchEvent(new CustomEvent('table:rows-updated'));
                     }
+
+                    // Prompt 8.7 : Recalculer les agrégats depuis les lignes visibles
+                    this.renderSongsAggregates();
                 });
             });
         } catch (error) {
@@ -503,6 +538,9 @@ class DataRenderer {
                     if (wrapper) {
                         wrapper.dispatchEvent(new CustomEvent('table:rows-updated'));
                     }
+
+                    // Prompt 8.7 : Recalculer les agrégats depuis les lignes visibles
+                    this.renderAlbumsAggregates();
                 });
             });
         } catch (error) {
@@ -655,20 +693,18 @@ class DataRenderer {
 
     /**
      * Initialise le rendu pour la page courante
+     * Prompt 8.7 : renderAggregates() appelé APRÈS renderTable() car les cartes
+     * calculent depuis les lignes DOM maintenant, pas depuis meta.json
      */
     async initCurrentPage(pageName) {
         this.currentPage = pageName;
 
         if (pageName === 'songs') {
-            await Promise.all([
-                this.renderSongsAggregates(),
-                this.renderSongsTable()
-            ]);
+            await this.renderSongsTable();
+            // Les agrégats seront calculés après le render via RAF dans renderSongsTable
         } else if (pageName === 'albums') {
-            await Promise.all([
-                this.renderAlbumsAggregates(),
-                this.renderAlbumsTable()
-            ]);
+            await this.renderAlbumsTable();
+            // Les agrégats seront calculés après le render via RAF dans renderAlbumsTable
         }
     }
 
