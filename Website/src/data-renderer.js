@@ -10,6 +10,23 @@ class DataRenderer {
             songs: null,
             albums: null
         };
+        
+        // Écouter l'événement de synchronisation pour rafraîchir les badges
+        window.addEventListener('data-sync-updated', () => {
+            console.log('[DataRenderer] 🔄 Rafraîchissement badges après sync');
+            // Le rebuild sera automatique via MutationObserver
+        });
+        
+        // Écouter le resize de la fenêtre avec debounce
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                console.log('[DataRenderer] 🔄 Rafraîchissement badges après resize');
+                if (window.rankRailSongs) window.rankRailSongs.debouncedRebuild();
+                if (window.rankRailAlbums) window.rankRailAlbums.debouncedRebuild();
+            }, 100);
+        });
     }
 
     /**
@@ -283,6 +300,23 @@ class DataRenderer {
             if (window.tableSort) {
                 window.tableSort.reinitTable('songs');
             }
+
+            // Monter et binder le rail de badges (nouveau système robuste)
+            if (window.rankRailSongs) {
+                window.rankRailSongs.mount('#page-songs .table-section');
+                window.rankRailSongs.bind();
+                window.rankRailSongs.rebuild(sortedSongs);
+            }
+
+            // Dispatcher événement après double RAF (garantir repaint)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const wrapper = document.querySelector('#page-songs .table-wrapper');
+                    if (wrapper) {
+                        wrapper.dispatchEvent(new CustomEvent('table:rows-updated'));
+                    }
+                });
+            });
         } catch (error) {
             console.error('❌ Erreur rendu table Songs:', error);
             this.showError('songs-table');
@@ -305,16 +339,20 @@ class DataRenderer {
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
         
-        // Ajouter le badge de mouvement INLINE (avant le numéro)
-        const rankBadge = this.createRankDeltaBadge(song);
-        if (rankBadge) {
-            tdRank.appendChild(rankBadge);
+        // Ajouter texte accessible (screen reader only) pour mouvement
+        if (song.rank_delta && song.rank_delta !== 0) {
+            const srText = document.createElement('span');
+            srText.className = 'sr-only';
+            const deltaAbs = Math.abs(song.rank_delta);
+            const places = deltaAbs > 1 ? 'places' : 'place';
+            srText.textContent = song.rank_delta > 0 
+                ? `+${deltaAbs} ${places}` 
+                : `${song.rank_delta} ${places}`;
+            tdRank.appendChild(srText);
         }
         
         // Ajouter le numéro de rang
-        const rankSpan = document.createElement('span');
-        rankSpan.textContent = displayRank;
-        tdRank.appendChild(rankSpan);
+        tdRank.textContent = displayRank;
         
         tr.appendChild(tdRank);
 
@@ -368,14 +406,17 @@ class DataRenderer {
         
         // Gérer les valeurs manquantes correctement
         const variationValue = song.variation_pct;
-        const isValidNumber = variationValue !== null && variationValue !== undefined && !isNaN(variationValue);
+        const isValidNumber = variationValue !== null 
+            && variationValue !== undefined 
+            && variationValue !== 'N.D.' 
+            && !isNaN(variationValue);
         
         if (isValidNumber) {
             tdVariation.setAttribute('data-sort-raw', variationValue);
             const variationText = formatPercent(variationValue);
             const value = Number(variationValue);
             
-            // Triple condition : >0 vert, <0 rouge, =0 gris (Prompt 7.10)
+            // Triple condition : >0 vert, <0 rouge, =0 gris
             if (value > 0) {
                 tdVariation.innerHTML = `<span class="data-table__delta--positive">${variationText}</span>`;
             } else if (value < 0) {
@@ -384,9 +425,10 @@ class DataRenderer {
                 tdVariation.innerHTML = `<span class="data-table__delta--neutral">${variationText}</span>`;
             }
         } else {
-            // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
-            tdVariation.setAttribute('data-sort-raw', '');
-            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
+            // "Non mis-à-jour" : classe muted, valeur sentinelle pour tri (nulls last)
+            // Utiliser une valeur sentinelle spéciale détectée par compareValues()
+            tdVariation.setAttribute('data-sort-raw', 'NA_SENTINEL');
+            tdVariation.innerHTML = `<span class="data-table__delta--na">${formatPercent(variationValue)}</span>`;
         }
         tr.appendChild(tdVariation);
 
@@ -446,6 +488,23 @@ class DataRenderer {
             if (window.tableSort) {
                 window.tableSort.reinitTable('albums');
             }
+
+            // Monter et binder le rail de badges (nouveau système robuste)
+            if (window.rankRailAlbums) {
+                window.rankRailAlbums.mount('#page-albums .table-section');
+                window.rankRailAlbums.bind();
+                window.rankRailAlbums.rebuild(sortedAlbums);
+            }
+
+            // Dispatcher événement après double RAF (garantir repaint)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const wrapper = document.querySelector('#page-albums .table-wrapper');
+                    if (wrapper) {
+                        wrapper.dispatchEvent(new CustomEvent('table:rows-updated'));
+                    }
+                });
+            });
         } catch (error) {
             console.error('❌ Erreur rendu table Albums:', error);
             this.showError('albums-table');
@@ -468,16 +527,20 @@ class DataRenderer {
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
         
-        // Ajouter le badge de mouvement INLINE (avant le numéro)
-        const rankBadge = this.createRankDeltaBadge(album);
-        if (rankBadge) {
-            tdRank.appendChild(rankBadge);
+        // Ajouter texte accessible (screen reader only) pour mouvement
+        if (album.rank_delta && album.rank_delta !== 0) {
+            const srText = document.createElement('span');
+            srText.className = 'sr-only';
+            const deltaAbs = Math.abs(album.rank_delta);
+            const places = deltaAbs > 1 ? 'places' : 'place';
+            srText.textContent = album.rank_delta > 0 
+                ? `+${deltaAbs} ${places}` 
+                : `${album.rank_delta} ${places}`;
+            tdRank.appendChild(srText);
         }
         
         // Ajouter le numéro de rang
-        const rankSpan = document.createElement('span');
-        rankSpan.textContent = displayRank;
-        tdRank.appendChild(rankSpan);
+        tdRank.textContent = displayRank;
         
         tr.appendChild(tdRank);
 
@@ -534,7 +597,7 @@ class DataRenderer {
             const variationText = formatPercent(variationValue);
             const value = Number(variationValue);
             
-            // Triple condition : >0 vert, <0 rouge, =0 gris (Prompt 7.10)
+            // Triple condition : >0 vert, <0 rouge, =0 gris
             if (value > 0) {
                 tdVariation.innerHTML = `<span class="data-table__delta--positive">${variationText}</span>`;
             } else if (value < 0) {
@@ -543,9 +606,9 @@ class DataRenderer {
                 tdVariation.innerHTML = `<span class="data-table__delta--neutral">${variationText}</span>`;
             }
         } else {
-            // N.D. : classe neutre, pas de data-sort-raw (ou valeur sentinelle)
-            tdVariation.setAttribute('data-sort-raw', '');
-            tdVariation.innerHTML = `<span class="data-table__delta--na">N.D.</span>`;
+            // "Non mis-à-jour" : classe muted, valeur sentinelle pour tri (nulls last)
+            tdVariation.setAttribute('data-sort-raw', 'null'); // Valeur sentinelle
+            tdVariation.innerHTML = `<span class="data-table__delta--na">${formatPercent(null)}</span>`;
         }
         tr.appendChild(tdVariation);
 
@@ -569,33 +632,10 @@ class DataRenderer {
     }
 
     /**
-     * Crée un badge de mouvement de rang (J vs J-1)
-     * @param {Object} item - Chanson ou album avec rank_delta
-     * @returns {HTMLElement|null} - Badge ou null si pas de mouvement
+     * Génère et positionne les badges de mouvement de rang dans le rail overlay
+     * @param {string} tableSelector - Sélecteur CSS de la table (ex: '#page-songs .data-table--songs')
+     * @param {Array} items - Tableau des chansons/albums avec rank_delta
      */
-    createRankDeltaBadge(item) {
-        // Pas de badge si pas de données J-1 ou mouvement nul
-        if (!item.rank_prev || !item.rank_delta || item.rank_delta === 0) {
-            return null;
-        }
-
-        const badge = document.createElement('div');
-        badge.className = `rank-delta ${item.rank_delta > 0 ? 'is-up' : 'is-down'}`;
-        
-        const arrow = item.rank_delta > 0 ? '▲' : '▼';
-        const deltaAbs = Math.abs(item.rank_delta);
-        const label = `${item.rank_delta > 0 ? '+' : ''}${item.rank_delta} place${deltaAbs > 1 ? 's' : ''}`;
-        
-        badge.setAttribute('aria-label', label);
-        badge.setAttribute('title', label);
-        badge.innerHTML = `
-            <span class="rank-delta__arrow">${arrow}</span>
-            <span>${deltaAbs}</span>
-        `;
-        
-        return badge;
-    }
-
     /**
      * Affiche un message d'erreur léger
      */

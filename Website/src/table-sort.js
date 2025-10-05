@@ -71,29 +71,47 @@
   /**
    * Compare deux valeurs selon le type
    */
-  function compareValues(a, b, sortType) {
-    // Gérer les valeurs nulles/undefined
-    if (a === null || a === undefined) return 1;
-    if (b === null || b === undefined) return -1;
+  function compareValues(a, b, sortType, direction = 'asc') {
+    // Gérer les valeurs sentinelles "NA_SENTINEL" pour tri nulls-last (Variation)
+    const isANull = a === 'NA_SENTINEL' || a === 'null' || a === '' || a === null || a === undefined;
+    const isBNull = b === 'NA_SENTINEL' || b === 'null' || b === '' || b === null || b === undefined;
+    
+    // Si les deux sont null, égalité
+    if (isANull && isBNull) return 0;
+    
+    // Nulls TOUJOURS EN DERNIER, peu importe la direction du tri
+    // En asc : nulls après les valeurs normales → return positif
+    // En desc : nulls après les valeurs normales → return positif aussi
+    if (isANull) return 1;   // a toujours après b
+    if (isBNull) return -1;  // b toujours après a
 
+    // Pour les valeurs normales, calculer la comparaison
+    let comparison = 0;
+    
     switch (sortType) {
       case 'number':
         // Convertir en nombre, gérer N.D. ou texte
         const numA = parseFloat(String(a).replace(/[^\d.-]/g, '')) || 0;
         const numB = parseFloat(String(b).replace(/[^\d.-]/g, '')) || 0;
-        return numA - numB;
+        comparison = numA - numB;
+        break;
 
       case 'title':
         // Tri alphabétique avec Collator FR, ignore *
         const titleA = normalizeTitle(String(a));
         const titleB = normalizeTitle(String(b));
-        return frCollator.compare(titleA, titleB);
+        comparison = frCollator.compare(titleA, titleB);
+        break;
 
       case 'text':
       default:
         // Tri texte standard avec Collator FR
-        return frCollator.compare(String(a), String(b));
+        comparison = frCollator.compare(String(a), String(b));
+        break;
     }
+    
+    // Appliquer la direction du tri pour les valeurs normales
+    return direction === 'asc' ? comparison : -comparison;
   }
 
   /**
@@ -114,14 +132,25 @@
       const valueA = cellA.getAttribute('data-sort-raw') || cellA.textContent.trim();
       const valueB = cellB.getAttribute('data-sort-raw') || cellB.textContent.trim();
 
-      const comparison = compareValues(valueA, valueB, sortType);
-      return direction === 'asc' ? comparison : -comparison;
+      const comparison = compareValues(valueA, valueB, sortType, direction);
+      return comparison; // Ne plus inverser ici, la direction est gérée dans compareValues
     });
 
     // Réinsérer les lignes triées
     rows.forEach(row => tbody.appendChild(row));
 
     // Ne PAS mettre à jour les rangs visuels - ils doivent rester figés au rang Kworb d'origine
+    
+    // Dispatcher événement après double RAF pour garantir repaint complet
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const wrapper = table.closest('.table-wrapper');
+        if (wrapper) {
+          wrapper.dispatchEvent(new CustomEvent('table:rows-updated'));
+          console.log('📡 [TableSort] Event table:rows-updated dispatché après tri');
+        }
+      });
+    });
   }
 
   /**

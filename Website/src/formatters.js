@@ -58,15 +58,33 @@ function formatIntFr(value) {
  * @returns {string} - Pourcentage formaté (ex: "+3,52 %", "-1,07 %", "N.D.")
  */
 function formatPercent(value) {
-    if (value === 'N.D.' || value === null || value === undefined || isNaN(value)) {
-        return 'N.D.';
+    // Cas "Non mis-à-jour" : valeur 'N.D.' explicite, null, ou undefined
+    if (value === 'N.D.' || value === null || value === undefined) {
+        return 'Non mis-à-jour';
+    }
+    
+    // Vérifier si c'est un nombre valide
+    if (isNaN(value)) {
+        return 'Non mis-à-jour';
     }
 
     const num = Number(value);
-    const sign = num > 0 ? '+' : (num < 0 ? '' : ''); // Pas de signe si 0
-    const formatted = formatNumber(Math.abs(num), 2);
     
-    return `${sign}${formatted}\u202F%`;
+    // Cas spécial : 0 exact (pas de signe)
+    if (num === 0) {
+        return '0,00\u202F%';
+    }
+    
+    // Utiliser Intl.NumberFormat avec signDisplay pour afficher +/- automatiquement
+    const formatter = new Intl.NumberFormat('fr-FR', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        signDisplay: 'always' // Toujours afficher le signe pour les valeurs non-nulles
+    });
+    
+    // Diviser par 100 car Intl.NumberFormat multiplie par 100 pour les pourcentages
+    return formatter.format(num / 100);
 }
 
 /**
