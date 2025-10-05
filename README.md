@@ -8,6 +8,106 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-05 — Prompt 8.6 : Rotation J/J-1/J-2 basée sur la vraie date Spotify (indépendante de l'horloge locale)**
+
+**Problématique** : La rotation des snapshots et la `spotify_data_date` étaient calculées avec `datetime.now() - 1 jour`, dépendant de l'horloge locale de la machine. Résultat : un scrape à 2h du matin locale pouvait créer un nouveau jour alors que Kworb n'avait pas encore basculé, causant des incohérences.
+
+**Règle métier** : 
+- Si Kworb affiche "Last updated: D", alors `spotify_data_date = D - 1 jour` (calendaire)
+- On ne bascule vers D que quand Kworb passe son "Last updated" à D+1
+- **Source de vérité unique** : `meta.json.kworb_last_update_utc` (timestamp UTC extrait de Kworb)
+
+**Solution** :
+1. **Module `date_manager.py`** : gestionnaire centralisé de dates et rotation
+   - `extract_kworb_last_update(html)` : parse "Last updated: YYYY/MM/DD" depuis HTML Kworb
+   - `calculate_spotify_data_date(kworb_utc)` : calcule `kworb_day - 1 jour` (calendaire UTC)
+   - `should_rotate(meta, new_date)` : compare `new_date > history.latest_date` (strict)
+   - `rotate_snapshots_atomic()` : rotation idempotente J→J-1→J-2
+     - Si nouveau jour : renommer J→J-1, créer nouveau J, purger J-2 ancien
+     - Sinon : réécrire seulement le J actuel (idempotence)
+   - `update_meta_with_rotation()` : met à jour `meta.json` avec history cohérent
+   - `log_rotation_decision()` : log clair des décisions (rotation ou pas)
+
+2. **Scrapers modifiés** (`scrape_kworb_songs.py`, `scrape_kworb_albums.py`) :
+   - Import du `date_manager`
+   - Extraction du timestamp Kworb depuis HTML : `Last updated: 2025/10/05`
+   - Fallback sur `datetime.now(UTC)` si extraction échoue
+   - Calcul `spotify_data_date` via `calculate_spotify_data_date()`
+   - Rotation automatique via `rotate_snapshots_atomic()` et `update_meta_with_rotation()`
+   - Log détaillé : "Kworb Day = 2025-10-05 → Spotify Data Date = 2025-10-04"
+
+3. **Orchestrateur (`auto_refresh.py`)** :
+   - Suppression de l'ancienne fonction `rotate_snapshots()` (obsolète)
+   - Rotation désormais gérée par les scrapers eux-mêmes
+   - Étape 5 : "Rotation gérée automatiquement par les scrapers"
+
+4. **Tests de validation** (`test_date_rotation.py`) :
+   - **T1 (Pas de bascule nocturne locale)** : 
+     - Kworb = 2025-10-05T23:50Z, latest_date = 2025-10-04
+     - Résultat : spotify_data_date = 2025-10-04, **aucune rotation**
+   - **T2 (Changement de jour Kworb)** :
+     - Kworb passe à 2025-10-06T00:10Z
+     - Résultat : spotify_data_date = 2025-10-05, **rotation effectuée**
+   - **T3 (Idempotence)** :
+     - Rejouer T2 : latest_date = 2025-10-05 = spotify_data_date
+     - Résultat : **aucune nouvelle rotation**, réécriture J uniquement
+   - **T4 (Front cohérent)** :
+     - Vérification : `spotify_data_date = kworb_day - 1` dans meta.json
+   - **T5 (Fallback parsing)** :
+     - Timestamp invalide → `parse_kworb_timestamp()` retourne `None`
+     - Fallback : `datetime.now(UTC)` utilisé
+   - ✅ **Tous les tests PASSED**
+
+**Critères d'acceptation** :
+- ✅ `spotify_data_date` ne change pas tant que `kworb_day` n'a pas changé, même en pleine nuit locale
+- ✅ À changement de `kworb_day`, rotation J/J-1/J-2 correcte et idempotente
+- ✅ `meta.json` mis à jour de façon cohérente (`spotify_data_date`, `history.latest_date`, `available_dates`)
+- ✅ Le front affiche toujours `spotify_data_date = kworb_day - 1` (cohérence garantie)
+- ✅ Tests T1-T5 validés
+
+**Fichiers modifiés** :
+- **Nouveau** : `scripts/date_manager.py` (355 lignes) : module de gestion dates/rotation
+- `scripts/scrape_kworb_songs.py` :
+  - Import `date_manager`
+  - Extraction timestamp Kworb depuis HTML (pattern "Last updated: YYYY/MM/DD")
+  - Fonction `create_snapshot()` utilise rotation atomique
+  - Fonction `update_meta()` délègue au `date_manager`
+- `scripts/scrape_kworb_albums.py` : mêmes modifications que songs
+- `scripts/auto_refresh.py` : suppression appel `rotate_snapshots()`, rotation gérée par scrapers
+- **Nouveau** : `test_date_rotation.py` : tests T1-T5 complets
+
+**Cache-busting** : Aucun (backend only)
+
+**Règles de rotation** :
+```python
+# Calcul de la date Spotify
+kworb_day = datetime.strptime("2025/10/05", "%Y/%m/%d").date()  # Extrait de Kworb
+spotify_data_date = kworb_day - timedelta(days=1)  # = 2025-10-04
+
+# Décision de rotation
+should_rotate = spotify_data_date > meta["history"]["latest_date"]
+
+# Si rotation nécessaire :
+#   1. Purger ancien J-2
+#   2. J actuel devient J-1 (gardé avec son nom)
+#   3. Créer nouveau J = spotify_data_date.json
+#   4. Mettre à jour meta.json
+
+# Si pas de rotation (idempotence) :
+#   - Réécrire J actuel avec nouvelles données
+#   - Aucun rename
+```
+
+**Avantages** :
+- ✅ **Indépendant du fuseau horaire machine** : seul le timestamp Kworb compte
+- ✅ **Gel automatique** : si Kworb pas à jour (weekend, maintenance), spotify_data_date reste fixe
+- ✅ **Idempotent** : relancer 10 fois le même jour = 1 seul snapshot créé
+- ✅ **Atomique** : rotation complète ou rollback, pas d'état intermédiaire
+- ✅ **Fallback sécurisé** : si parsing Kworb échoue, utilise `datetime.now(UTC)` (safe)
+- ✅ **Log clair** : chaque décision (rotate ou pas) est journalisée avec contexte
+
+---
+
 **2025-10-05 — Prompt 8.2 : Indicateur de mouvement de rang (J vs J-1) avec flèches ▲/▼**
 
 **Problématique** : Les utilisateurs ne pouvaient pas voir rapidement quelles chansons/albums avaient gagné ou perdu des places au classement entre J (aujourd'hui) et J-1 (hier).
