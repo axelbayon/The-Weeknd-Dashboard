@@ -298,6 +298,13 @@ class DataRenderer {
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', song.id);
         tr.setAttribute('data-testid', 'songs-row');
+        
+        // Ajouter le badge de mouvement de rang (si applicable)
+        const rankBadge = this.createRankDeltaBadge(song);
+        if (rankBadge) {
+            tr.style.position = 'relative';
+            tr.appendChild(rankBadge);
+        }
 
         // Colonne #
         const tdRank = document.createElement('td');
@@ -450,6 +457,13 @@ class DataRenderer {
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', album.id);
         tr.setAttribute('data-testid', 'albums-row');
+        
+        // Ajouter le badge de mouvement de rang (si applicable)
+        const rankBadge = this.createRankDeltaBadge(album);
+        if (rankBadge) {
+            tr.style.position = 'relative';
+            tr.appendChild(rankBadge);
+        }
 
         // Colonne #
         const tdRank = document.createElement('td');
@@ -544,6 +558,34 @@ class DataRenderer {
         tr.appendChild(tdNextCap);
 
         return tr;
+    }
+
+    /**
+     * Crée un badge de mouvement de rang (J vs J-1)
+     * @param {Object} item - Chanson ou album avec rank_delta
+     * @returns {HTMLElement|null} - Badge ou null si pas de mouvement
+     */
+    createRankDeltaBadge(item) {
+        // Pas de badge si pas de données J-1 ou mouvement nul
+        if (!item.rank_prev || !item.rank_delta || item.rank_delta === 0) {
+            return null;
+        }
+
+        const badge = document.createElement('div');
+        badge.className = `rank-delta ${item.rank_delta > 0 ? 'is-up' : 'is-down'}`;
+        
+        const arrow = item.rank_delta > 0 ? '▲' : '▼';
+        const deltaAbs = Math.abs(item.rank_delta);
+        const label = `${item.rank_delta > 0 ? '+' : ''}${item.rank_delta} place${deltaAbs > 1 ? 's' : ''}`;
+        
+        badge.setAttribute('aria-label', label);
+        badge.setAttribute('title', label);
+        badge.innerHTML = `
+            <span class="rank-delta__arrow">${arrow}</span>
+            <span>${deltaAbs}</span>
+        `;
+        
+        return badge;
     }
 
     /**

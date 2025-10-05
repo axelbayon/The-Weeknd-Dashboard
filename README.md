@@ -8,6 +8,58 @@ Dashboard local recensant les streams Spotify de The Weeknd (Songs & Albums) via
 
 ---
 
+**2025-10-05 — Prompt 8.2 : Indicateur de mouvement de rang (J vs J-1) avec flèches ▲/▼**
+
+**Problématique** : Les utilisateurs ne pouvaient pas voir rapidement quelles chansons/albums avaient gagné ou perdu des places au classement entre J (aujourd'hui) et J-1 (hier).
+
+**Solution** :
+1. **Calcul automatique des mouvements** (`scripts/generate_current_views.py`) :
+   - Ajout de `rank_prev` (rang à J-1) depuis le snapshot précédent
+   - Calcul de `rank_delta = rank_prev - rank` :
+     - Positif = gain de places (ex: +3 → chanson montée de 3 positions)
+     - Négatif = perte de places (ex: −2 → chanson descendue de 2 positions)
+     - Null = pas de données J-1 (chanson absente hier ou premier jour)
+   - Intégration dans le même pipeline que `variation_pct`, `next_cap_value`, etc.
+
+2. **Affichage visuel des badges** (`Website/src/data-renderer.js` + `global.css`) :
+   - Badge positionné **à gauche du tableau**, avant la colonne `#`
+   - **Gain** : flèche ▲ + nombre en turquoise (`#4ae3c8`)
+   - **Perte** : flèche ▼ + nombre en rouge saumon (`#ff8678`)
+   - **Stable ou inconnu** : aucun badge (pas d'espace réservé)
+   - Accessibilité : `aria-label` et `title` avec texte explicite ("+3 places", "−2 places")
+   - Badge en `position: absolute` avec `left: -60px`, ne perturbe pas la structure du tableau
+
+3. **Données enrichies** :
+   - `songs.json` : 317/317 chansons avec `rank_prev` et `rank_delta`
+   - `albums.json` : 25/25 albums avec `rank_prev` et `rank_delta`
+   - Source de vérité : `rank` de Kworb (J) vs `rank` du snapshot J-1
+
+4. **Tests validés** :
+   - ✅ **Take My Breath** : #71 (était #72) → **▲ 1** (gain)
+   - ✅ **Double Fantasy** : #72 (était #71) → **▼ 1** (perte)
+   - ✅ Inversion symétrique détectée et affichée correctement
+   - ✅ 4 mouvements détectés (2 gains ↑, 2 pertes ↓)
+   - ✅ Non-régression : tri, recherche, sticky #, auto-refresh OK
+
+**Critères d'acceptation** :
+- ✅ `rank_prev` et `rank_delta` présents dans `songs.json` et `albums.json`
+- ✅ Badge vert ▲ n pour les gains, rouge ▼ n pour les pertes, rien pour stable/inconnu
+- ✅ Affiché sur pages Titres et Albums
+- ✅ Accessibilité avec `aria-label`/`title` explicites
+- ✅ Tests OK (mouvements détectés, cas symétrique, non-régression)
+
+**Fichiers modifiés** :
+- `scripts/generate_current_views.py` : calcul `rank_prev` et `rank_delta` dans `generate_current_view()`
+- `Website/src/data-renderer.js` :
+  - Fonction `createRankDeltaBadge(item)` : génère badge avec flèche + delta
+  - Intégration dans `createSongRow()` et `createAlbumRow()`
+- `Website/src/styles/global.css` : classes `.rank-delta`, `.is-up`, `.is-down` avec positionnement absolu
+- `Website/index.html` : cache-busting v8.2 (data-renderer, global.css)
+
+**Cache-busting** : v8.2 (`index.html`)
+
+---
+
 **2025-01-27 — Prompt 7.9 : Caps clic plein-surface Titre + Variations unifiées (3 pages) + Albums tri/légende compilation (^)**
 
 **Problématique** : Header Titre dans Caps n'est cliquable que sur le bouton interne (pas plein-surface comme #). Variations (%) utilisent des formats différents entre pages : Caps avec `.toFixed(2)` (point décimal anglais), Songs/Albums avec `formatPercent` (virgule FR). Albums n'ignorent pas le symbole ^ (compilation) lors du tri alphabétique, et pas de légende explicative pour ^.

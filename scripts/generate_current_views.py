@@ -111,9 +111,15 @@ def generate_current_view(
     for current in current_snapshot:
         item_id = current["id"]
         
-        # Récupérer streams_daily_prev depuis J-1
+        # Récupérer streams_daily_prev et rank_prev depuis J-1
         prev_item = prev_by_id.get(item_id)
         streams_daily_prev = prev_item["streams_daily"] if prev_item else None
+        rank_prev = prev_item["rank"] if prev_item else None
+        
+        # Calcul du delta de rang (positif = gain de places, négatif = perte)
+        rank_delta = None
+        if rank_prev is not None:
+            rank_delta = rank_prev - current["rank"]
         
         # Calculs
         variation_pct = calculate_variation_pct(current["streams_daily"], streams_daily_prev)
@@ -128,6 +134,8 @@ def generate_current_view(
         enriched = {
             **current,
             "streams_daily_prev": streams_daily_prev,
+            "rank_prev": rank_prev,
+            "rank_delta": rank_delta,
             "variation_pct": variation_pct,
             "next_cap_value": next_cap_value,
             "days_to_next_cap": days_to_next_cap,
