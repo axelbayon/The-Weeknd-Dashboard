@@ -298,20 +298,24 @@ class DataRenderer {
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', song.id);
         tr.setAttribute('data-testid', 'songs-row');
-        
-        // Ajouter le badge de mouvement de rang (si applicable)
-        const rankBadge = this.createRankDeltaBadge(song);
-        if (rankBadge) {
-            tr.style.position = 'relative';
-            tr.appendChild(rankBadge);
-        }
 
         // Colonne #
         const tdRank = document.createElement('td');
         tdRank.className = 'data-table__cell--rank cell-num';
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
-        tdRank.textContent = displayRank;
+        
+        // Ajouter le badge de mouvement INLINE (avant le numéro)
+        const rankBadge = this.createRankDeltaBadge(song);
+        if (rankBadge) {
+            tdRank.appendChild(rankBadge);
+        }
+        
+        // Ajouter le numéro de rang
+        const rankSpan = document.createElement('span');
+        rankSpan.textContent = displayRank;
+        tdRank.appendChild(rankSpan);
+        
         tr.appendChild(tdRank);
 
         // Colonne Titre
@@ -457,20 +461,24 @@ class DataRenderer {
         const tr = document.createElement('tr');
         tr.setAttribute('data-row-id', album.id);
         tr.setAttribute('data-testid', 'albums-row');
-        
-        // Ajouter le badge de mouvement de rang (si applicable)
-        const rankBadge = this.createRankDeltaBadge(album);
-        if (rankBadge) {
-            tr.style.position = 'relative';
-            tr.appendChild(rankBadge);
-        }
 
         // Colonne #
         const tdRank = document.createElement('td');
         tdRank.className = 'data-table__cell--rank cell-num';
         tdRank.setAttribute('data-sort-value', 'rank');
         tdRank.setAttribute('data-sort-raw', displayRank);
-        tdRank.textContent = displayRank;
+        
+        // Ajouter le badge de mouvement INLINE (avant le numéro)
+        const rankBadge = this.createRankDeltaBadge(album);
+        if (rankBadge) {
+            tdRank.appendChild(rankBadge);
+        }
+        
+        // Ajouter le numéro de rang
+        const rankSpan = document.createElement('span');
+        rankSpan.textContent = displayRank;
+        tdRank.appendChild(rankSpan);
+        
         tr.appendChild(tdRank);
 
         // Colonne Titre
