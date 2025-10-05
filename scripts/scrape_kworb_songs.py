@@ -20,6 +20,16 @@ except ImportError:
     print("   pip install requests beautifulsoup4")
     sys.exit(1)
 
+# Importer le gestionnaire de dates
+from date_manager import (
+    extract_kworb_last_update,
+    calculate_spotify_data_date,
+    rotate_snapshots_atomic,
+    update_meta_with_rotation,
+    log_rotation_decision,
+    should_rotate
+)
+
 
 # Configuration
 KWORB_SONGS_URL = "https://kworb.net/spotify/artist/1Xyo4u8uXC1ZmMpatF05PJ_songs.html"
@@ -300,6 +310,15 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
                 songs.append(song)
             
             print(f"[OK] {len(songs)} chansons extraites avec succès")
+            
+            # Extraire le timestamp "Last updated" depuis le HTML
+            last_update_kworb = extract_kworb_last_update(response.text)
+            
+            # Fallback : si extraction échoue, utiliser datetime.now(UTC)
+            if last_update_kworb is None:
+                print("[WARN] Timestamp Kworb non trouvé, fallback sur datetime.now(UTC)")
+                last_update_kworb = datetime.now(timezone.utc)
+            
             return songs, last_update_kworb, role_stats
             
         except requests.RequestException as e:
@@ -317,13 +336,32 @@ def scrape_kworb_songs(url: str, retries: int = MAX_RETRIES) -> Tuple[List[Dict]
 
 def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: Path) -> str:
     """
-    Crée un snapshot journalier dans data/history/songs/.
+    Crée un snapshot journalier dans data/history/songs/ avec rotation intelligente J/J-1/J-2.
+    
+    Utilise le date_manager pour :
+    - Calculer spotify_data_date depuis kworb_last_update_utc
+    - Effectuer la rotation atomique si nouveau jour
+    - Mettre à jour meta.json
     
     Returns:
         str: La date spotify_data_date (YYYY-MM-DD)
     """
-    # Calculer spotify_data_date = last_update_kworb - 1 jour
-    spotify_data_date = (last_update_kworb - timedelta(days=1)).strftime("%Y-%m-%d")
+    # Calculer spotify_data_date = kworb_day - 1 jour
+    spotify_data_date = calculate_spotify_data_date(last_update_kworb)
+    
+    # Charger meta.json pour vérifier s'il faut rotate
+    meta_path = base_path / "data" / "meta.json"
+    if meta_path.exists():
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    else:
+        meta = {"history": {}}
+    
+    previous_date = meta.get("history", {}).get("latest_date")
+    rotated = should_rotate(meta, spotify_data_date)
+    
+    # Log la décision
+    log_rotation_decision(last_update_kworb, spotify_data_date, previous_date, rotated)
     
     # Enrichir chaque chanson avec les timestamps
     snapshot_songs = []
@@ -335,15 +373,16 @@ def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: P
         }
         snapshot_songs.append(snapshot_song)
     
-    # Écrire le snapshot
-    snapshot_path = base_path / "data" / "history" / "songs" / f"{spotify_data_date}.json"
-    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    # Effectuer la rotation atomique (idempotente)
+    success = rotate_snapshots_atomic(
+        base_path,
+        "songs",
+        spotify_data_date,
+        snapshot_songs
+    )
     
-    with open(snapshot_path, "w", encoding="utf-8") as f:
-        json.dump(snapshot_songs, f, indent=2, ensure_ascii=False)
-    
-    print(f"[SAVE] Snapshot créé : {snapshot_path}")
-    print(f"   Date des données Spotify : {spotify_data_date}")
+    if not success:
+        print("[ERROR] Échec de la rotation des snapshots")
     
     return spotify_data_date
 
@@ -351,48 +390,29 @@ def create_snapshot(songs: List[Dict], last_update_kworb: datetime, base_path: P
 def update_meta(spotify_data_date: str, last_update_kworb: datetime, role_stats: Dict, base_path: Path):
     """
     Met à jour data/meta.json avec les nouvelles informations + stats Lead/Feat.
+    Utilise le date_manager pour gérer history de façon cohérente.
     """
     meta_path = base_path / "data" / "meta.json"
     
-    # Charger meta.json existant
-    if meta_path.exists():
-        with open(meta_path, "r", encoding="utf-8") as f:
-            meta = json.load(f)
-    else:
-        meta = {"history": {}}
-    
-    # Récupérer les dates disponibles dans history/songs
-    songs_history_path = base_path / "data" / "history" / "songs"
-    available_dates = []
-    
-    if songs_history_path.exists():
-        for file in songs_history_path.glob("*.json"):
-            date = file.stem
-            if re.match(r'^\d{4}-\d{2}-\d{2}$', date):
-                available_dates.append(date)
-    
-    # Trier par ordre décroissant
-    available_dates.sort(reverse=True)
-    
-    # Mettre à jour
-    meta["kworb_last_update_utc"] = last_update_kworb.isoformat()
-    meta["spotify_data_date"] = spotify_data_date
-    meta["last_sync_local_iso"] = datetime.now().isoformat()
-    meta["history"] = {
-        "available_dates": available_dates,
-        "latest_date": available_dates[0] if available_dates else spotify_data_date
-    }
+    # Utiliser le gestionnaire pour mettre à jour meta.json
+    meta = update_meta_with_rotation(
+        meta_path,
+        last_update_kworb,
+        spotify_data_date,
+        data_type="songs"
+    )
     
     # Ajouter les stats Lead/Feat extraites de Kworb
     if role_stats:
         meta["songs_role_stats"] = role_stats
         print(f"[Stats] Lead/Feat ajoutées à meta.json : Lead={role_stats.get('lead', {}).get('count', 'N/A')}, Feat={role_stats.get('feat', {}).get('count', 'N/A')}")
-    
-    # Sauvegarder
-    with open(meta_path, "w", encoding="utf-8") as f:
-        json.dump(meta, f, indent=2, ensure_ascii=False)
+        
+        # Sauvegarder à nouveau avec les stats
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2, ensure_ascii=False)
     
     print(f"[SAVE] meta.json mis à jour")
+    available_dates = meta.get("history", {}).get("available_dates", [])
     print(f"   Dates disponibles : {len(available_dates)}")
 
 

@@ -229,10 +229,9 @@ def run_pipeline(base_path: Path, python_exe: str) -> bool:
         print(f"⚠️  Covers: {error} (non-bloquant)")
         # Ne pas bloquer le pipeline si l'enrichissement échoue
     
-    # Étape 5 : Rotation snapshots
-    print("\n[5/5] Rotation snapshots (maintien J/J-1/J-2)...")
-    rotate_snapshots(base_path, keep_count=3)
-    print("✅ Rotation terminée")
+    # Étape 5 : Rotation gérée automatiquement par les scrapers
+    print("\n[5/5] Rotation snapshots gérée par les scrapers")
+    print("✅ Rotation automatique (basée sur kworb_day)")
     
     # Mise à jour du statut dans meta.json
     if all_success:
