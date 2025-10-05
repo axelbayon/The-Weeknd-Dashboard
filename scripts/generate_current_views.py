@@ -50,14 +50,29 @@ def normalize_key(title: str, album: str) -> str:
     return f"kworb:{norm_title}@{norm_album}"
 
 
-def calculate_variation_pct(streams_daily: float, streams_daily_prev: Optional[float]) -> Union[float, str]:
+def calculate_variation_pct(
+    streams_daily: float, 
+    streams_daily_prev: Optional[float],
+    streams_total: float,
+    streams_total_prev: Optional[float]
+) -> Union[float, str]:
     """
     Calcule la variation % entre J et J-1.
     Retourne un nombre arrondi à 2 décimales ou "N.D." si non calculable.
+    
+    Règle importante : Si streams_total == streams_total_prev, 
+    alors les données ne sont PAS à jour (Spotify pas encore rafraîchi).
+    Dans ce cas, retourner "N.D." même si streams_daily existe.
     """
+    # Si streams_total n'a pas changé, les données ne sont pas à jour
+    if streams_total_prev is not None and streams_total == streams_total_prev:
+        return "N.D."
+    
+    # Si pas de données J-1 ou invalides
     if streams_daily_prev is None or streams_daily_prev <= 0:
         return "N.D."
     
+    # Calcul normal de la variation
     variation = ((streams_daily - streams_daily_prev) / streams_daily_prev) * 100
     return round(variation, 2)
 
@@ -111,9 +126,10 @@ def generate_current_view(
     for current in current_snapshot:
         item_id = current["id"]
         
-        # Récupérer streams_daily_prev et rank_prev depuis J-1
+        # Récupérer streams_daily_prev, rank_prev ET streams_total_prev depuis J-1
         prev_item = prev_by_id.get(item_id)
         streams_daily_prev = prev_item["streams_daily"] if prev_item else None
+        streams_total_prev = prev_item["streams_total"] if prev_item else None
         rank_prev = prev_item["rank"] if prev_item else None
         
         # Calcul du delta de rang (positif = gain de places, négatif = perte)
@@ -121,8 +137,13 @@ def generate_current_view(
         if rank_prev is not None:
             rank_delta = rank_prev - current["rank"]
         
-        # Calculs
-        variation_pct = calculate_variation_pct(current["streams_daily"], streams_daily_prev)
+        # Calculs (avec détection "Non mis-à-jour" si streams_total inchangé)
+        variation_pct = calculate_variation_pct(
+            current["streams_daily"], 
+            streams_daily_prev,
+            current["streams_total"],
+            streams_total_prev
+        )
         next_cap_value = calculate_next_cap(current["streams_total"], cap_step)
         days_to_next_cap = calculate_days_to_cap(
             next_cap_value,
